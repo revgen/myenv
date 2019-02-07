@@ -28,8 +28,7 @@ function runExit() { [Environment]::Exit(0) }
 function cdToWorkspace() { Set-Location $WS }
 function runAs() { Start-Process PowerShell -Verb RunAs }
 function runTig() { git tig }
-function runMeld() { & "C:\Program Files (x86)\Meld\Meld.exe" }
-function runSnakeTail() { & "$env:PROGRAMFILES\SnakeTail\SnakeTail.exe" }
+function runSnakeTail($file) { & "$env:PROGRAMFILES\SnakeTail\SnakeTail.exe" "$file"}
 function runMidnightCommander() { & "C:\Program Files (x86)\Midnight Commander\mc.exe" "$WS" }
 function runGitBash() { & "$env:PROGRAMFILES\Git\git-bash.exe" }
 # vim -d

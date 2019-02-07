@@ -18,6 +18,12 @@ function dirSize($path) {
     $sizeStr = "{0:N2} MB" -f ($sizeMD / 1MB)
     Write-Host "$sizeStr - $path"
 }
+function openExplorer($path) {
+    if (!$path) {
+        $path = Get-Location
+    }
+    explorer "${path}"
+}
 function runExit() { [Environment]::Exit(0) }
 function cdToWorkspace() { Set-Location $WS }
 function runAs() { Start-Process PowerShell -Verb RunAs }
@@ -38,6 +44,7 @@ Set-Alias -Name ws      -Value cdToWorkspace
 Set-Alias -Name su      -Value runAs
 Set-Alias -name du      -Value dirSize
 Set-Alias -name du0     -Value dirSize
+Set-Alias -name open-explorer -Value openExplorer
 
 Set-Alias -Name apk     -Value choco
 Set-Alias -Name apt     -Value choco

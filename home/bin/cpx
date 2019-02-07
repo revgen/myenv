@@ -1,0 +1,13 @@
+#!/bin/sh
+#=======================================================================
+## Copy files using rsync
+## Usage: {SCRIPT_NAME} <source> <destination>
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+
+rsync -avhW --progress "${1}" "${2}"
+

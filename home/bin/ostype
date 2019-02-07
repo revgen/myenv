@@ -1,0 +1,13 @@
+#!/bin/bash
+# This simple script will return a type of the OS: linux, macos, bsd, windows
+value=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
+if [ -z "${value}" ]; then
+    echo "Unknown OS type"
+    exit 1
+fi
+if [ "${value}" == "linux" ] || [ "${value}" == "macos" ]; then
+    echo ${value}
+else 
+    # need an additional transformation for BSD and Windows
+    echo ${value}
+fi

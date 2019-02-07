@@ -1,0 +1,193 @@
+#!/bin/bash
+#===============================================================================
+## Command line interface for the OS X System Keychain
+##
+#  author  :Evgen Rusakov
+#  licence :MIT
+#  date    :2016-02-05
+#  version  :1.0
+#
+## Use: {SCRIPT_NAME} <command> <name> [-a/-k/-c/-v/-o/-s/-C/-V]
+## Commands:
+##   open                   - open keychain application
+##   lock                   - lock the specified keychain
+##   unlock                 - unlock the specified keychain
+##   set                    - get secret value from the keychain
+##   get                    - set secret value to the keychain
+##   backup                 - create the specified keychain archive
+## Options:
+##   name                   - specify secret name [required]
+##   -a,--account ACCOUNT   - specify account name
+##   -k,--kind KIND         - specify kind (default "user password")
+##   -c,--comment COMMENT   - specify comment string
+##   -v,--value VALUE       - specify text to be added
+##   -o,--output PATH       - specify output directory for backup (default: current directory)
+##   -C,--compress          - indicate that we have a compressed or need a it for value (gzip + base64)
+##   -V,--verbose           - show detailed messages
+##
+#===============================================================================
+[ "$(uname -s)" != "Darwin" ] && echo "Error: script can work only under the OS X system" && exit 1
+DEF_KIND="custom password"
+DEF_STORAGE=${USER_KEYCHAIN:-"$HOME/Library/Keychains/${USER}-private.keychain"}
+
+#-------------------------------------------------------------------------------
+show_help() {
+    if [ -n "$1" ]; then echo $1 >&2; fi
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+log() { if [ ${verbose} ]; then echo "$1"; fi }
+
+create_keychain_storage() {
+    lock_timeout_sec=300
+    log "Keychain storage \"${storage}\" not found. Creating..."
+    security create-keychain -P ${storage}
+    ERR=$?
+    if [ ${ERR} -ne 0 ]; then
+        echo "ERROR: create new keychain storage: ${storage} (code=${ERR})"
+        exit ${ERR}
+    fi
+    log "Update settings for keychain storage: autolock after the ${lock_timeout_sec} seconds"
+    security set-keychain-settings -lu -t ${lock_timeout_sec} ${storage}
+    log "Keychain storage \"${storage}\" was create successfully"
+}
+
+get_keychain_value() {
+    log "Getting value from keychain storage \"${storage}\" (name=\"${name}\", account=\"${account}\")..."
+    if [ -n "${kind}" ]; then match_kind="-D '${kind}'";
+    else match_kind=; fi
+    if [ -n "${account}" ]; then match_account="-a ${account}";
+    else match_account=; fi
+    #echo Command: security find-generic-password -gl "${name}" ${match_account} -w ${storage}
+ 
+    value=$(security find-generic-password -gl "${name}" ${match_account} -w ${storage} 2> /dev/null)
+    # -s - field WHERE
+    # -l - field NAME
+    ERR=$?
+    if [[ ${ERR} -eq 0  && $compress ]]; then
+        log "Uncompressing..."
+        value=$(echo -e "${value}" | base64 -D | gzip -d)
+        ERR=$?
+    fi
+    if [ ${ERR} -eq 0 ]; then
+        # We need null terminated string for some tools: ex. 1password
+        printf '%s\0' "${value}"
+        #echo -e "${value}"
+        return
+    fi
+    if [ ${ERR} -eq 44 ]; then
+        echo "ERROR: name \"${name}\" not found in the keychain storage \"${storage}\""
+        return
+    fi
+    echo "ERROR: code=${ERR}"
+}
+
+set_keychain_value() {
+    account=${account:-${name}}
+    log "Setting value to keychain storage \"${storage}\" (name=\"${name}\", account=\"${account}\")..."
+    if [ ! -f "${storage}" ]; then
+        create_keychain_storage
+    fi
+    if [ -z "${value}" ]; then value=$(cat); fi
+    if [ ${compress} ]; then
+        log "Compressing..."
+        value=$(echo -e "${value}" | gzip | base64)
+    fi
+    security add-generic-password -a "${account}" -s "${name}" \
+        -D "${kind}" -j "${comment}" -U -w "${value}" ${storage}
+    ERR=$?
+    if [ $ERR -eq 0 ]; then
+        log "Value was set successfully";
+        return
+    fi
+    echo "ERROR: code=${ERR}"
+}
+
+lock_keychain_storage() {
+    log "Locking keychain storage \"${storage}\" ..."
+    security lock-keychain ${storage}
+    ERR=$?
+    if [ ${ERR} -eq 0 ]; then
+        log "Keychain storage \"${storage}\" was locked successfully"
+        return
+    fi
+    echo "ERROR: code=$ERR"
+}
+
+unlock_keychain_storage() {
+    log "Unlocking keychain storage \"${storage}\" ..."
+    security unlock-keychain ${storage}
+    ERR=$?
+    if [ $ERR -eq 0 ]; then
+        log "Keychain storage \"${storage}\" was unlocked successfully"
+        return
+    fi
+    echo "ERROR: code=$ERR"
+}
+
+open_keychain() {
+    /usr/bin/open -a "/Applications/Utilities/Keychain Access.app" "${storage}"
+}
+
+backup_keychain() {
+    log "Creating an archive from keychain storage \"${storage}\"..."
+    output=${output:-"$PWD"}
+    mkdir -p "${output}" &> /dev/null
+    result_file=${output:-"$PWD"}/$(basename "$storage").$(date +"%Y%m%d-%H%M%S").gz
+    ls "${storage}" &> /dev/null
+    ERR=$?
+    if [ $ERR -ne 0 ]; then
+        echo "Keychain storage \"${storage}\" not found"
+        return
+    fi
+    cat "${storage}" | gzip --best > "${result_file}"
+    ERR=$?
+    if [ $ERR -eq 0 ]; then
+        log "Create backup success."
+        echo "Result file is ${result_file}"
+        return
+    fi
+    echo "ERROR: code=$ERR"
+}
+
+#-------------------------------------------------------------------------------
+# Parse command line arguments
+cmd=${1:--help}
+shift
+if [[ "$cmd" == "get" || "$cmd" == "set" ]]; then
+    name=$1
+    shift
+    if [[ -z "$name" ]]; then show_help "ERROR: Argument --name is required."; fi
+fi
+
+while [[ $# -gt 0 ]]; do
+    opt="$1"
+    shift
+    case "$opt" in
+        -a|--account) account="$1"; shift;;
+        -k|--kind) kind="$1"; shift;;
+        -c|--comment) comment="$1"; shift;;
+        -v|--value) value="$1"; shift;;
+        -s|--storage) storage="$1"; shift;;
+        -o|--output) output="$1"; shift;;
+        -C|--compress|--compressed) compress=true;;
+        -V|--verbose) verbose=true;;
+        -h|h|--help|help) show_help;;
+        *) show_help "ERROR: Invalid option: \"$opt\"";;
+    esac
+done
+kind=${kind:-"${DEF_KIND}"}
+storage=${storage:-"${DEF_STORAGE}"}
+
+# Execute a specific command
+case "$cmd" in
+    get) get_keychain_value ;;
+    set) set_keychain_value ;;
+    lock) lock_keychain_storage ;;
+    unlock) unlock_keychain_storage ;;
+    open) open_keychain ;;
+    backup) backup_keychain ;;
+    *) show_help ;;
+esac
+exit $ERR

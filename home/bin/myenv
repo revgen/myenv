@@ -1,0 +1,57 @@
+#!/bin/bash
+#=============================================================================
+## Usage: {SCRIPT_NAME} <command> [parameters]
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2017-03-17
+#  version  :1.0
+#
+## Commands:
+##   apps         - show all tools and scripts from my environment
+##   home         - show myenv home directory
+##   help <app>   - show help screen for the specific myenv's tool or script
+##   help         - show this help screen
+#=============================================================================
+OLDPWD=${PWD}
+
+end() { cd ${OLDPWD}; exit ${1:-1}; }
+
+show_all_executable() {
+    OLDPWD1=${PWD}
+    cd $1
+    for f in $(find ./ -maxdepth 1 -mindepth 1); do
+        [ -x "$f" ] && [ ! -d "$f" ] && echo $f | sed 's/^[\.\/]*//g'
+    done
+    cd ${OLDPWD1}
+}
+
+show_help() {
+    if [ -n "$1" ]; then
+        if which "$1" 2>/dev/null >/dev/null; then
+            "$1" --help
+            # add Custom help from text file 
+        else
+            echo "Error: ${1} not found"
+            end 1
+        fi
+    else
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        end 255
+    fi
+}
+
+case "$(uname -s)" in
+    Darwin) script=$(python -c "import os,sys; print os.path.realpath(sys.argv[1]);" "$0") ;;
+    *)      script=$(readlink -f "$0") ;;
+esac
+cd ${script%/*}/../..
+cmd=$(echo "$1" | sed 's/^[-]*//g')
+case "${cmd}" in
+    home|path|directory)
+        echo "${PWD}" ;;
+    list|bin|app|apps)
+        (show_all_executable ./home/bin && show_all_executable ./tools) | sort ;;
+    *|help|h) show_help "$2" ;;
+esac
+end 0

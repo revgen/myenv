@@ -1,0 +1,86 @@
+#!/bin/bash
+
+show_help() {
+    echo "Help"
+}
+
+clean_local() {
+    tmutil listlocalsnapshotdates / |grep 20|while read f; do tmutil deletelocalsnapshots $f; done
+}
+
+status_short() {
+    status=/tmp/tm.status.txt
+    tmutil status > ${status}
+    if [ -n "$(grep 'Running = 1' ${status})" ]; then
+        done=$(grep "bytes" ${status} | grep -v "_" | awk -F"=" '{printf "%.0f", $2/1024/1024}' | sed 's/^[ ]*//g' | sed 's/;//g' | sed 's/ of $//g')
+        total=$(grep "totalBytes" ${status} | grep -v "_" | awk -F"=" '{printf "%.0f", $2/1024/1024}' | sed 's/^[ ]*//g' | sed 's/;//g' | sed 's/ of $//g')
+        if [ -z "${done}" ]; then
+            done="N/A"
+            total="N/A"
+            percentage="N/A"
+        else
+            percentage=$(( ${done}*100/${total} ))
+        fi
+        echo "Backing Up: ${done} MB of ${total} MB (${percentage}%)"
+        PID=$(ps -ax | grep "/System/Library/CoreServices/backupd.bundle/Contents/Resources/backupd-helper" | grep -v "grep" | awk '{print $1}')
+        NICE=$(ps -lax | grep "/System/Library/CoreServices/backupd.bundle/Contents/Resources/backupd-helper"  | grep -v "grep" | awk '{print $7}')
+        echo "Time Machine: PID=${PID}, NICE=${NICE}"
+    else
+        echo "Backup: Stopped"
+    fi
+}
+
+start_backup() {
+    wait_sec=3
+    priority=20
+    if [ -z "$(sysctl debug.lowpri_throttle_enabled | grep " 0$")" ]; then
+        sudo sysctl debug.lowpri_throttle_enabled=0
+    fi
+    echo "Starting backup..."
+    if [ -z "$(tmutil status | grep 'Running = 1')" ]; then
+        tmutil startbackup
+        echo "Backup started - wait ${wait_sec} seconds..."
+        sleep ${wait_sec}
+    else
+        echo "TimeMachine was started"
+    fi
+    PID=$(ps -ax | grep "/System/Library/CoreServices/backupd.bundle/Contents/Resources/backupd-helper" | grep -v "grep" | awk '{print $1}')
+    if [ -n "${PID}" ]; then
+        echo "Found active TimeMachine (PID=${PID})"
+        NICE=$(ps -lax | grep "/System/Library/CoreServices/backupd.bundle/Contents/Resources/backupd-helper"  | grep -v "grep" | awk '{print $7}')
+        if [ ${NICE} -lt ${priority} ]; then
+            echo "Set new priority for the TimeMachine process: ${NICE} -> ${priority}"
+            sudo renice -n ${priority} -p ${PID}
+        else
+            echo "TimeMachine process has ${NICE} priority"
+        fi
+        echo "Backup started"
+    else
+        echo "Error: can't find active TimeMachine"
+    fi
+}
+stop_backup() {
+    tmutil stopbackup
+    if [ -z "$(sysctl debug.lowpri_throttle_enabled | grep " 1$")" ]; then
+        sudo sysctl debug.lowpri_throttle_enabled=1
+    fi
+}
+
+tm_clean_localsnapshots() {
+    echo "Clean all TimeMachine local snapshots"
+    #sudo tmutil disablelocal && echo "Done"
+    sudo tmutil thinLocalSnapshots / 10000000000 4
+    sudo tmutil listlocalsnapshots / | sed 's/com\.apple\.TimeMachine\.//g' | while read f; do sudo tmutil deletelocalsnapshots $f; done
+}
+
+cmd=${1:-"help"}
+
+case "${cmd}" in
+    status) status_short ;;
+    start)  start_backup ;;
+    stop)   stop_backup ;;
+    cleanlocal) tm_clean_localsnapshots;;
+    help)   show_help ;;
+    *) echo "Unknown command '${cmd}'"; show_help ;;
+esac
+

@@ -1,0 +1,26 @@
+#!/bin/sh
+#=======================================================================
+## Start screensaver in current terminal
+## Usage: {SCRIPT_NAME} <pipe|matrix|clock>
+#=======================================================================
+script_path=$(python -c "import os,sys; print os.path.realpath(sys.argv[1]);" "$0")
+cd $(dirname "${script_path}")
+arg=$(echo ${1:-"pipes"} | sed 's/^[-]*//g')
+case "${arg}" in
+    pipe) shift; "${0}" pipes $@ ;;
+    cmatrix) shift; "${0}" matrix $@ ;;
+    list)
+        echo "Terminal screensavers:"
+        find . -name "screensaver.*.sh" -and ! -name "*.origin.*" | sed 's/^\.\/screensaver./  * /g' | sed 's/\.sh$//g' | sort
+        ;;
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255
+        ;;
+    *)
+        script=./screensaver.${arg}.sh
+        [ ! -f "${script}" ] && echo "Error: can't find '${arg}' screensaver." && exit 1
+        echo "Execute script: ${script}"
+        sh "${script}" $@
+        ;;
+esac

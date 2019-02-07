@@ -1,0 +1,77 @@
+#!/bin/bash
+#=======================================================================
+## Backup script v1.2 Evgen Rusakov
+## --------------------------------
+#  date     :2013-05-01
+#  license  :MIT
+#
+## Usage: {SCRIPT_NAME} [command] [archive] <source>
+##
+## Commands:
+##      create      - create backup file
+##      open        - extract all resources from the backup file
+##      test        - test backup file
+##      hash        - calculate hash for the specific file
+##
+## Environment variables:
+##   BACKUP_STORAGE - target directoy to store a backup 
+##   EXCLUDE        - file name with a list of path masks for exclusion
+##
+#=======================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+    exit 255
+}
+set -o errexit
+BACKUP_STORAGE=${BACKUP_STORAGE:-"$HOME/.backup/$(hostname).backup/$(date +%Y%m%d)"}
+
+log() { logger -s -t "backup.custom" ${1}; }
+debug() { echo backup.custom: ${1}; }
+
+test_backup() {
+    file=${1}
+    [ -z "${file}" ] && show_help
+    debug "Testing '${file}' ..." && \
+    tar -tzf "${dest}" >/dev/null && \
+    debug "Test successfully"
+}
+
+create_backup() {
+    curtime=$(date +%Y%m%d%H%M)
+    local src=${1:-"${PWD}"}
+    local dest=${2:-"${BACKUP_STORAGE}/$USER-${src##*/}.${curtime}.tar.gz"}
+    # add a file which contains masks to exclusion
+    if [ -n "${EXCLUDE}" ]; then exclude_paths="-X ${EXCLUDE}";
+    else exclude_paths=""; fi
+    # go to the parent directory for the source (to prevent add a full path
+    # in the result archive file)
+    OLDPWD=${PWD}
+    cd "${src}/.."
+    # create destination directory and backup source directory
+    mkdir -p "$(dirname "${dest}")" 2>/dev/null
+    debug "Backup '${src}' -> '${dest}' ..." && \
+    ([ -n "${EXCLUDE}" ] && echo "Exclude paths from ${EXCLUDE}" || true) && \
+    tar -cz ${exclude_paths} -f "${dest}" "$(basename "${src}")" && \
+    debug "Backup created: ${dest}" && \
+    test_backup "${dest}" && \
+    log "Backup file created: ${dest} ($(du -hd 0 "${dest}" | cut -f1))"
+    errcode=$?
+    cd ${OLDPWD}
+    return ${errcode}
+}
+
+calculate_hash() {
+    file=${1}
+    [ -z "${file}" ] && show_help
+    hash=$(md5sum "${file}" | cut -d" " -f1)
+    echo "${hash} ${file}"
+}
+
+cmd=${1:-"create"}
+case "${cmd}" in
+    create|C|c) create_backup "${2}" "${3}" ;;
+    test|T|t)   test_backup "${2}" ;;
+    hash|H)     calculate_hash "${2}" "${3}" ;;
+    help|h)     show_help ;;
+    *) echo "Error: unknown command ${cmd}"; show_help ;;
+esac

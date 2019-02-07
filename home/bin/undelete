@@ -1,0 +1,14 @@
+#!/bin/sh
+#=======================================================================
+## Restore deleted files
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+esac
+case "$(uname -s)" in
+    Darwin) testdisk ;;
+    Linux) echo "Error: NotImplemented" ;;
+    *) echo "Error: unknown OS type"; exit 1 ;;
+esac

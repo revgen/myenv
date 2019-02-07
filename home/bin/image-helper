@@ -1,0 +1,15 @@
+#!/bin/sh
+
+## DRAFT
+
+clean_exif_info() {
+    exiftool -all= foo.jpg
+}
+
+update_exif_info() {
+    if [ "${2}" == "clean" ]; then
+        exiftool -all= "${1}"
+        return $?
+    fi
+}
+

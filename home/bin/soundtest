@@ -1,0 +1,12 @@
+#!/bin/sh
+if [ -z "$1" ]; then
+    echo "You should now hear the sound"
+    if [ "$(uname -s)" == "Darwin" ]; then
+        for i in {1..3}; do echo "* Playing..."; afplay /System/Library/Sounds/Glass.aiff; done
+    else
+        echo "Not implemented"
+    fi
+    echo "Done"
+else
+    echo "Play system audio sound for test purpouse."
+fi

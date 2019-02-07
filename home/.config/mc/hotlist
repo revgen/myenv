@@ -1,0 +1,6 @@
+ENTRY "${HOME}/Downloads" URL "~/Downloads"
+ENTRY "${HOME}/Documents" URL "~/Documents"
+ENTRY "${HOME}/Workspace" URL "~/Workspace"
+ENTRY "${HOME}/.local/var" URL "~/.local/var"
+ENTRY "${HOME}" URL "~"
+ENTRY "/root/Volumes" URL "/Volumes"

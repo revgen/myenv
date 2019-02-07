@@ -1,0 +1,66 @@
+#!/bin/sh
+#=======================================================================
+## Wrap text in a border
+##
+## Usage:
+##    echo "Hello, $USER\!" | {SCRIPT_NAME} <mode>
+##    fortune | border <mode>
+## Border modes:
+##      0 - "+-+||+-+"
+##      1 - "********"
+##      2 - "┌─┐││└─┘"
+##      3 - "╭─╮││╰─╯"
+##      4 - "┏━┓┃┃┗━┛" (default)
+##      5 - "╔═╗║║╚═╝"
+##      6 - "┏╍┓╏╏┗╍┛"
+##      7 - "▛▀▜▌▐▙▄▟"
+##      8 - "░░░░░░░░"
+##      9 - "▒▒▒▒▒▒▒▒"
+##     10 - "▓▓▓▓▓▓▓▓"
+##     11 - "████████"
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+tmpl_num=${1:-"4"}
+border_templates=(
+"+-+||+-+"
+"********"
+"┌─┐││└─┘"
+"╭─╮││╰─╯"
+"┏━┓┃┃┗━┛"
+"╔═╗║║╚═╝"
+"┏╍┓╏╏┗╍┛"
+"▛▀▜▌▐▙▄▟"
+"░░░░░░░░"
+"▒▒▒▒▒▒▒▒"
+"▓▓▓▓▓▓▓▓"
+"████████"
+)
+
+border=${border_templates[$tmpl_num]}
+padding=' '
+buff=
+max_len=0
+horizontal_line=
+while read line; do
+    len=$(echo "${line}" | wc -c)
+    [ -n "${buff}" ] && buff=${buff}'\n'
+    buff=${buff}${line}
+    if [ $max_len -lt $len ]; then
+        max_len=${len}
+        horizontal_line1=$(echo "${padding}${line}${padding}" | sed 's/./'"${border:1:1}"'/g')
+        horizontal_line2=$(echo "${padding}${line}${padding}" | sed 's/./'"${border:6:1}"'/g')
+    fi
+done
+max_len=$((max_len-1))
+echo "${border:0:1}${horizontal_line1}${border:2:1}"
+echo "${buff}" | while read -r line; do
+    printf "${border:3:1}${padding}"  
+    printf "%-*s" ${max_len} "${line}"
+    printf "${padding}${border:4:1}\n"
+done
+echo "${border:5:1}${horizontal_line2}${border:7:1}"
+

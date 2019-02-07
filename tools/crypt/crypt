@@ -1,0 +1,239 @@
+#!/bin/sh
+#=======================================================================
+## The utility to encrypt and decrypt file from the command line (using openssl or 7z).
+##
+## Usage: {SCRIPT_NAME} <encrypt|decrypt> [type] [--base64] [--password <secret>] [--keyfile <path>] [source file] [output file]
+## Types:
+##     --7z     - using 7z for encryption/decryption  (default)
+##     --aes    - using openssl with aes256 for encryption/decryption
+##
+#  Author : Evgen Rusakov
+#  Date   : 2018-10-23
+#
+## Examples:
+##
+## * Encrypt file or directory:
+##   tar cz /tmp/secret-data/ | crypt encrypt --aes --password secret-password > /tmp/secret-data.tar.gz.enc
+##   crypt encrypt --7z --password secret-password /tmp/secret-data/ /tmp/secret-data.tar.gz.enc.7z
+##
+## * Decrypt a file into the currect directory:
+##   cat /tmp/secret-data.tar.gz.enc | crypt decrypt --aes --password secret-password | tar xz
+##   crypt decrypt --7z --password secret-password /tmp/secret-data.tar.gz.enc
+##
+#=======================================================================
+set -a
+
+OPEN_SSL_ALG=aes-256-cbc
+DEFAULT_TYPE=7z
+DEBUG=${DEBUG:-"false"}
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+error() { (>&2 echo $@); }
+
+debug() {
+    if [ "${DEBUG}" == "true" ]; then
+        (>&2 echo $@)
+    fi
+}
+
+encrypt_decrypt() {
+    if [ "${TYPE}" == "aes" ]; then
+        encrypt_decrypt_aes "${1}" "${2}" "${3}" "${4}" "${5}" "${6}"
+    else
+        encrypt_decrypt_7z "${1}" "${2}" "${3}" "${4}" "${5}" "${6}"
+    fi
+}
+
+test_encrypted() {
+    if [ -z "${FILE_IN}" ]; then
+        error "Error: please specify a source encrypted file for testing."
+        return 1
+    fi
+    if [ "${TYPE}" == "aes" ]; then
+        test_encrypted_aes "${1}" "${2}" "${3}" "${4}" "${5}" "${6}"
+    else
+        test_encrypted_7z "${1}" "${2}" "${3}" "${4}" "${5}" "${6}"
+    fi
+}
+
+get_password_for_7z() {
+    if [ -z "${PASSWORD}" ]; then
+        if [ -n "${KEYFILE}" ]; then
+            debug "Read password from the keyfile ${KEYFILE}"
+            PASSWORD=$(head -n 1 "${KEYFILE}")
+        else
+            debug "Read password from stdin"
+            read -s -p "Enter password (will not be echoed): " PASSWORD
+            read -s -p "Verify password (will not be echoed): " password2
+            [ "${PASSWORD}" != "${password2}" ] && error "Error: Passwords not mutch" && exit 1
+            unset password2
+        fi
+    fi
+    if [ -z "${PASSWORD}" ]; then
+        error "Error: please specify a password" && exit 1
+    fi
+}
+
+encrypt_decrypt_7z() {
+    arg_cmd=${1}
+    if [ "${arg_cmd}" == "-e" ]; then
+        operation="Encryption"
+        if [ -n "${FILE_IN}" ] && [ -z "${FILE_OUT}" ]; then
+            FILE_OUT=${FILE_IN}.enc
+        fi
+        if [ -n "${FILE_OUT}" ]; then
+            # add an extension '7z' to the end of the output file
+            echo "${FILE_OUT}" | grep -qv ".7z$" && FILE_OUT="${FILE_OUT}.7z"
+        fi
+    else
+        operation="Decryption"
+        if [ -z "${FILE_OUT}" ]; then
+            FILE_OUT=${PWD}
+        fi
+    fi
+    if [ -z "${FILE_IN}" ]; then
+        arg_stdin=-si
+    fi
+    if [ -z "${FILE_OUT}" ]; then
+        error "Error: Output file are required for 7z compression"
+        exit 1
+    fi
+
+    debug "${operation} with 7z..."
+    get_password_for_7z
+    if [ "${arg_cmd}" == "-e" ]; then
+        # volume size in MB  (default: 1GB)
+        # volume_size_arg=-v${VOLUME_SIZE:-"1048576"}
+        # 0 - compression
+        compression=0
+        debug "7z a -t7z -m0=lzma2 ${volume_size_arg} -mx=${compression} -mfb=64 -md=32m -ms=on -mhe=on -p'${PASSWORD}' ${arg_stdin} ${arg_stdout} '${FILE_OUT}' '${FILE_IN}'"
+        7z a -t7z -m0=lzma2 ${volume_size_arg} -mx=${compression} -mfb=64 -md=32m -ms=on \
+            -mhe=on -p"${PASSWORD}" ${arg_stdin} ${arg_stdout} "${FILE_OUT}" "${FILE_IN}" >/dev/null
+        errcode=$?
+    else
+        7z x -p"${PASSWORD}" -o"${FILE_OUT}" "${FILE_IN}" >/dev/null
+        errcode=$?
+    fi
+    if [ ${errcode} -eq 0 ]; then
+        debug "${operation} success"
+    else
+        error "Error: ${operation} failed"
+    fi
+    return ${errcode}
+}
+
+test_encrypted_7z() {
+    get_password_for_7z
+    7z t -p"${PASSWORD}" "${FILE_IN}" >/dev/null
+    errcode=$?
+    if [ $errcode -eq 0 ]; then
+        debug "Test success"
+    else
+        error "Error: Test failed"
+        return 1
+    fi
+}
+
+encrypt_decrypt_aes() {
+    arg_cmd=${1}
+    if [ "${arg_cmd}" == "-e" ]; then
+        operation="Encryption"
+        if [ -n "${FILE_IN}" ] && [ -z "${FILE_OUT}" ]; then
+            FILE_OUT=${FILE_IN}.enc
+        fi
+    else
+        operation="Decryption"
+    fi
+    debug "${operation} with ${OPEN_SSL_ALG}..."
+    if [ -n "${FILE_IN}" ]; then
+        debug "Source file: ${FILE_IN}"
+        arg_in="-in ${FILE_IN}"
+        if [ ! -f "${FILE_IN}" ]; then
+            error "Error: Not found"
+            exit 1
+        fi
+    fi
+    if [ -n "${FILE_OUT}" ]; then
+        debug "Output file: ${FILE_OUT}"
+        arg_out="-out ${FILE_OUT}"
+    fi
+    if [ -n "${PASSWORD}" ]; then
+        debug "Password: ********"
+        arg_pass="-pass pass:${PASSWORD}"
+    else if [ -n "${KEYFILE}" ]; then
+        debug "Keyfile: ${KEYFILE}"
+        arg_pass="-pass file:${KEYFILE}"
+        else
+            arg_pass=""
+        fi
+    fi
+    if [ "${BASE64}" == "true" ]; then
+        arg_base64=-base64
+    fi
+    debug "openssl enc ${arg_cmd} -${OPEN_SSL_ALG} ${arg_base64} ${arg_pass} ${arg_in} ${arg_out}"
+    openssl enc ${arg_cmd} -${OPEN_SSL_ALG} ${arg_base64} ${arg_pass} ${arg_in} ${arg_out}
+    errcode=$?
+    if [ ${errcode} -eq 0 ]; then
+        debug "${operation} success"
+    else
+        error "Error: ${operation} failed"
+    fi
+    return ${errcode}
+}
+
+test_encrypted_aes() {
+    if [ "${DEBUG}" == "true" ]; then
+        FILE_OUT=/tmp/$(basename "${FILE_IN}").temp.decrypted
+        debug "Temporary decrypt into a file '${FILE_OUT}'"
+        encrypt_decrypt_aes -d
+    else
+        encrypt_decrypt_aes -d > /dev/null
+    fi
+    errcode=$?
+    if [ $errcode -eq 0 ]; then
+        debug "Test success"
+    else
+        error "Error: Test failed"
+        return 1
+    fi
+}
+
+parse_commandline_args() {
+    PASSWORD=
+    KEYFILE=
+    FILE_IN=
+    FILE_OUT=
+    TYPE=${DEFAULT_TYPE}
+    BASE64=
+    CMD=${1:-"--help"}
+    shift
+    for arg in "$@"; do
+        if [ -n "${1}" ]; then
+            case "${1}" in
+                --password|--pass|-p) shift; PASSWORD=${1} ;;
+                --keyfile|-k) shift; KEYFILE=${1} ;;
+                --base64|-a) BASE64=true ;;
+                --7z) TYPE=7z ;;
+                --aes) TYPE=aes ;;
+                *)  if [ -n "${1}" ]; then
+                        if [ -z "${FILE_IN}" ]; then FILE_IN=${1}
+                        else [ -z "${FILE_OUT}" ] && FILE_OUT=${1}; fi
+                    fi ;;
+            esac
+            shift
+        fi
+    done
+    debug "Arguments: cmd=${CMD}, password=${PASSWORD}, keyfile=${KEYFILE}, base64=${BASE64}, source=${FILE_IN}, output=${FILE_OUT}"
+}
+
+parse_commandline_args "$@"
+case "${CMD}" in
+    encrypt|enc|E) shift; encrypt_decrypt -e ;;
+    decrypt|dec|D) shift; encrypt_decrypt -d ;;
+    test|T) shift; test_encrypted ;;
+    help|--help) show_help ;;
+    *) error "Error: unknown command '${CMD}'\n"; show_help ;;
+esac

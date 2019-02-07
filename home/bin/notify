@@ -1,0 +1,55 @@
+#!/bin/sh
+#=============================================================================
+## Show desktop notification
+## Usage: {SCRIPT_NAME} <title> [message]
+##
+## Examples:
+##   {SCRIPT_NAME} "System" "Hello User"
+##   {SCRIPT_NAME} "Current time" "$(date)"
+##   echo "Sample text from other command" | {SCRIPT_NAME} "Command output"
+#
+#=============================================================================
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+show_macos_notification() {
+    title=${1}
+    msg=${2}
+    echo "[${title}]: ${msg}"
+    if [ -n "$DISPLAY" ]; then
+        if [ -n "$(which growlnotify)" ]; then
+            growlnotify -n "${title}" -m "${msg}"
+        else
+            osascript -e 'display notification "'"${msg}"'" with title "'"${title}"'"'
+        fi
+    fi
+}
+
+show_linux_notification() {
+    title=${1}
+    msg=${2}
+    echo "[${title}]: ${msg}"
+    if [ -n "$DISPLAY" ]; then
+        notify-send "${title}" "${msg}"
+    fi
+}
+
+title=${1:-"help"}
+case "${title}" in
+    help|--help|h|-h) show_help ;;
+esac
+
+msg=${2}
+if [ -z "${msg}" ]; then
+    msg=$(cat /dev/stdin)
+fi
+
+ostype=$(uname -s)
+if [ "${ostype}" == "Darwin" ]; then
+    show_macos_notification "${title}" "${msg}"
+else
+    show_linux_notification "${title}" "${msg}"
+fi

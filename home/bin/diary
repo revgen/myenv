@@ -1,0 +1,61 @@
+#!/bin/sh
+#=======================================================================
+## A small console utility for keeping a secret diary or secret notes.
+## All records will be encrypted with Blowfish algorithm.
+## See http://vim.wikia.com/wiki/Encryption for details.
+#
+#  author   :Evgen
+#  url      :https://github.com/revgen
+#  date     :2018-04-01
+#  license  :MIT
+#=======================================================================
+CFG=$HOME/.local/var/tmp/.vimrc.secret
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+    exit 255
+}
+
+create_secret_vimrc() {
+    mkdir $(dirname "${CFG}") 2>/dev/null
+    cat "$HOME/.vimrc" > "${CFG}"
+    echo "set cm=blowfish2" >> "${CFG}"
+    echo "set noswapfile" >> "${CFG}"
+    echo "set nobackup" >> "${CFG}"
+    echo "set nowritebackup" >> "${CFG}"
+    echo "Vim config file ${CFG} created."
+}
+
+main() {
+    OLDPWD=${PWD}
+    mkdir -p ${HOME}/Documents/.diary 2>/dev/null
+    cd ${HOME}/Documents/.diary
+    echo "Diary home directory is ${HOME}/Documents/.diary."
+    dir=$(date +"%Y/%m-%b")
+    name=$(date +"%Y-%m-%d.diary")
+    title="Today is $(date +"%b %d, %Y (%H:%M)")"
+    if [ "$(uname -s)" == "Darwin" ]; then
+        (echo "${title}" && echo "------------------------------" && echo "") | pbcopy
+    else
+        (echo "${title}" && echo "------------------------------" && echo "") | xclip -selection clipboard
+    fi
+
+    create_secret_vimrc
+    mkdir -p ${dir}
+    if [ -f "${dir}/${name}" ]; then
+        # TODO: add checker for VimCrypt prefix
+        vim -u "${CFG}" -c 'startinsert' +$ ${dir}/${name}
+    else
+        vim -u "${CFG}" -x -c 'startinsert' ${dir}/${name}
+    fi
+    if [ -f "${dir}/${name}" ]; then
+        echo "Record ${dir}/${name} created."
+    else
+        echo "Error create ${dir}/${name}."
+    fi
+    cd ${OLDPWD}
+}
+
+case "$1" in
+    help|--help|h|-h) show_help ;;
+    *) main ;;
+esac

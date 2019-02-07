@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+DESCR="Script {timer} used to start stopwatch or countdown timer."
+__version__ = "1.0"
+__author__ = "Evgen Rusakov"
+__address__ = ""
+
+import datetime
+import os
+import sys
+import time
+
+DATE_FMT="%d %b %Y %H:%M:%S"
+SILENT = False
+
+def log(message):
+    if not SILENT:
+        print(message)
+
+def countdown(stop_time):
+    time_parts = (stop_time or "").split(":")
+    seconds = int(time_parts[-1])
+    minutes = int(time_parts[-2]) if len(time_parts) > 1 else 0
+    hours = int(time_parts[-3]) if len(time_parts) > 2 else 0
+    days = int(time_parts[-4]) if len(time_parts) > 3 else 0
+
+    start_time = datetime.datetime.now()
+    log("Countdown: {0} days {1:02}:{2:02}:{3:02}"
+        .format(days, hours, minutes, seconds))
+    log("Use <Ctrl+C> to immediately stop the countdown.")
+    log("Start: {0}".format(start_time.strftime(DATE_FMT)))
+    total_sec = seconds + minutes * 60 + hours * 3600 + days * 3600 * 24
+    while True:
+        cur_time = datetime.datetime.now()
+        if (cur_time - start_time).total_seconds() < total_sec:
+            cur_time_fmt = cur_time.strftime("  Now: " + DATE_FMT)
+            if not SILENT:
+                sys.stdout.write(cur_time_fmt)
+                sys.stdout.flush()
+            time.sleep(0.5)
+            if not SILENT:
+                sys.stdout.write("\b" * len(cur_time_fmt))
+        else:
+            break
+    log(" Stop: {0}".format(datetime.datetime.now().strftime(DATE_FMT)))
+
+def stopwatch():
+    log("Run stopwatch.")
+    log("Use <Enter> button to mark step and <Ctrl+C> to stop the stopwatch.")
+    log("Start: {0}".format(datetime.datetime.now().strftime(DATE_FMT)))
+    while True:
+        cur_time = datetime.datetime.now().strftime(" Step: " + DATE_FMT)
+        if not SILENT:
+            sys.stdout.write(cur_time)
+            sys.stdout.flush()
+        time.sleep(0.5)
+        if not SILENT:
+            sys.stdout.write("\b" * len(cur_time))
+
+if __name__ == "__main__":
+    try:
+        stop_time = None
+        for a in sys.argv[1:]:
+            arg = a.strip('-').lower()
+            if arg in ['h', 'help']:
+                app = os.path.basename(__file__)
+                print(DESCR.format(timer=app))
+                print("Author: {0}, 2015. License: MIT".format(__author__))
+                print("")
+                print("use: {0} [time]".format(app))
+                print("Start stopwatch when time is not specified.")
+                print("Start countdown when time is specified.")
+                print("[time] format - D:H:M:S")
+                print("            D - days (not required)")
+                print("            H - hours (not required)")
+                print("            M - minutes (not required)")
+                print("            S - seconds (required)")
+                print("Sample:")
+                print("  Start countdown on 2 minutes and 15 seconds")
+                print("    $ {0} 2:15".format(app))
+                print("  Start countdown on 90 seconds")
+                print("    $ {0} 90".format(app))
+                print("  Start ciuntdown on 1 day and 5 hour")
+                print("    $ {0} 1:05:00:00".format(app))
+                print("  Start stopwatch")
+                print("    $ {0}".format(app))
+                print("")
+                sys.exit(255)
+            elif arg in ["s", "q", "silent", "quiet"]:
+                SILENT = True
+            else:
+                stop_time = arg
+
+        if stop_time:
+            countdown(stop_time)
+        else:
+            stopwatch()
+    except KeyboardInterrupt:
+        log("")
+        sys.exit(1)
+    sys.exit(0)
+

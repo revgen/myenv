@@ -1,0 +1,10 @@
+alias c='clear'
+alias ws='cd ${WORKSPACE}'
+alias mc='start /MAX "C:\Program Files (x86)\Midnight Commander\mc.exe"'
+alias apk='choco'
+alias apt='choco'
+alias su='powershell "Start-Process \$env:USERPROFILE\.mintty.admin.cmd  -Verb RunAs"'
+export  PS1='\[\033]0;$TITLEPREFIX:$PWD\007\]\n\[\033[32m\]\u@\h: \[\033[33m\]\W\[\033[36m\]\$ '
+
+uname -a
+

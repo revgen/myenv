@@ -1,0 +1,16 @@
+#!/bin/bash
+#=======================================================================
+## Return the full path
+## Usage: {SCRIPT_NAME} <path>
+#=======================================================================
+ostype=$(uname -s)
+if [ "${1:-"--help"}" == "--help" ]; then
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+fi
+
+if [ "${ostype}" == "Darwin" ]; then
+    python -c "import os,sys; print(os.path.abspath(sys.argv[1]));" "$1"
+else
+    realpath -s "$1"
+fi

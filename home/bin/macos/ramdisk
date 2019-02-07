@@ -1,0 +1,26 @@
+#!/bin/bash
+#==============================================================================
+## Create ramdisk with a specific size
+## Usage: {SCRIPT_NAME} <create|close> <size in MB> <mount point>
+#==============================================================================
+create() {
+    size=$1;        # size in MB
+    mpoint=$2
+    echo "Creating RAM disk ${size}MB at ${mpoint}..."
+    ram_dev=$(hdid -nomount ram://$((2*1024*${size})))
+    mkdir -p "${mpoint}" &> /dev/null && \
+    newfs_hfs -v "RamDisk-${size}MB" ${ram_dev} && \
+    mount -o noatime -t hfs ${ram_dev} ${mpoint} && \
+    chflags hidden ${mpoint} && \
+    echo "Success"
+}
+destroy() {
+    echo "Destroying RAM disk at ${mpoint}..."
+    umount "$1" && rm -r "$1" && \
+    echo "Success"
+}
+case "$1" in
+    close|umount) destroy "${2:-"/tmp/ramdisk"}" ;;
+    create|mount) create ${2:-"100"} "${3:-"/tmp/ramdisk"}" ;;
+    *|help|--help|h|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g' ;;
+esac

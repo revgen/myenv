@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+from gmusicapi import Musicmanager
+from gmusicapi import Mobileclient
+
+HELP = '''
+Command line utility to upload mp3 files to the Google Play Music Cloud
+Usage: {name} <command> <arguments>
+Commands:
+  login     - 
+  logout    - 
+  upload    - 
+  download  - 
+  list      - 
+  quotas    - 
+  help      - show help screen
+'''
+
+
+def show_help():
+    print(HELP.strip().format(name=os.path.basename(__file__)))
+    sys.exit(1)
+
+
+def get_size(filename):
+    fsize = os.path.getsize(filename)
+    if fsize > 1024 * 1024:
+        return '{0}MB'.format(round(fsize / 1024 / 1024, 2))
+    elif fsize > 1024:
+        return '{0}KB'.format(round(fsize / 1024, 2))
+    else:
+        return '{0}B'.format(fsize)
+
+
+class GoogleMusicHelper:
+    def __init__(self):
+        self._manager = Musicmanager()
+        self._is_logged_in = False
+
+    def is_logged_in(self):
+        return self._manager and self._is_logged_in
+
+    def assert_logged_in(self):
+        if not self.is_logged_in():
+            raise PermissionError('Error: you are not logged in')
+
+    def login(self):
+        print('Checking login...')
+        self._is_logged_in = self._manager.login()
+        if not self.is_logged_in():
+            print('You are not login to the system, please use an instruction below.')
+            self._manager.perform_oauth()
+            # print('OAuth = {0}'.format(logged_in))
+            self._is_logged_in = self._manager.login()
+        if self.is_logged_in():
+            print('You are logged in successfully.')
+            return True
+        else:
+            self.assert_logged_in()
+
+    def logout(self):
+        if self.is_logged_in():
+            self._manager.logout()
+        print('Logout success')
+            
+    def get_quota(self):
+        self.assert_logged_in()
+        quota = self._manager.get_quota()
+        return quota
+
+    def list(self):
+        self.assert_logged_in()
+        library = self._manager.get_uploaded_songs()
+        return library
+
+    def download(self):
+        raise NotImplementedError()
+
+    def upload(self, files):
+        self.assert_logged_in()
+        if not files:
+            raise ValueError('Input files are required')
+        count = len(files)
+        print('Uploading ({0}) files...'.format(count))
+        success = 0
+        duplicated = 0
+        failed = 0
+        for (idx, f) in enumerate(files):
+            print('[{0: 3} of {1}] {2} ({3})...'.format(idx + 1, count, f, get_size(f)))
+            (uploaded, matched, not_uploaded) = self._manager.upload(f, enable_matching=False)
+            if len(uploaded) == 1:
+                print('        - Upload success: {0}'.format(json.dumps(uploaded)))
+                success += 1
+            elif len(matched) > 0:
+                print('        - Upload skip. Found duplicate: {0}'.format(json.dumps(matched)))
+                duplicated += 1
+            elif len(not_uploaded) > 0:
+                print('        - Upload error: {0}'.format(json.dumps(not_uploaded)))
+                failed += 1
+            else:
+                print('        - Upload error: Unknown')
+                failed += 1
+        print('Done: {0} - success, {1} - duplocated, {2} - failed'
+              .format(success, duplicated, failed))
+        return failed == 0
+
+cmd = sys.argv[1].lower() if len(sys.argv) > 1 else '--help'
+
+print('Command = {0}'.format(cmd))
+gmh = GoogleMusicHelper()
+gmh.login()
+gmh.upload(sys.argv[2:])
+

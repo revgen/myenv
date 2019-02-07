@@ -1,0 +1,124 @@
+#!/bin/bash
+#==============================================================================
+## Script to show all active tomcat instances and all opened ports with it.
+#
+## Usage: {SCRIPT_NAME} [option]
+## Options:
+##  --list        - show information for all tomcat instances
+##  --port <port> - show tomcat instance information using an opened port
+##  --pid <pid>   - show tomcat instance information using a pid
+##  --kill <pid>  - kill tomcat instance with a pid
+##  --killall     - kill all tomcat instances
+##  --help        - show this screen
+#==============================================================================
+pids=$(ps -ef | grep tomcat | grep java | grep -v grep | awk '{print $2}')
+
+isroot(){
+    [ "$(whoami)" != "root" ] && return 1
+    return 0
+}
+
+show_help()
+{
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255;
+}
+
+show_status()
+{
+    selected_pid=$1
+    if [ -n "$pids" ]; then
+        if [ -z "$selected_pid" ]; then
+            echo "Active tomcat instances:"
+            for pid in ${pids}; do echo "pid=${pid}"; done
+        else
+            echo "Active tomcat instance with pid=$selected_pid"
+        fi
+        netstat -tulpan 2>/dev/null | head -n 2 | tail -n 1
+        for pid in ${pids}; do
+            if [ -z "$selected_pid" ]; then
+                netstat -tulpan 2>/dev/null|grep "${pid}/java"|grep -v grep
+            fi
+            if [ "$selected_pid" = "$pid" ]; then
+                netstat -tulpan 2>/dev/null|grep "${pid}/java"|grep -v grep
+            fi
+        done
+        ERR=0
+    else
+        echo "The are now active tomcat instances"
+        ERR=1
+    fi
+}
+
+close()
+{
+    pid=$1
+    if [ -z "$(echo \"$pids\" | grep \"$pid\")" ]; then
+        echo "Can't find tomcat with pid=$pid."
+        ERR=2
+    else
+        echo "Stopping tomcat with a pid $pid..."
+        kill -9 $pid 2>/dev/null
+        echo "Stop tomcat [pid=${pid}]- success"
+        ERR=0
+    fi
+}
+
+show_with_port()
+{
+    port=$1
+    selected_pid=
+    for pid in ${pids}; do
+        exist=`netstat -tulpan 2>/dev/null | grep "${pid}/java" | \
+                grep ":${port} " | grep -v grep`
+        if [ -n "$exist" ]; then
+            selected_pid=${pid}
+            break
+        fi
+    done
+    if [ -z "$selected_pid" ]; then
+        echo "The are now active tomcat instances with port ${port}"
+        ERR=1
+    else
+        show_status $selected_pid
+    fi
+}
+
+# if isroot; then echo "ROOT"; fi
+case "$1" in
+    kill|--kill|k|-k)
+        if [ -z "$2" ]; then show_help; fi
+        close $2
+        ;;
+    killall|--killall|all|--all)
+        if [ -z "$pids" ]; then
+            echo "The are now active tomcat instances"
+            ERR=1
+        else
+            for pid in ${pids}; do
+                close $pid
+                if [ $ERR -ne 0 ]; then break; fi
+            done
+        fi
+        ;;
+    port|--port)
+        if [ -z "$2" ]; then show_help; fi
+        show_with_port $2
+        ;;
+    pid|--pid)
+        if [ -z "$2" ]; then show_help; fi
+        if [ -z "$(echo \"$pids\" | grep \"$2\")" ]; then
+            echo "Can't find tomcat with pid=$2."
+            ERR=2
+        else
+            show_status $2
+        fi
+        ;;
+    list|--list|status|--status|s|-s|"")
+        show_status
+        ;;
+    *)
+        show_help
+        ;;
+esac
+exit $ERR

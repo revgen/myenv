@@ -1,0 +1,11 @@
+BoldAsFont=-1
+Font=Lucida Console
+FontHeight=12
+Columns=120
+Rows=35
+BackgroundColour=0,128,64
+FontSmoothing=default
+Locale=C
+Charset=UTF-8
+Term=xterm-256color
+BellType=0

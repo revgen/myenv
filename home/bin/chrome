@@ -1,0 +1,50 @@
+#!/bin/sh
+#=============================================================================
+## Chrome Command Line Interface
+## Uses: {SCRIPT_NAME} [command]
+## Commands:
+##   <empty>            - launch chrome application
+##   bookmarks          - show bookmarks
+##   history            - show full history
+## Options:
+#=============================================================================
+
+
+case "$(echo ${1:-"open"} | sed 's/^[-]*//g')" in
+    bookmarks)
+        file=/tmp/browser.tmp
+        if [ "$(uname -s)" == "Darwin" ]; then
+            cp -f ${HOME}/Library/Application\ Support/Google/Chrome/Profile*/Bookmarks "${file}"
+        else
+            echo "Not implemented for Linux"
+            exit 1
+        fi
+        jq ".roots[].children[].url" "${file}" 2>/dev/null \
+        | sed 's/^"//g' | sed 's/"$//g' | sort
+        ;;
+    history)
+        file=/tmp/browser.tmp
+        if [ "$(uname -s)" == "Darwin" ]; then
+            cp ~/Library/Application\ Support/Google/Chrome/Profile*/History "${file}"
+        else
+            echo "Not implemented for Linux"
+            exit 1
+        fi
+        echo "SELECT datetime(last_visit_time/1000000-11644473600,'unixepoch','localtime'), url FROM urls ORDER BY last_visit_time;" \
+        | sqlite3 "${file}"
+        ;;
+    help|h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255
+        ;;
+    *)
+        if [ "${0}" == "open" ]; then shift; fi
+        if [ "$(uname -s)" == "Darwin" ]; then
+            if [ -z "${1}" ]; then /usr/bin/open -a Google\ Chrome.app ;
+            else /usr/bin/open -a Google\ Chrome.app "${1}"; fi
+        else
+            echo "Not implemented for Linux"
+            exit 1
+        fi
+        ;;
+esac

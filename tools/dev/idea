@@ -1,0 +1,81 @@
+#!/bin/sh
+#=======================================================================
+## Run Intellij IDEA from the command line in the current directory
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+
+open_in_idea() {
+    echo "JAVA_HOME   = ${JAVA_HOME}"
+    echo "IDEA_JDK    = ${IDEA_JDK}"
+    echo "GRADLE_HOME = ${GRADLE_HOME}"
+    
+    case "$(uname -s)" in
+        Darwin)
+            # check for where the latest version of IDEA is installed
+            idea_app=$(ls -1d ~/Applications/IntelliJ\ * 2>/dev/null | tail -n1)
+            if [ -z "$idea_app" ]; then
+                idea_app=$(ls -1d /Applications/IntelliJ\ * 2>/dev/null | tail -n1)
+            fi
+            if [ -z "${idea_app}" ]; then
+                echo "Error: can't find Intellij IDEA in /Application"
+                exit 1
+            fi
+            echo "IDE : ${idea_app}"
+            info=$(grep IntelliJ "${idea_app}/Contents/Info.plist" | grep Copyright | cut -d'>' -f2 | cut -d'<' -f1)
+            echo "NAME: ${info}"
+            echo "$2"
+            /usr/bin/open -a "${idea_app}" "$1" &
+            echo "IDEA: Started [PID=$!]"
+            ;;
+        Linux)
+            idea_app=/opt/idea/bin/idea.sh
+            echo "IDEA: ${idea_app}"
+            "${idea_app}" "$1" &
+            echo "IDEA: Started [PID=$!]"
+            ;;
+        *)
+            echo "Error: unknown OS type"
+            exit 1
+            ;;
+    esac
+}
+
+export IDEA_JDK=$JAVA_HOME
+export GRADLE_HOME=/usr/local/opt/gradle/libexec
+
+path=${1}
+if [ -z "$path" ]; then
+    path=$(pwd)
+fi
+OLDPWD="$(PWD)"
+if [ -f "$path" ]; then
+    open_in_idea "$path" "IDEA: Opening file '$path'..."
+else
+    cd "${path}"
+    # check .idea directory?
+    if [ -d ".idea" ]; then
+        open_in_idea ./ "IDEA: Opening ${path}/.idea ..."
+    # is there an IDEA project file?
+    elif [ -f *.ipr ]; then
+        open_in_idea "$(ls -1d *.ipr | head -n1)" "IDEA: Opening ${path}/*.ipr ..."
+    # Is there a pom.xml (importing)?
+    elif [ -f pom.xml ]; then
+        open_in_idea pom.xml "IDEA: Importing project from ${path}/pom.xml ..."
+    # can't do anything smart; just open IDEA
+    else
+        echo "Can't find idea settings in the current directory: ${PWD}"
+        read -n 1 -p "Would you like to open it and create settings (y/N)? " opt
+        echo ""
+        if [ "${opt}" == "y" ] || [ "${opt}" == "Y" ]; then
+            open_in_idea "${PWD}" "IDEA: can't understand directory type. Try open '${PWD}'..."
+        else
+            echo "Exit"
+        fi
+    fi
+fi
+cd ${OLDPWD}
+

@@ -1,0 +1,61 @@
+#!/bin/sh
+#=======================================================================
+## Remove file or directory to the trash
+## Usage: {SCRIPT_NAME} <path|--help|empty|size>
+##   <path>   - remove specific file/directory to the trash
+##   list     - show content from the trash
+##   info     - show user's trash information: location and size
+##   location - show user's trash location only
+##   size     - show user's trash size only
+##   empty    - empty user's trash
+##   help     - show this help screen
+#=======================================================================
+TRASH=$HOME/.Trash
+SIZE=$(du -hd 0 "${TRASH}" | awk '{print $1}')
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+    exit 255
+}
+
+trash_info() {
+    echo "Trash info [${USER}]: location=${TRASH}, size=${SIZE}"
+}
+
+trash_size() {
+    if [ $(ls ${TRASH} | wc -l | sed 's/^[ ]*//g') -ne 0 ]; then echo "1B";
+    else echo "${SIZE}"; fi
+}
+
+empty_trash() {
+    trash_info
+    if [ "$(trash_size)" != "0B" ]; then
+        echo "Clearing a trash '${TRASH}'..."
+        rm -rf ${TRASH}/*
+        rm -rf ${TRASH}/.* 2>/dev/null
+    fi
+    echo "The trash is empty."
+}
+
+move_to_trash() {
+    #new_name=$(date +"%Y%m%d%H%M%S").$(basename "${1}")
+    new_name=$(basename "${1}")
+    mv "${1}" "${TRASH}/${new_name}" && echo "Move to trash: ${1} -> ${new_name} - success" || echo "Move to trash: ${1} -> ${new_name} - ERROR"
+}
+
+list() {
+    echo "${TRASH}"
+    ls -ahl ${TRASH}
+}
+
+
+arg=${1:-"info"}
+case "${arg}" in
+    clean|--clean|empty|--empty) empty_trash ;;
+    list|ls) list ;;
+    info|--info) trash_info ;;
+    location|--location) echo "${TRASH}" ;;
+    size|--size) trash_size ;;
+    --help|help) show_help ;;
+    *) move_to_trash "$1" ;;
+esac

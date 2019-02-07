@@ -1,0 +1,15 @@
+#!/bin/sh
+#=======================================================================
+## Start simple HTTP server in the current directory
+## Usage: {SCRIPT_NAME} [port (default:8000)]
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+port=${1:-8080}
+echo "Current directory: ${PWD}"
+#python -m SimpleHTTPServer ${port}
+python3 -m http.server ${port}
+

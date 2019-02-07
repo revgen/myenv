@@ -1,0 +1,63 @@
+#!/bin/sh
+#=======================================================================
+## User session in the terminal using GNU screen tool (https://www.gnu.org/software/screen/)
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2015-08-18
+#  version  :1.0
+#
+## Usage: {SCRIPT_NAME} <NAME|--list|--list-all>
+##    NAME       - create or attache to the session by name(default: main)
+##    --list     - show all user's screens session
+##    --list-raw - show raw screen -list output
+##    --help     - show this help screen
+##
+#=======================================================================
+PREFIX=screen-session-${USER}
+SCREEN_CONFIG=${SCREEN_CONFIG:-"${HOME}/.screenrc"}
+
+case "${1}" in
+    list|-l|-list|--l|--list)
+        res=$(screen -list | grep "${PREFIX}" | awk '{gsub("\t"," ",$0); print $0}' \
+        | sed 's/^[ 0-9.]*//g' \
+        | awk '{gsub("'${PREFIX}'-","",$0); print $0}')
+
+        if [ -z "${res}" ]; then
+            echo "There are now screen sessions."
+        else
+            echo "$res"
+        fi
+        exit 0
+        ;;
+    listall|-la|-listall|--listall|list-all|-list-all|--list-all)
+        screen -list
+        exit 0
+        ;;
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    *)
+        name=$1
+        ;;
+esac
+
+name=${name:-"main"}
+session_name=${PREFIX}-${name}
+screen_list=$(screen -ls | grep ${session_name})
+if [ -n "${screen_list}" ]; then
+    if [ -n "$(echo ${screen_list} | grep Attached)" ]; then
+        if [ -z "$(echo ${TERMCAP} | grep screen)" ]; then
+            echo "Enter into \"${name}\" screen session";
+            sleep 1;
+            screen -x "${session_name}" ;
+        else
+            echo "Already in ${name} session" ;
+        fi
+    else
+        screen -r "${session_name}" ;
+    fi
+else
+    echo "Create screen session \"${name}\". Configuration from \"${SCREEN_CONFIG}\""
+    screen -S "${session_name}" -c "${SCREEN_CONFIG}"
+fi

@@ -1,0 +1,5 @@
+tint2 &
+feh --bg-scale ${HOME}/.config/openbox/wallpaper.jpg &
+xset -b
+(sleep 1s && nm-applet) &
+(sleep 1s && conky) &

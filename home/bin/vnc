@@ -1,0 +1,108 @@
+#!/bin/bash
+#==============================================================================
+## Run VNC client from command line.
+## The script allow you to use a ssh as a transport protocol.
+##
+## Usage: {SCRIPT_NAME} [start|stop|status] [user@host]
+## System environment:
+##    PORT          - this port will be open on the localhost (default=5901)
+##    PORT_DEST     - port on the remote host (default=5900)
+#==============================================================================
+
+start_vnc_client() {
+    host=${1}
+    port=${2}
+    readonly=${3}
+    arg_ro=
+    if [ "$(uname -s)" == "Darwin" ]; then
+        if [ "${readonly}" == "True" ]; then arg_ro="-ViewOnly"; fi
+        if [ -n "${host}" ]; then
+            echo "Connect VNC client to ${host}:${port} (ReadOnly=${readonly:-"False"})"
+            /usr/bin/open -a VNC\ Viewer.app --args "${host}:${port}" ${arg_ro}
+        else
+            echo "Start VNC client"
+            /usr/bin/open -a VNC\ Viewer.app
+        fi
+    else
+        if [ "${readonly}" == "True" ]; then arg_ro="-viewonly"; fi
+        if [ -n "${host}" ]; then
+            echo "Connect VNC client to ${host}:${port} (ReadOnly=${readonly:-"False"})"
+            xtightvncviewer "${host}:${port}" ${arg_ro}
+        else
+            echo "Start VNC client"
+            xtightvncviewer
+        fi
+    fi
+}
+
+find_pid() {
+    port=$1
+    port_dest=$2
+    ps -A | grep ssh | grep "${port}:localhost:${port_dest}" | cut -d' ' -f1
+}
+
+PORT=${PORT:-"5901"}
+PORT_DEST=${PORT_DEST:-"5900"}
+host=
+case "${1}" in
+    help|--help|h|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255
+        ;;
+    stop|--stop|S|-S)
+        tunnel_pid=$(find_pid ${PORT} ${PORT_DEST})
+        if [ -n "${tunnel_pid}" ]; then
+            echo "Stop SSH tunnel..."
+            kill ${tunnel_pid} && echo "Stopped"
+        else
+            echo "SSH tunnel doesn't exists."
+        fi
+        exit 0
+        ;;
+    start|--start|s|-s)
+        shift
+        echo "${1}" | grep "@" >/dev/null
+        if [ $? -eq 0 ]; then
+            host=$(echo $1 | cut -d'@' -f2)
+            user=$(echo $1 | cut -d'@' -f1)
+        else
+            host=${1}
+            user=${USER}
+        fi
+        tunnel_pid=$(find_pid ${PORT} ${PORT_DEST})
+        if [ -n "${tunnel_pid}" ]; then
+            echo "SSH tunnel exists (PID=${tunnel_pid})"
+        else
+            echo "Open SSH tunnel 'localhost:${PORT}' -> '${user}@${host}:${PORT_DEST}'"
+            ssh -L ${PORT}:localhost:${PORT_DEST} -N -f -l "${user}" "${host}" && \
+            echo -n "PID=" && find_pid
+        fi
+        host=localhost
+        ;;
+    status|--status|stat|--stat|s|-s)
+        tunnel_pid=$(find_pid ${PORT} ${PORT_DEST})
+        if [ -n "${tunnel_pid}" ]; then
+            echo "SSH tunnel was running."
+            exit 0
+        else
+            echo "SSH tunnel was not running."
+            exit 1
+        fi
+        ;;
+    *)
+        host=$1
+        ;;
+esac
+
+readonly="False"
+for arg in "$@"; do
+    case "${arg}" in
+        --readonly| --ro) readonly="True" ;;
+    esac
+done
+    
+if [ -n "${host}" ]; then
+    start_vnc_client "${host}" ${PORT} ${readonly}
+else
+    start_vnc_client
+fi

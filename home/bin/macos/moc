@@ -1,0 +1,15 @@
+#!/bin/sh
+which jackd >/dev/null
+if [ $? -ne 0 ]; then
+    echo "Please install jack under the OS X"
+    echo "brew install jack"
+    exit 1
+fi
+
+ps -A | grep jackd | grep coreaudio >/dev/null
+if [ $? -eq 1 ]; then
+    echo "Jack daemon didn't run. Runn it in the background."
+    jackd -d coreaudio &
+fi
+mocp $@
+

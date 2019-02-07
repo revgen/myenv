@@ -1,0 +1,37 @@
+{
+    "workbench.colorTheme": "Darkula",
+    "workbench.startupEditor": "newUntitledFile",
+    "editor.renderWhitespace": "boundary",
+    "explorer.openEditors.visible": 0,
+    "update.channel": "none",
+    "update.enableWindowsBackgroundUpdates": false,
+    "update.showReleaseNotes": false,
+    "telemetry.enableCrashReporter": false,
+    "telemetry.enableTelemetry": false,
+
+    "editor.rulers": [79, 120],
+
+    "python.pythonPath": "/usr/local/bin/python3",
+    "python.analysis.logLevel": "Warning",
+    "python.linting.enabled": true,
+    "python.linting.pep8Enabled": true,
+    "python.linting.pep8Args": [
+        "--ignore=E501"
+    ],
+    "[markdown]": {
+        "editor.wordWrap": "off"
+    },
+    "search.exclude": {
+        "**/*.egg-info": true,
+        "**/__pycache__": true,
+        "**/dist": true,
+        "**/node_modules": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.egg-info": true
+    },
+    "workbench.editor.closeOnFileDelete": true,
+    "breadcrumbs.enabled": true,
+    "editor.minimap.enabled": false
+}

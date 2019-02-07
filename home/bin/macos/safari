@@ -1,0 +1,33 @@
+#!/bin/sh
+#=============================================================================
+## Safari Command Line Interface
+## Uses: {SCRIPT_NAME} [command]
+## Commands:
+##   <empty>            - launch safari application
+##   bookmarks          - show bookmarks
+##   history            - show full history
+#=============================================================================
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "Wrong OS. The script work under the OS X only."
+    exit 1
+fi
+case "$(echo ${1:-"open"} | sed 's/^[-]*//g')" in
+    bookmarks)
+        plutil -convert xml1 -o - ~/Library/Safari/Bookmarks.plist \
+        | grep -E  -o '<string>http[s]{0,1}://.*</string>' \
+        | grep -v icloud | sed -E 's/<\/{0,1}string>//g'
+        echo "Export"
+        ;;
+    history)
+        echo "History"
+        ;;
+    help|h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255
+        ;;
+    *)
+        if [ "${0}" == "open" ]; then shift; fi
+        if [ -z "${1}" ]; then open -a Safari.app;
+        else open -a Safari.app "${1}"; fi
+        ;;
+esac

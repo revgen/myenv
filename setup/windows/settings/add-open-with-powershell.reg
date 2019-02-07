@@ -1,0 +1,84 @@
+Windows Registry Editor Version 5.00
+
+; Source code of this file from Shawn Brink
+; Tutorial: http://www.tenforums.com/tutorials/60175-open-powershell-window-here-context-menu-add-windows-10-a.html
+
+; -- Add "Open PowerShell here" to the Popup Menu ------------------------
+[HKEY_CLASSES_ROOT\Directory\shell\Powershell]
+@="Open PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CLASSES_ROOT\Directory\shell\Powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\Powershell]
+@="Open PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\Powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+
+[HKEY_CLASSES_ROOT\Drive\shell\Powershell]
+@="Open PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CLASSES_ROOT\Drive\shell\Powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+[HKEY_CLASSES_ROOT\Drive\Background\shell\Powershell]
+@="Open PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CLASSES_ROOT\Drive\Background\shell\Powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+
+[HKEY_CLASSES_ROOT\LibraryFolder\shell\Powershell]
+@="Open PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CLASSES_ROOT\LibraryFolder\shell\Powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+[HKEY_CLASSES_ROOT\LibraryFolder\Background\shell\Powershell]
+@="Open PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CLASSES_ROOT\LibraryFolder\Background\shell\Powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+
+; -- Add "Open PowerShell here as administrator" to the Popup Menu
+[HKEY_CLASSES_ROOT\Directory\shell\OpenElevatedPS]
+@="Open PowerShell here as administrator"
+"Icon"="powershell.exe"
+"HasLUAShield"=""
+
+[HKEY_CLASSES_ROOT\Directory\shell\OpenElevatedPS\command]
+@="PowerShell -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/c,pushd %V && powershell' -Verb RunAs\""
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\OpenElevatedPS]
+@="Open PowerShell here as administrator"
+"Icon"="powershell.exe"
+"HasLUAShield"=""
+
+[HKEY_CLASSES_ROOT\Directory\Background\shell\OpenElevatedPS\command]
+@="PowerShell -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/c,pushd %V && powershell' -Verb RunAs\""
+
+[HKEY_CLASSES_ROOT\Drive\shell\OpenElevatedPS]
+@="Open PowerShell here as administrator"
+"Icon"="powershell.exe"
+"HasLUAShield"=""
+
+[HKEY_CLASSES_ROOT\Drive\shell\OpenElevatedPS\command]
+@="PowerShell -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/c,pushd %V && powershell' -Verb RunAs\""
+
+[HKEY_CLASSES_ROOT\LibraryFolder\background\shell\OpenElevatedPS]
+@="Open PowerShell here as administrator"
+"Icon"="powershell.exe"
+"HasLUAShield"=""
+
+[HKEY_CLASSES_ROOT\LibraryFolder\background\shell\OpenElevatedPS\command]
+@="PowerShell -windowstyle hidden -Command \"Start-Process cmd.exe -ArgumentList '/s,/c,pushd %V && powershell' -Verb RunAs\""
+

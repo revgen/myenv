@@ -1,0 +1,95 @@
+#!/bin/bash
+#=============================================================================
+## Helper script for 1Password application
+##
+## Usage: {SCRIPT_NAME} <command>
+## Commands:
+##  open        - open 1Password.app
+##  version     - show 1Password version
+##  application - show 1Password.app path
+##  data        - show 1Password data path
+##  backup      - create backup file for 1Password app and data
+##
+#=============================================================================
+set -o errexit
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+    exit 255
+}
+
+get_app_location() {
+    app=/Applications/1Password.app
+    if [ ! -d "${app}" ]; then
+        app=${HOME}/Applications/1Password.app
+    fi
+    if [ ! -d "${app}" ]; then
+        echo "Error: can't find 1Password application"
+        return 1
+    fi
+    echo ${app}
+    return 0
+}
+
+get_data_location() {
+    ls -d ${HOME}/Library/Containers/*com.agilebits.onepassword-osx-helper/Data | head -n 1
+    if [ $? -ne 0 ]; then
+        echo "Error: can't find 1Password data directory: Library/Containers/*com.agilebits.onepassword-osx-helper/Data"
+        return 1
+    fi
+    return 0
+}
+
+get_version() {
+    app=$(get_app_location)
+    if [ $? -eq 0 ]; then
+        cat ${app}/Contents/Info.plist | while read line; do
+            row=$(echo "$line" | grep "CFBundleShortVersionString" || true)
+            if [ -n "${row}" ]; then
+                read v
+                echo -e $v | sed 's/<[\/]*string>//g'
+            fi
+        done
+        return 0
+    fi
+    echo "Error: can't find 1Password application"
+    return 1
+}
+
+backup() {
+    target=${1:-"${HOME}/.backup/${USER}-1password.$(date +"%Y%m%d-%H%M%S").tar.gz"}
+    app=$(get_app_location)
+    data=$(get_data_location)
+    if [ -n "${app}" ] && [ -n "${data}" ]; then
+        mkdir -p "$(dirname "${target}")" 2>/dev/null
+        echo "Backup 1Password files:" && \
+        echo "- ${app}" && \
+        echo "- ${data}" && \
+        echo "Backup file '${target}'..." && \
+        tar czf "${target}" "${app}" "${data}" && \
+        echo "Backup created -> Testing..." && \
+        tar tf "${target}" >/dev/null && \
+        logger -is -t "backup.1pass" "Backup created successfully: ${target} ($(du -hd 0 "${target}" | cut -f1))" && \
+        return 0
+    fi
+    return 1
+}
+
+cmd=$(echo ${1:-"open"} | sed 's/^[-]*//g')
+case "${cmd}" in
+    open|O)
+        /usr/bin/open -a "$(get_app_location)" ;;
+    version|V)
+        get_version ;;
+    app|application|A|location)
+        get_app_location ;;
+    data|D|data-location)
+        get_data_location ;;
+    backup)
+        backup "${2}" ;;
+    help|H)
+        show_help ;;
+    *)
+        echo "Error: unknown command '${cmd}'."
+        show_help ;;
+esac
+exit 0

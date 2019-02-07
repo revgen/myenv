@@ -1,0 +1,132 @@
+#!/bin/bash
+#=============================================================================
+## Console tool to work with DPF files
+## Usage: {SCRIPT_NAME} <command> [options] [file1] [file2] ...
+##
+## Commands:
+##   info       - show details information about a file
+##   merge      - combine two or more PDFs files in a single file
+##   extract    - extract selected pages from the PDF file
+##   encrypt    - create encrypted PDF file from the existed
+##   decrypt    - decrypt encrypted PDF file and store it
+##   rotate     - rotate pages in the document: clockwise, counterclockwise, 
+##
+## Options:
+##   --output <file>    - specify output file
+##   --beginPage <N>    -
+##   --endPage <N>      -
+##
+#  Author: Evgen Rusakov
+#
+#=============================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+
+check_gs() {
+    if ! which gs >/dev/null; then
+        echo "Error: ghostscript not found."
+        exit 1
+    fi
+}
+
+show_info() {
+    if ! which pdfinfo >/dev/null; then echo "Error: pdfinfo not found."; exit 1; fi
+    if [ -z "${1}" ]; then
+        echo -e "Error: input file is required\n"
+        show_help
+    fi
+    echo "Information about a file"
+    echo "File:           ${1}"
+    # page_count=$(gs -q -dNODISPLAY -c "(${1}) (r) file runpdfbegin pdfpagecount = quit")
+    pdfinfo "${1}"
+}
+
+merge() {
+    check_gs
+    if [ -z "${1}" ] || [ -z "${2}" || [ -z "${3}" ]; then
+        echo -e "Error: output/input files are required\n"
+        show_help
+    fi
+    output=${1}; shift
+    echo "Merge PDFs file"
+    echo "$@"
+    echo "Result file: ${output}"
+    gs -dNOPAUSE -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dBATCH \
+        -sOUTPUTFILE="${output}" \
+        $@ \
+    && echo "Done" && ls "${output}"
+}
+
+update() {
+    if ! which exiftool >/dev/null; then echo "Error: exiftool not found."; exit 1; fi
+    if [ -z "${1}" ] || [ -z "${2}" ]; then
+        echo -e "Error: input file name, field name and new value are required\n"
+        show_help
+    fi
+    exiftool -${2}="${3}" "${1}"
+    #if pdfinfo "${1}" | grep -q "${2}:"; then
+    #else
+    #    echo "Error: field '${2}' incorrect"
+    #    return 1
+    #fi
+}
+
+extract() {
+    check_gs
+    if [ -z "${1}" ] || [ -z "${2}" || [ -z "${3}" ]; then
+        echo -e "Error: output/input files are required\n"
+        show_help
+    fi
+# gs -sDEVICE=pdfwrite -q -dNOPAUSE -dBATCH -sOutputFile=Document1-page1.pdf -dFirstPage=1 -dLastPage=1 Document1.pdf
+# 
+#     # OutputFile=${3%.pdf}_p${1}-p${2}.pdf
+#     source=${2}
+#     firstPage=${3}
+#     lastPage=${4}
+#     echo "Extract pages ${firstPage}-${lastPage} from the document ${source}"
+#     echo "Result file: ${output}"
+#     gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER \
+#        -dFirstPage=${firstPage} \
+#        -dLastPage=${lastPage} \
+#        -sOutputFile="${output}.pdf" \
+#        "${source}"
+}
+
+# images_to_pdf() {
+#     https://stackoverflow.com/questions/4283245/using-ghostscript-to-convert-jpeg-to-pdf
+#     mask=${1}
+#     viewjpeg=$(ls /usr/local/share/ghostscript/*/lib/viewjpeg.ps)
+#     echo "Convert jpg files to pdf (${mask})"
+#     echo "Directory: ${PWD}"
+#     if [ -z "${viewjpeg}" ]; then
+#         echo "Error: GhostScript viewjpeg not found."
+#         return 1
+#     fi
+    
+#     gs \
+#  -sDEVICE=pdfwrite \
+#  -o foo.pdf \
+#     viewjpeg.ps \
+#  -c "(1st.jpg)  viewJPEG showpage \
+#      (2nd.jpg)  viewJPEG showpage \
+#      (3rd.jpg)  viewJPEG showpage \
+#      (last.jpg) viewJPEG showpage"
+# }
+
+
+
+case "$(echo ${1:-"help"} | sed 's/^[-]*//g')" in
+    info) shift; show_info $@ ;;
+    merge) shift; merge $@ ;;
+    extract) shift; extract $@ ;;
+    create) shift; create $@ ;;
+    encrypt) shift; encrypt $@ ;; 
+    encrypt) shift; encrypt $@ ;;
+    decrypt) shift; decrypt $@ ;;
+    update) shift; update "${1}" "${2}" "${3}" "${4}" "${5}" ;;
+    help|h) show_help ;;
+    *) echo "Error: Unknown command ${1}"; show_help ;;
+esac
+

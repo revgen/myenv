@@ -1,0 +1,109 @@
+#!/bin/sh
+#=======================================================================
+## Test internet speed from the command line
+## Using: {SCRIPT_NAME} [0..9] [servers] [url]
+## Options:
+##   0..9   - key to select test server in the servers list
+##   list   - show servers list
+##   url    - custom url to test a download speed
+##   help   - show this screen
+#=======================================================================
+WGET="wget --timeout=3 --tries=1 --output-document=/dev/null "
+
+get_page_size() {
+    ${WGET} -S --spider -o /dev/stdout "${1}" | grep "Content-Length:" | awk '{print $2}'
+}
+
+wait_until_done() {
+    printf "  Downloading ${2} "
+    while ps a|awk '{print $1}'|grep -q ${1}; do printf '.'; sleep "0.25"; done
+    echo " done."
+}
+
+test_download_speed() {
+    url=${1}
+    start=$(date +%s)
+    out=/dev/stdout
+    [ "${DEBUG}" != "true" ] && out=/dev/null
+
+    echo "Connect to ${url} at ${start} ..."
+    size=$(get_page_size "${url}")
+    if [ -n "${size}" ]; then
+        echo "Resource length is ${size} bytes."
+        sizeMB=$(echo "${size}/1024/1024" | bc | cut -d'.' -f1)
+        ${WGET} -o ${out} "${url}" &
+        PID=$!
+        wait_until_done ${PID} "${sizeMB}MB"
+        end=$(date +%s)
+        duration=$(( end - start ))
+        speed=$(( sizeMB*8/duration ))
+        echo "  Download complete at ${end}. Duration is ${duration} seconds."
+        echo "  Speed ${speed} Mbps for ${url}."
+    else
+        echo "  Error: Can't get request header (timeout or connection lost)."
+        return 1
+    fi
+}
+
+show_servers() {
+    echo "[0] speedtest-cli -  testing internet bandwidth using speedtest.net"
+    echo "[1] download - http://speedtest.wdc01.softlayer.com/downloads/test10.zip"
+    echo "[2] download - http://speedtest.wdc01.softlayer.com/downloads/test100.zip"
+    echo "[3] download - http://speedtest.wdc01.softlayer.com/downloads/test500.zip"
+    echo "[4] download - http://ipv4.download.thinkbroadband.com/20MB.zip"
+    echo "[5] download - http://ipv4.download.thinkbroadband.com/50MB.zip"
+    echo "[6] download - http://ipv4.download.thinkbroadband.com/100MB.zip"
+    echo "[7] download - http://ipv4.download.thinkbroadband.com/200MB.zip"
+    echo "[8] download - http://speedtest.tele2.net/100MB.zip"
+    echo "[x] exit"
+}
+
+main() {
+    opt=${1}
+    if [ -z "${opt}" ]; then
+        clear
+        echo "TEST INTERNET SPEED"
+        echo "----------------------------------------------------------------------"
+        show_servers
+        echo "----------------------------------------------------------------------"
+        read -n 1 -s opt
+    fi
+    if [ "${opt}" == "X" ] || [ "${opt}" == "x" ]; then exit 0; fi
+    if [ "${opt}" == "0" ]; then
+        which speedtest >/dev/null
+        if [ $? -eq 0 ]; then 
+            speedtest
+        else
+            echo "Error: 'speedtest' not found"
+        fi
+        return 0
+    fi  
+    selected=$(show_servers | grep "\[${opt}\]" | awk -F"] " '{print $2}' | sed 's/download - //g')
+    if [ -z "${selected}" ]; then
+        echo "Error: wrong choice"
+        if [ -z "${1}" ]; then
+            sleep 1
+        fi
+        return 1
+    else
+        echo "Address '${selected}' selected."
+        echo ""
+        test_download_speed "${selected}"
+        echo ""
+    fi
+    if [ -z "${1}" ]; then 
+        echo "Press any kay to continue..."
+        read -n 1
+    fi
+}
+
+case "${1:-"menu"}" in
+    0) main 0 ;;
+    servers|list) show_servers | grep -v "[x]" ;;
+    menu) while true; do main; done ;;
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    *) main ${1} ;;
+esac
+

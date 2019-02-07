@@ -1,0 +1,107 @@
+#!/bin/bash
+##============================================================
+## Generate password in command line
+## Password will be generated using /dev/urandom
+#
+#  author   :Evgen Rusakov
+#  date     :2013-09-12
+#  license  :MIT
+#
+##============================================================
+## use: {SCRIPT_NAME} [options]
+## Options:
+##   -n         remove newline symbol
+##   -s         strong password
+##   -p         create password based on key phrase (entered from stdin)
+##   -h         show help screen
+##   length     length of the needed password (defult: 12)
+##
+## Examples:
+##
+##   {SCRIPT_NAME} 24
+##     Output: BY2huZ9PUTx8xOEbaNrzwBa9
+##
+##   {SCRIPT_NAME} -s
+##     Output: XJ!gHw*i0M.p
+##
+##   echo "TestPassword" | {SCRIPT_NAME} -p
+##    Output: QjAyMDQ0QjdCMUIzMzhGNDI0RjFBMUVFRDg...N0ZGODRCQzQ1N0RCQTM4ODI=
+##
+#=============================================================
+LENGTH=16
+SIMPLE_KEY='A-Z-a-z-0-9\-.'
+STRONG_KEY='A-Za-z0-9_+.=-#@^*%()[]\-'
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+    exit 255
+}
+
+nonewline() {
+    awk '{q=p;p=$0}NR>1{print q}END{ORS = ""; print p}'
+}
+
+pass_by_phrase() {
+    hash=$(echo "${1}" | nonewline | openssl dgst -sha512)
+    echo -n ${hash}
+}
+
+generate_by_hash() {
+    # test links:
+    # https://passwordsgenerator.net/sha256-hash-generator/
+    # https://cryptii.com/ascii85-encoding
+    # base85(hash(key_phrase + hash(key_prhase)))
+    #
+    type=${1:-"sha256sum"}
+    pass=${2}
+    case "${type}" in
+        sha256sum) [ -z "$(which sha256sum)" ] && type="shasum -a 256" ;;
+        sha512sum) [ -z "$(which sha512sum)" ] && type="shasum -a 512" ;;
+    esac
+
+    if [ -z "${pass}" ]; then
+        read -s -p "Input key phrase: " pass
+        echo ""
+    fi
+    echo "Create hashed password from the key phrase using (${type})..."
+    echo "DEBUG: Key phrase: ${pass}"
+    pass_hash=$(echo -n ${pass} | ${type} | cut -d" " -f1)
+    echo "DEBUG: Hash (step 1): ${pass_hash}"
+    echo -n ${pass}${pass_hash} | ${type} | cut -d" " -f1 | base85
+}
+
+ONELINE=0
+SYMBOLS=${SIMPLE_KEY}
+PASS=
+HASH_TYPE=
+for var in "$@"; do
+    case "$var" in
+        help|--help|h|-h) show_help ;;
+        strong|--strong|s|-s) SYMBOLS=${STRONG_KEY} ;;
+        sha1|sha1sum) HASH_TYPE=sha1sum ;;
+        sha|sha256|sha256sum) HASH_TYPE=sha256sum ;;
+        sha512|sha512sum) HASH_TYPE=sha512sum ;;
+        n|-n) ONELINE=1 ;;
+        p|-p) read -s PASS ;;
+        ''|*[!0-9]*) show_help ;;
+        *) LENGTH=${var};;
+    esac
+done
+if [ -n "${HASH_TYPE}" ]; then
+    shift
+    generate_by_hash ${HASH_TYPE} $@
+else
+    if [ -n "${PASS}" ]; then
+        # pass -> sha512 (lowercase) -> sha512 (lowercase) -> sha512 (lowercase) -> base64
+        # without newline symbol
+        echo "${PASS}" | nonewline \
+        | openssl dgst -sha512 | nonewline \
+        | openssl dgst -sha512 | nonewline \
+        | openssl dgst -sha512 | nonewline \
+        | base64 | nonewline
+    else
+        LC_CTYPE=C tr -cd $SYMBOLS </dev/urandom | head -c"$LENGTH"
+    fi
+fi
+if [ $ONELINE -eq 0 ]; then echo ""; fi
+

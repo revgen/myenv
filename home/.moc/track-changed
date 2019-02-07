@@ -1,0 +1,7 @@
+#!/bin/sh
+artist=$1
+title=$2
+length=$3
+album=$4
+echo "MOC: ${artist} - ${album} - ${title} [${length}]" >> /tmp/moc.log
+

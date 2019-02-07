@@ -1,0 +1,7 @@
+Problem: No OSD in mplayer for MacOS
+Source link: https://github.com/Homebrew/legacy-homebrew/issues/49861
+
+Quick fix: a workaround you can install an older 1.2 version which supports OSD
+brew remove mplayer
+brew install https://raw.githubusercontent.com/Homebrew/legacy-homebrew/0f3ba89b0d2609b0464a60f60e320b5f3f2a714c/Library/Formula/mplayer.rb
+brew pin mplayer

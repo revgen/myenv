@@ -1,0 +1,12 @@
+#!/bin/sh
+echo "Start console radio"
+export DIGITALLY_IMPORTED_RADIO_KEY=$(curl -Ls "https://old.friezy.ru/m3u/DI.m3u" | grep "di.fm" | head -n 1 | cut -d'?' -f2)
+echo "DI-Token=${DIGITALLY_IMPORTED_RADIO_KEY}"
+#python ${0%/*}/radio-cli.py
+python ${HOME}/Workspace/private/prj/github.com/mytools/cli/radio-cli/radio-cli.py
+
+#mplayer http://prem1.jazzradio.com/classicjazz_aac?${DIGITALLY_IMPORTED_RADIO_KEY}
+#mplayer http://prem1.radiotunes.com/rtchillout?${DIGITALLY_IMPORTED_RADIO_KEY}
+#mplayer http://prem1.classicalradio.com/orchestralworks_aac?${DIGITALLY_IMPORTED_RADIO_KEY}
+
+

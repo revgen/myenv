@@ -1,0 +1,14 @@
+#!/bin/bash
+#=======================================================================
+## Convert text to audible speech
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+#festival --language russian -b "(begin (kal_diphone) (SayText \"$1\" nil))"
+festival --tts
+# female voice: http://koplowicz.com/node/264
+# http://ubuntuusertips.wordpress.com/2013/01/13/text-to-speech-festival-installation-english/
+

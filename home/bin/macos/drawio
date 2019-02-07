@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ -n "$1" ]; then
+    echo "Openning $1 file..."
+    /usr/bin/open -a draw.io.app "$1"
+else
+    /usr/bin/open -a draw.io.app
+fi

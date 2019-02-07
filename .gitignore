@@ -1,0 +1,42 @@
+#-- Python ----------------------------
+*.pyc
+*/build/*
+*/dist/*
+*.egg-info/
+*.egg*
+*/virtual_env/
+*/venv/
+
+#-- Java ------------------------------
+**/.classpath
+**/.project
+**/.settings/
+**/target/
+
+#-- NodeJS ----------------------------
+**/node_modules
+
+#-- Idea ------------------------------
+**/.idea/
+**/.idea_modules/
+**/*.iml
+**/*.ipr
+**/*.iws
+
+#-- VSCode ----------------------------
+# Using myenv/vscode/settings.json as a main settings file for all projects
+# .vscode/
+
+#-- generic files to ignore -----------
+*~
+*.bak
+*.lock
+*.DS_Store
+*.swp
+*.out
+*.log
+obj/
+out/
+log/
+overlays/
+

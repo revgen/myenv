@@ -1,0 +1,20 @@
+#!/bin/sh
+#=============================================================
+## Download video from Youtube
+## Usage: {SCRIPT_NAME} <youtube full url>
+##
+#  author   : Evgen Rusakov
+#  date     : 2018-08-11
+#  license  : MIT
+#=============================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+    exit 255
+}
+
+case "${1:-"help"}" in
+    help|--help|h|-h) show_help;;
+esac
+echo "Downloading video from ${1}..."
+youtube-dl -f bestvideo+bestaudio "${1}" && echo "Done"
+

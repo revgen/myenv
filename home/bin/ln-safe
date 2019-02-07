@@ -1,0 +1,133 @@
+#!/bin/bash
+#=============================================================================
+## Create a symlink or make a copy for the path in a safe mode.
+##
+# author   :Evgen Rusakov
+# license  :MIT
+# date     :2015-12-01
+#
+## Usage: {SCRIPT_NAME} [options] <source> <destination>
+##   source         - existed path (file or  directory)
+##   destination    - new symlink path or copy destination
+## Options:
+##   --copy         - copy file instead of symlink creation
+##   --overwrite    - do not ask when the destination path exists
+##   --verbose      - show full information to the console
+##
+## Exapmles:
+##   # Create a symlink to the 'log' directory in the home directory
+##   ln-safe /var/log ~/main-logs
+##   # Create a symlink in the home bin directory tothe 'parser.sh' script.
+##   ln-safe --overwrite /opt/bin/parser.sh ~/bin/
+#=============================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+    exit 255
+}
+mode="symlink"
+overwrite="false"
+answer=null
+src=
+dest=
+VERBOSE=/dev/null
+for arg in "$@"; do
+    echo "Arg: ${arg}" > ${VERBOSE}
+    case "$arg" in
+        --help|-h) show_help;;
+        --copy|-c) mode=copy;;
+        --verbose|-v) VERBOSE=/dev/stdout;;
+        --overwrite|--force|-f) overwrite="true";;
+        *)
+            if [ -n "${arg}" ]; then
+                if [ -z "${src}" ]; then src="${arg}";
+                else  dest="${arg}"; fi
+            fi
+    esac
+done
+if [[ -z "$1" || -z "$2" ]]; then
+    show_help
+fi
+if [ ! -d "${src}" ]; then
+    if [[  "${dest}" == *"/" ]]; then
+        dest=${dest}$(basename "$src")
+    else if [ -d "$dest" ]; then
+        dest=${dest}/$(basename "$src")
+    fi fi
+fi
+echo "Source     : ${src}" > ${VERBOSE}
+echo "Destination: ${dest}" > ${VERBOSE}
+echo "Mode       : ${mode}" > ${VERBOSE}
+echo "Overwrite  : ${overwrite}" > ${VERBOSE}
+
+echo "${mode}: ${src} -> ${dest}" > ${VERBOSE}
+if [ ! -e "$src" ]; then
+    echo "Error: ${src}: No such file or directory"
+    exit 2
+fi
+if [ -e "${dest}" ] || [ -L "${dest}" ]; then
+    if [ -L "${dest}" ] && [ "$mode" != "copy" ]; then
+        echo "The symlink ${dest} exist and it will be updated" > ${VERBOSE}
+        answer=w
+    else if [ "${overwrite}" == "true" ]; then
+        echo "The path ${dest} exist and will be overwritten." > ${VERBOSE}
+    fi fi
+    if [ "${overwrite}" != "true" ] && [ "${answer}" != "w" ]; then
+        echo "The path ${dest} exist."
+        attempt=0
+        while true; do
+            if [ ${attempt} -lt 3 ]; then
+                read -p "Do you want skip[s],rename[r],overwrite[w] it? " answer
+            else
+                answer=s
+            fi
+            attempt=$((attempt+1))
+            case "$answer" in
+                s|S) echo "Skipped." > ${VERBOSE}; exit 1;;
+                r|R|y|Y)
+                    dest_old=${dest%.*}.$(date +"%Y%m%d-%H%M%S").${dest##*.}
+                    echo "Rename an old path to the new ${dest_old}" > ${VERBOSE}
+                    mv "${dest}" "${dest_old}"
+                    break;;
+                w|W)
+                    echo "Overwrite a file${dest}" > ${VERBOSE}
+                    answer=w
+                    break;;
+            esac
+        done
+    else
+        answer=w
+    fi
+    if [ "$answer" == "w" ]; then
+        if [[ "${dest}" == "${HOME}"* || "${dest}" == "/tmp"* || $overwrite -eq 1 ]]; then
+            rm -f "${dest}"
+        else
+            # safe remove for the non-home destination
+            rm -i "${dest}"
+        fi
+    fi
+fi
+if [[ -e "${dest}" || -d "${dest}" || -f "${dest}" || -L "${dest}" ]]; then
+    echo "Error: path ${dest} exists"
+    exit 1
+fi
+dest_dir=$(dirname "$dest")
+if [ ! -d "$dest_dir" ]; then
+    mkdir -p "$dest_dir"
+fi
+if [ "$mode" == "copy" ]; then
+    cp -Rp "${src}" "${dest}"
+    errcode=$?
+else
+    ln -s "${src}" "${dest}"
+    errcode=$?
+fi
+if [ $errcode -ne 0 ]; then
+    echo "[ERR]: ${mode}: ${src} -> ${dest} [code=$errcode]"
+    exit 1
+fi
+if [ ! -e "${dest}" ]; then
+    echo "[ERR]: ${mode}: ${src} -> ${dest} - destination didn't exist"
+    exit 1
+fi
+echo "[OK ]: ${mode}: ${src} -> ${dest}"
+exit 0

@@ -1,0 +1,9 @@
+#!/bin/sh
+read -n 1 -p "Delete Homebrew Cache (y/N)? " opt
+echo ""
+if [ "${opt}" != "Y" ] && [ "${opt}" != "y" ]; then
+    echo "Skip"
+else
+    echo "Deleting Homebrew cache ~/Library/Caches/Homebrew/*..."
+    rm -r ~/Library/Caches/Homebrew/* && echo "Done"
+fi

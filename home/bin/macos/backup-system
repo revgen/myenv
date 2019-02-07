@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+#=============================================================================
+## The script will backup MacOS data for the current user:
+## * Documents
+## * Keychains
+## * Settings: Printers, Keyboard Layouts
+## * MYENVHOME
+## * brew list - list of all tools/apps installed with Homebrew
+## * mas list  - list of all tools/apps installed from Apple Store
+## * ls /Applications - list of all installed applications in the system
+## * custom directories from the BACKUP_DIRECTORIES
+##
+## System environment:
+## BACKUP_STORAGE       - directory path to save a backup
+##                        (default: ${HOME}/.backup)
+## BACKUP_DIRECTORIES   - list of all custom directories to backup (; - separator) 
+#=============================================================================
+set -o errexit
+app=$(basename "${0}")
+logfile=${HOME}/.local/var/log/${app}-$(date +%Y%m%d).log
+mkdir -p "$(dirname "${logfile}")" 2>/dev/null
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+debug() {
+    if [ "${DEBUG}" == "true" ]; then echo $@; fi
+}
+info() {
+    echo $@ | tee -a "${logfile}"
+}
+title() {
+    # info "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+    info "[BACKUP]: ${1}"
+}
+#------------------------------------------------------------------------------
+case "${1}" in
+    help|--help|-h) show_help ;;
+    *) [ -n "${1}" ] && echo "Error: unknown command '${1}'." && exit 1
+esac
+
+time=$(date +%Y%m%d)-$(($(date +%H)/6*6))
+sources=${BACKUP_DIRECTORIES}
+target=${BACKUP_STORAGE:-"${HOME}/.backup"}/$(date +%Y%m%d)
+dry_run=1
+export exclude=/tmp/backup-exclude-$RANDOM
+echo -e ".git\nCached*.*\n*.log\nGoogleDrive\nOneDrive*" > ${exclude}
+
+logger -s "[${app}] starting (log: ${logfile})..."
+echo "=============================================================" >> "${logfile}"
+info "Backup custom data (System: $(uname -sm | sed 's/Darwin/MacOS/g'))"
+info "Backup target     : ${target}"
+info "Backup excludes   : ${exclude}"
+debug "Log file          : ${logfile}"
+if [ "${DEBUG}" == "true" ]; then cat ${exclude} | sort; fi 
+
+sources="${HOME}/Documents;${HOME}/Library/Keychains;${HOME}/Library/Printers;${HOME}/Library/Keyboard Layouts;${sources}"
+sources="${HOME}/.config;${MYENVHOME};${sources}"
+#------------------------------------------------------------------------------
+mkdir -p "${target}" 2>/dev/null
+title "Create archives from the source directories:"
+echo "${sources}" | tr ';' '\n' | grep -v '^[ ]*$' | sed 's/^[ ]*//g' | while read path; do
+    if [ -z "${path}" ]; then continue; fi
+    name=$(basename "${path}" | tr "[:upper:]" "[:lower:]" | sed 's/ /_/g' | sed 's/\*//g')
+    archive=${target}/${USER}-${name}.${time}.tar.gz
+    debug "Compressing ${path} -> ${archive}..."
+    if [ -n "$(echo "${path}" | grep ' ')" ]; then
+        if [ -n "$(ls "${path}" 2>/dev/null)" ]; then
+            tar -cz -P -X "${exclude}" -f "${archive}" "${path}"
+            info "- ${path} -> ${archive}"
+        else
+            info "- [WARNING] ${path} not exists."
+        fi
+    else
+        if [ -n "$(ls ${path} 2>/dev/null)" ]; then
+            tar -cz -P -X "${exclude}" -f "${archive}" ${path}
+            info "- ${path} -> ${archive}"
+        else
+            info "- [WARNING] ${path} not exists."
+        fi
+    fi
+    
+done
+#------------------------------------------------------------------------------
+name=${USER}-system-info.${time}.txt
+title "Create system info file: ${name}"
+date > "${target}/${name}" 
+sw_vers >> "${target}/${name}" 
+uname -a >> "${target}/${name}" 
+
+name=${USER}-system-profile.${time}.spx.gz
+title "Create system profile file: ${name}"
+system_profiler -detailLevel mini -xml | gzip > "${target}/${name}" 
+
+name=${USER}-brew-list.${time}.txt
+title "Create Homebrew formulars list: ${name}" && brew list > "${target}/${name}" 
+
+name=${USER}-mas-list.${time}.txt
+title "Create Apple Store installed apps list: ${name}" && mas list > "${target}/${name}"
+
+name=${USER}-applications-list.${time}.txt
+title "Store /Applications directory list: ${name}" && find /Applications/ -maxdepth 2 -iname "*.app" | sort > "${target}/${name}"
+title "Store ${HOME}/Applications directory list: ${name}" && find ${HOME}/Applications/ -maxdepth 2 -iname "*.app" | sort >> "${target}/${name}"
+
+name=${USER}-chrome-bookmarks.${time}.tar.gz
+title "Create Chrome Bookmarks Backup: ${name}"
+tar -cz -P -f "${target}/${name}" ${HOME}/Library/Application\ Support/Google/Chrome/Profile*/Bookmarks
+
+#------------------------------------------------------------------------------
+name=${USER}-${app}.${time}.md5
+title "Create hash file: ${name}"
+cd ${target}
+md5sum ./* > "${target}/${name}"
+cd - >/dev/null
+
+title "Backup created: ${target}"
+(ls -ahl ${target} | grep ${time})
+
+size=$(du -hcd 0 ${target}/*${time}*.* | tail -n 1 | awk '{print $1}')
+title "Done: ${target} - ${size}"
+logger -s "[${app}] done: (${size}) ${target} (log: ${logfile})"
+rm -f ${exclude} || true

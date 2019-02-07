@@ -1,0 +1,19 @@
+#EXTM3U
+#EXTINF: 0, Classical WETA 90.9
+http://stream.weta.org:8000/fmlive?nocache=14207
+#EXTINF: 0, Ambient: stillstream.fm
+http://opus.stillstream.fm:8000/stillstream
+#EXTINF: 0, Ambient: ambientsleepingpill.com
+http://radio.stereoscenic.com/asp-s
+#EXTINF: 0, Blue Mars (echoesofbluemars.org)
+http://streams.echoesofbluemars.org:8000/bluemars
+#EXTINF: 0, Bcryoslee (echoesofbluemars.org)
+http://streams.echoesofbluemars.org:8000/cryosleep
+#EXTINF: 0, Voices from with in (echoesofbluemars.org)
+http://streams.echoesofbluemars.org:8000/voicesfromwithin
+#EXTINF: 0, Trance Radio
+http://icecast4.pulsradio.com:80/pulstranceHD.mp3
+#EXTINF: 0, Ragga King
+http://stream.raggakings.net:8000
+#EXTINF: 0, Frequence 3: POP
+http://ice.stream.frequence3.net/frequence3-128.mp3

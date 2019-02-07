@@ -1,0 +1,33 @@
+#!/bin/sh
+#=============================================================================
+## Set system volume
+## Usage: {SCRIPT_NAME} <0-100|mute|unmute|toggle>
+#=============================================================================
+is_muted() {
+    osascript -e 'output muted of (get volume settings)' | grep "true" >/dev/null
+    return $?
+}
+
+mute() { osascript -e 'set volume output muted true'; }
+
+unmute() { osascript -e 'set volume output muted false'; }
+
+toggle() {
+    if is_muted; then unmute;
+    else mute; fi
+}
+
+status() {
+    val=$(osascript -e 'output volume of (get volume settings)')
+    if is_muted; then echo "Volume: ${val} [MUTED]";
+    else echo "Volume: ${val}"; fi
+}
+
+case "$(echo ${1:-"status"} | sed 's/^[-]*//g')" in
+    help|h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 255 ;;
+    mute) mute && status ;;
+    unmute) unmute && status ;;
+    toggle) toggle && status ;;
+    status) status ;;
+    *) osascript -e "set volume output volume ${1}" && status ;;
+esac

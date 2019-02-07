@@ -1,0 +1,15 @@
+#!/bin/sh
+#=======================================================================
+## Start simple proxy server for debugging purpose
+## Usage: {SCRIPT_NAME}
+##
+## To install mitmproxy on your system:
+##   pip install mitmproxy
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+
+mitmproxy $@ 

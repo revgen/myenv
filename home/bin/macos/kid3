@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/open -a kid3.app "$1"

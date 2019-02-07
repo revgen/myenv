@@ -1,0 +1,14 @@
+#!/bin/sh
+#=======================================================================
+## Start simple local SMTP server for debugging purpose
+## Usage: {SCRIPT_NAME} [port (default:2525)]
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+port=${1:-2525}
+echo "Start SMTP test server on ${port} port"
+python -m smtpd -n -c DebuggingServer localhost:${port}
+

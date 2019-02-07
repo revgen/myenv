@@ -1,0 +1,18 @@
+startup_message off
+vbell off
+defscrollback 4096
+defutf8 on
+# Don't block command output if the terminal stops responding
+# (like if the ssh connection times out for example).
+nonblock on
+shelltitle " screen"
+shell -$SHELL
+hardstatus string "%{= kb}[$USER@%H:%n] %{= kw}%-w%{= bw}%n*%t%{-}%+w %-= %{= kb}[%D %Y-%m-%d %c]"
+hardstatus alwayslastline
+# F11/F12 - open prev/next window
+bindkey -k F2 next
+bindkey -k F1 prev
+# Lock screen by Ctrl+L
+bindkey "^L" lockscreen
+select 0
+

@@ -1,0 +1,69 @@
+#!/bin/sh
+#=============================================================================
+## Command line interface for OpenDNS.
+##
+## Usage: {SCRIPT_NAME} <command> [username] [password] [network]
+##
+## Commands:
+##  status  - test for successful OpenDNS configuration
+##  ips     - show OpenDNS addresses
+##  update  - update OpenDNS settings for specific username/password and network
+##  help    - show help screen
+##
+## Version :1.0.0
+## Author  :Evgen Rusakov
+## License :Apache License v2.0 (https://opensource.org/licenses/Apache-2.0)
+##
+#=============================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+status() {
+    curl -s -I https://welcome.opendns.com/ | grep "Location: http://welcome.opendns.com/oops" >/dev/null
+    [ $? -eq 0 ] && echo "ERR: You aren't using OpenDNS yet." && return 1
+    echo "OK: You are using OpenDNS."
+}
+
+show_ips() {
+    ips=$(curl -Ls https://welcome.opendns.com/oops/ | grep '"ips"' 2>/dev/null | sed "s/</>/g" | awk -F">" '{print $5}' | sed 's/ &middot;/,/g')
+    echo "OpenDNS addresses: ${ips}"
+}
+
+update() {
+    status
+    if [ $? -ne 0 ]; then
+        if [ "${FORCE}" != "true" ]; then
+            echo "If you still want update OpenDNS address set an environment variables FORCE=true"
+            exit 1
+        else
+            echo "Force updating..."
+        fi
+    fi
+    echo "Updating...."
+    return 0
+
+    response=$(curl --basic --user "${1}":"${2}" https://updates.opendns.com/nic/update?hostname=${3:-"main"} 2>/dev/null)
+    case "${response}" in
+        !yours) code=400; msg="You tried to setup not yours ip address." ;;
+        badauth) code=401; msg="Username and password credentials are invalid or do not match an existing OpenDNS account." ;;
+        abuse) code=429; msg="OpenDNS received more than one update per minute for a set period of time." ;;
+        nohost) code=406; msg="OpenDNS account specified does not have a network enabled for dynamic IP updates. See: http://www.opendns.com/support/article/61." ;;
+        good*) code=200; msg=${response} ;;
+        *) code=500; msg="Unknown response: ${response}" ;;
+    esac
+    [ ${code} -ne 200 ] && echo "ERR [${code}]: $msg" && exit $(( ${code} - 399 ))
+    echo "OK [${code}]: $msg"
+}
+
+case "$(echo ${1:-"check"} | sed 's/^[-]*//g')" in
+    update)
+        [ -z "$2" ] || [ -z "$3" ] && show_help
+        update "$2" "$3" "$4" ;;
+    ips|ip|addresses|address) show_ips ;;
+    status|check) status || exit 1 ;;
+    help|h|H) show_help ;;
+    *) echo "Unknown command '$1'"; show_help ;;
+esac
+

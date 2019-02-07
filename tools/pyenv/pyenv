@@ -1,0 +1,589 @@
+#!/bin/bash
+################################################################################
+# Script helps with virtual environment for the project
+#
+#  author   : Evgen Rusakov
+#  license  : MIT
+#  date     : 2016-02-01
+#  version  : 1.0
+##
+##
+    echo "Script help with virtual environment for the project: create, test and etc. in virtual environment."
+    echo "Created by Evgen Rusakov on 2013"
+    echo ""
+    echo "Use: $name <command> [parameters]"
+    echo ""
+    echo "  Commands:"
+    echo "    create - create virtual environment,"
+    echo "    remove - clear virtual environment,"
+    echo "  activate - activate virtual environment,"
+    echo "      test - test project,"
+    echo "     build - build the project,"
+    echo "     start - start pyramid application for the project,"
+    echo "      info - show information abount virtual environment."
+    echo ""
+    echo "  Parameters:"
+    echo "   --python=version   - version of the python to be used (default: 2.6);"
+    echo "   --directory=path   - virtual environment directory name (default=$VIRTUAL_ENV_PATH_DEFAULT)."
+    echo "                        when key VIRTUAL_ENV was found in users environment,"
+    echo "                        is is using for virtual environment directory;"
+    echo "   --kernel-name      - use kernel name as the subdirectory (default: ON);"
+    echo "   --no-kernel-name   - do not use kernel name as the subdirectory;"
+    echo "   --requirement=file - file with requirement packages for pip install"
+    echo "                        (default: requirements.pip), use NONE - do not install packages;"
+    echo "   --config=file      - config file for the project"
+    echo "   --file=path        - included files/directories (default: current directory)"
+    echo "   --exclude=mask     - exclude files or directories"
+    echo "   --ignore-errors    - skip errors and warnings (e.g. E4,W)"
+    echo "   --pep8             - test only code for pep8"
+    echo "   --max-line-length  - set maximum allowed line length (default: 79)"
+    echo "   --help             - show help screen"
+    ERR=-255
+}
+
+################################################################################
+activate_virtual_env()
+{
+    OLD_PS1="$PS1"
+    . "$VIRTUAL_ENV_PATH/bin/activate"
+    name=$(basename "$PWD")
+    log ""
+    if [ ! "$VIRTUAL_ENV_ACTIVATED" == "$name" ]; then
+        PS1="($name)$OLD_PS1"
+        export VIRTUAL_ENV_ACTIVATED=$name
+        log "Virtual environment is activated."
+    else
+        PS1=$OLD_PS1
+        log "Virtual environment is already activated."
+    fi
+    log "Python: `which python`"
+    log "Pip: `which pip`"
+}
+
+################################################################################
+deactivate_virtual_env()
+{
+    deactivate > /dev/null 2>&1
+}
+################################################################################
+check_if_source()
+{
+    if [ "${FUNCNAME[2]}" = "source" ]; then
+        ERR=0
+        return 0
+    else
+        ERR=1
+        return 1
+    fi
+}
+
+################################################################################
+install_packages()
+{
+    if [ -z "$REQUIREMENT" ]; then
+        REQUIREMENT="$WD/requirements.pip"
+        if [ ! -f "$REQUIREMENT" ]; then
+            REQUIREMENT="$WD/requirements.txt"
+        fi
+    fi
+    if [[ "$REQUIREMENT" == "none" || "$REQUIREMENT" == "NONE" ]]; then
+        REQUIREMENT=
+    fi
+    log "---------------------------------------------------------------------------"
+    log "Install packages into the virtual environment ($REQUIREMENT)..."
+    log ""
+    if [ -z "$REQUIREMENT" ]; then
+        log "Requirement is none. Skip install packages."
+        ERR=0
+        return
+    fi
+    if [ ! -f "$REQUIREMENT" ]; then
+        log "File \"$REQUIREMENT\" not found. Packages will not be install."
+        ERR=0
+        return
+    fi
+    if [ ! -f "$VIRTUAL_ENV_PATH/bin/pip" ]; then
+        log "Error: Can't find pip in virtual environment directory"
+        log "Install pip for python$PYTHON_VERSION and try script again."
+        ERR=3
+        return
+    fi
+
+    activate_virtual_env
+
+    log "List of packages"
+    cat "$REQUIREMENT"
+    log ""
+    log "Use (w)ipe with 'pip install --upgrade' ..."
+    if [ -z "$PIP_FIND_LINKS" ]; then
+        PIP_FIND_LINKS=file://$HOME/tmp/python
+    fi
+    log "Pip find-links=$PIP_FIND_LINKS"
+    yes w | "$VIRTUAL_ENV_PATH/bin/pip" install -f "$PIP_FIND_LINKS" -r "$REQUIREMENT"
+    ERR=$?
+    if [ $ERR -ne 0 ]; then
+        log "Error installing required packages"
+    fi
+}
+
+################################################################################
+create_virtual_env()
+{
+    log "---------------------------------------------------------------------------"
+    log "Create virtual environment directory"
+    log ""
+    PYTHON=/usr/bin/python$PYTHON_VERSION
+    if [ ! -f "$PYTHON" ]; then
+        PYTHON=/usr/local/bin/python$PYTHON_VERSION
+    fi
+    log "Python file path: $PYTHON"
+
+    if [ ! -f "$PYTHON" ]; then
+        log "Error: Can't find python ($PYTHON)"
+        log "Install python$PYTHON_VERSION first."
+        ERR=1
+        return
+    else
+        log "Using $PYTHON for virtual environment"
+    fi
+
+    if [ ! -f "/usr/bin/virtualenv" ]; then
+        if [ ! -f "/usr/local/bin/virtualenv" ]; then
+            log "Error: Can't find virtualenv"
+            log "Install virtualenv first."
+            ERR=2
+            return
+        else
+            log "Using /usr/local/bin/virtualenv for create virtual environment"
+        fi
+    else
+        log "Using /usr/bin/virtualenv for create virtual environment"
+    fi
+    "virtualenv" --no-site-packages "$VIRTUAL_ENV_PATH" -p $PYTHON
+    ERR=$?
+    if [ $ERR -eq 0 ]; then
+        log ""
+        log "Create virtual environment success!"
+        log ""
+    else
+        log "Create virtual environment failed (Error=$ERR)!!!"
+        log ""
+        return
+    fi
+    file_info=$VIRTUAL_ENV_PATH/virtualenv.txt
+    python_version=`"$PYTHON" -c "import sys; print('{0}.{1}.{2} ({3})'.format(sys.version_info[0], sys.version_info[1], sys.version_info[2], sys.version_info[3]))"`
+    echo "Python virtual environment directory." >"$file_info"
+    echo "   Python: $python_version" >>"$file_info"
+    echo "       OS: `uname -o`" >>"$file_info"
+    echo "   Kernel: `uname -r`" >>"$file_info"
+    echo "  Machine: `uname -m`" >>"$file_info"
+    echo " Platform: `uname -i`" >>"$file_info"
+    echo "Processor: `uname -p`" >>"$file_info"
+    if [ -f "$REQUIREMENT" ]; then
+        echo "Installed requirement packages:" >>"$file_info"
+        cat "$REQUIREMENT" >>"$file_info"
+    fi
+    echo "  Created: `date`" >>"$file_info"
+
+    echo "Update setuputils and pip..."
+    "$VIRTUAL_ENV_PATH/bin/pip" install --upgrade setuputils
+    "$VIRTUAL_ENV_PATH/bin/pip" install --upgrade pip
+
+    install_packages
+
+    if [ $ERR -eq 0 ]; then
+        log "Result directory: $VIRTUAL_ENV_PATH".
+        export VIRTUAL_ENV_PATH=$VIRTUAL_ENV_PATH
+    fi
+}
+
+################################################################################?
+remove_virtual_env()
+{
+    log "---------------------------------------------------------------------------"?
+    log "Remove virtual_env: $VIRTUAL_ENV_PATH"
+    if [ -d "$VIRTUAL_ENV_PATH" ]; then
+        rm -rf "$VIRTUAL_ENV_PATH"
+    else
+        log "Directory not exists. Skip."
+    fi
+}
+################################################################################
+check_virtual_env()
+{
+    if [ ! -d "$VIRTUAL_ENV_PATH" ]; then
+        log ""
+        log "Error: Can't find virtual environment: $VIRTUAL_ENV_PATH"
+        log ""
+        log "Create virtual environment first."
+        name=$(basename "$0")
+        log "Command: ./$name create"
+        ERR=3
+        return 0
+    else
+        log "Python file path: $PYTHON"
+        ERR=0
+        return 1
+    fi
+}
+
+################################################################################
+test_project()
+{
+    # flake8
+    #E901
+    EXCLUDE_PATH_DEF="*/build","*/virtual_env","*/test*","*/webtests*","*/contrib/*","*.egg","$virtualenv_name"
+    IGNORE_ERRORS="E501,W391"
+
+    if [ -n "$MAX_LINE_LENGTH" ]; then
+        max_line_length=--max-line-length=$MAX_LINE_LENGTH
+    else
+        max_line_length=
+    fi
+    if [ -n "$IGNORE_ERRORS" ]; then
+        ignore_errors=--ignore=$IGNORE_ERRORS
+    else
+        ignore_errors=
+    fi
+    if [ -n "$EXCLUDE_PATH" ]; then
+        exclude_path=--exclude=$EXCLUDE_PATH
+    else
+        exclude_path=--exclude=$EXCLUDE_PATH_DEF
+    fi
+    if [ -n "$INCLUDE_PATH" ]; then
+        include_path=$INCLUDE_PATH
+    else
+        include_path=./
+    fi
+    virtualenv_name=$(basename "$VIRTUAL_ENV_PATH")
+
+    log "---------------------------------------------------------------------------"
+    log "Starting tests..."
+    activate_virtual_env
+
+    if [ -z "$TEST_SYNTAX_ONLY" ]; then
+        build_project $@
+
+        export UNITTEST_CONFIG_FILE=$PROJECT_CONFIG
+        if [ -z "$UNITTEST_CONFIG_FILE" ]; then
+            export UNITTEST_CONFIG_FILE=$WD/development.ini
+        fi
+        log "Test config file: $UNITTEST_CONFIG_FILE"
+        log ""
+        log "--[Unit tests]-------------------------------------------------------------"
+        "$PYTHON" setup.py test
+        ERR_UNITTEST=$?
+        log ""
+    else
+        ERR_UNITTEST=0
+    fi
+
+    log "--[Syntax tests]-----------------------------------------------------------"
+    TEST_APP=$VIRTUAL_ENV_PATH/bin/flake8
+    if [ ! -f "$TEST_APP" ]; then
+        which flake8 > /dev/null
+        if [ $? -ne 0 ]; then
+            TEST_APP=
+        else
+            TEST_APP=flake8
+        fi
+    fi
+    if [ -n "$TEST_APP" ]; then
+        log "Test package: $TEST_APP"
+        if [ -n "$exclude_path" ]; then log "Exclude: $EXCLUDE_PATH"; fi
+        if [ -n "$ignore_errors" ]; then log "Ignore: $IGNORE_ERRORS"; fi
+        if [ -n "$max_line_length" ]; then log "Line length: $MAX_LINE_LENGTH"; fi
+
+        log ""
+        "$TEST_APP" $ignore_errors $max_line_length $exclude_path $include_path
+        ERR_STYLE=$?
+    else
+        log "Can't find flake8 module."
+        ERR_STYLE=255
+    fi
+    if [ $ERR_STYLE -eq 0 ];
+    then
+        log "OK"
+    else
+        log "Error = $ERR_STYLE"
+    fi
+    log "---------------------------------------------------------------------------"
+    if [ $ERR_UNITTEST -eq 0 ];
+    then
+        log "Unit test - success"
+    else
+        log "Unit test - failed (Error code: $ERR_UNITTEST, full errors see above)"
+    fi
+    if [ $ERR_STYLE -eq 0 ];
+    then
+        log "Syntax test - success"
+    else
+        log "Syntax test - failed (Error code: $ERR_STYLE, full errors see above)"
+    fi
+    ERR=$(($ERR_STYLE + $ERR_UNITTEST))
+    if [ $ERR -ne 0 ]; then
+        log "Test error code = $ERR"
+    fi
+}
+################################################################################
+build_dependence()
+{
+    DEPENDENCE_DIR=$1
+    DEPENDENCE_DIR=$(readlink -f "$DEPENDENCE_DIR")
+    log "---------------------------------------------------------------------------"
+    log "Build dependence: $DEPENDENCE_DIR"
+    OLDPWD2=$PWD
+    cd $DEPENDENCE_DIR
+    "$PYTHON" setup.py build
+    "$PYTHON" setup.py install
+    if [ $? -eq 0 ];
+    then
+        log "OK"
+    else
+        log "Error = $?"
+        exit 2
+    fi
+    cd $OLDPWD2
+}
+################################################################################
+build_project()
+{
+    log "---------------------------------------------------------------------------"
+    log "Starting build..."
+
+    activate_virtual_env
+    log "Delete all previous *.pyc files ..."
+    find ./ -name "*.pyc" -delete
+    for arg in "$@"
+    do
+        if [ "$1" == "$arg" ]; then continue; fi
+        case "$arg" in
+            --dependence=*)
+                DEPENDENCE_DIR=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                build_dependence "$DEPENDENCE_DIR"
+                ;;
+        esac
+    done
+
+
+    log "---------------------------------------------------------------------------"
+    log "Build..."
+    "$PYTHON" setup.py develop
+    if [ $? -eq 0 ];
+    then
+        log "OK"
+    else
+        log "Error = $?"
+    fi
+}
+
+################################################################################
+start_project()
+{
+    build_project $@
+    for i in `seq 1 50`; do echo ''; done
+    log "---------------------------------------------------------------------------"
+    log "Starting project..."
+    if [ -f "$VIRTUAL_ENV_PATH/bin/pserve" ]; then
+        log "Found pserve"
+        CONFIG=$PROJECT_CONFIG
+        if [ -z "$CONFIG" ]; then
+            CONFIG=development.ini
+        fi
+        log "Starting server..."
+        log "Config: $CONFIG"
+        "$VIRTUAL_ENV_PATH/bin/pserve" "$CONFIG" --reload
+        if [ $? -eq 0 ];
+        then
+            log "OK"
+        else
+            log "Error = $?"
+        fi
+    else
+        module_name=$(basename ${PWD})
+        python -m ${module_name} 
+        ERR=255
+    fi
+}
+
+################################################################################
+info_project()
+{
+    virtualenv_file=$VIRTUAL_ENV_PATH/virtualenv.txt
+    if [ -f "$virtualenv_file" ]; then
+        log "Virtual environment info:"
+        while read line; do
+            log "* $line"
+        done < "$virtualenv_file"
+    else
+        log "Incorrect virtual environment directory: info file not found."
+        ERR=3
+    fi
+}
+
+################################################################################
+end()
+{
+    ERR=$1
+    if [ $ERR -ne -255 ]; then
+        log ""
+        log "==========================================================================="
+    fi
+    cd "$OLDPWD"
+    return 0
+}
+
+################################################################################
+begin()
+{
+    name=$1
+    log "==========================================================================="
+    if [ -n "$name" ]; then
+        log "$name"
+    fi
+    log "Current directory: $PWD"
+    log "Virtual directory: $VIRTUAL_ENV_PATH"
+}
+
+################################################################################
+main()
+{
+    ERR=0
+    if [ $USE_SCRIPT_DIR -eq 1 ]; then
+        WD=$(readlink -f "$0")
+        WD=$(dirname "$WD")
+    else
+        WD=$PWD
+    fi
+    REQUIREMENT=
+    PROJECT_CONFIG=
+    TEST_SYNTAX_ONLY=
+    MAX_LINE_LENGTH=
+    INCLUDE_PATH=
+    EXCLUDE_PATH=
+    IGNORE_ERRORS=
+    OLDPWD=$PWD
+    cd $WD
+    for arg in "$@"
+    do
+        if [ "$1" == "$arg" ]; then continue; fi
+        case "$arg" in
+            -d=*|--directory=*)
+                VIRTUAL_ENV_PATH=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -k|--kernel-name)
+                VIRTUAL_ENV_PREFIX=`uname -r`
+                ;;
+            -nk|--no-kernel-name)
+                VIRTUAL_ENV_PREFIX=
+                ;;
+            -p=*|--python=*)
+                PYTHON_VERSION=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -r=*|--requirement=*)
+                REQUIREMENT=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -c=*|--config=*)
+                PROJECT_CONFIG=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -so|--syntax-only|-pep8-only|--pep8-only)
+                TEST_SYNTAX_ONLY=yes
+                ;;
+            -line=*|-mll=*|--max-line-length=*)
+                MAX_LINE_LENGTH=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -f=*|--file=*|--files=*)
+                INCLUDE_PATH=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -ep=*|--exclude=*|--exclude-path=*)
+                EXCLUDE_PATH=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+            -ie=*|--ignore-errors=*)
+                IGNORE_ERRORS=`echo $arg | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
+        esac
+    done
+    # use default virtual env path when not specified
+    if [ -z "$VIRTUAL_ENV_PATH" ]; then
+        VIRTUAL_ENV_PATH=$VIRTUAL_ENV_PATH_DEFAULT
+    fi
+    # use relative path if not exists
+    if [ $(dirname "$VIRTUAL_ENV_PATH") == '.' ]; then
+        VIRTUAL_ENV_PATH=$WD/$VIRTUAL_ENV_PATH
+    else
+        # add prefix to the virtual env directory name: directory-inode
+        if [ $VIRTUAL_ENV_INODE -eq 1 ]; then
+            inode=`stat -L -f '%i' "$PWD"`
+            name=$(basename "$PWD")
+            name=`echo "$name" | sed 's/ /_/g'`
+            VIRTUAL_ENV_PATH=$VIRTUAL_ENV_PATH/$name-$inode
+        fi
+    fi
+    # add prefix to the virtual env directory name (example: kernel version)
+    if [ -n "$VIRTUAL_ENV_PREFIX" ]; then
+        VIRTUAL_ENV_PATH=$VIRTUAL_ENV_PATH/$VIRTUAL_ENV_PREFIX
+    fi
+    #log "VIRTUAL_ENV_PATH = $VIRTUAL_ENV_PATH"
+    PYTHON=$VIRTUAL_ENV_PATH/bin/python
+
+    case "$1" in
+        create|c|-c)
+            begin "Create virtual_env..."
+            create_virtual_env
+            deactivate_virtual_env
+            ;;
+        remove|delete|r|-r)
+            begin "Remove virtual_env..."
+            remove_virtual_env
+            deactivate_virtual_env
+            ;;
+        activate|a|-a)
+            begin "Activate virtual_env..."
+            check_virtual_env
+            if [ $ERR -eq 0 ]; then
+                check_if_source
+                if [ $ERR -eq 0 ]; then
+                    activate_virtual_env
+                else
+                    log ""
+                    log "Error activation virtual environment."
+                    log "Use: source '$0'"
+                fi
+            fi
+            ;;
+        build|b|-b)
+            begin "Build project"
+            check_virtual_env
+            if [ $ERR -eq 0 ]; then
+                build_project $@
+            fi
+            ;;
+        test|t|-t)
+            begin "Test project"
+            check_virtual_env
+            if [ $ERR -eq 0 ]; then
+                test_project $@
+            fi
+            ;;
+        start|s|-s)
+            begin "Start project"
+            check_virtual_env
+            if [ $ERR -eq 0 ]; then
+                start_project $@
+            fi
+            ;;
+        info|i|-i)
+            begin "Virtual environment information for the project"
+            check_virtual_env
+            if [ $ERR -eq 0 ]; then
+                info_project $@
+            fi
+            ;;
+        *)
+            show_help
+            ;;
+    esac
+}
+
+main $@
+end $ERR

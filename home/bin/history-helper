@@ -1,0 +1,70 @@
+#!/bin/sh
+#=============================================================================
+## Helper script for 'history' tool.
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2018-10-03
+#  version  :1.0
+#
+## Usage: {SCRIPT_NAME} [command]
+## Commands:
+##    search <pattern>  - search records in the history by pattern
+##    compress          - remove duplicate records
+##    remove <N>        - remove last <N/ALL> history records
+##    remove pattern    - remove history records by pattern
+##    cleanup           - remove duplicates and sort all items
+##    help              - show help screen
+#=============================================================================
+HISTORY_FILE=${HOME}/.bash_history
+TMP=${TMPDIR:-"${TMP:-"/tmp"}"}
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+remove_last_command() {
+    last_idx=$(history | tail -n 1 | awk '{print $1}')
+    if [ -n "${last_idx}" ]; then
+        history -d ${last_idx}
+    fi
+}
+search() {
+    [ -z "${1}" ] && echo "Error: Search pattern is required." && exit 1
+    # remove_last_command
+    history | grep --color=auto "${1}"
+}
+
+compress() {
+   echo "History before compression: $(wc -l "${HISTORY_FILE}" | sed 's/^[ ]*//g')"
+    nl ~/.bash_history | sort -k 2  -k 1,1nr| uniq -f 1 | sort -n | cut -f 2 > "${TMP}/old-history"
+    mv "${TMP}/old-history" "${HISTORY_FILE}"
+    echo "History before compression: $(wc -l "${HISTORY_FILE}" | sed 's/^[ ]*//g')"
+}
+
+cleanup() {
+    [ -z "$1" ] && echo "Error: Search pattern is required." && exit 1
+    echo "History before cleanup: $(wc -l "${HISTORY_FILE}" | sed 's/^[ ]*//g')"
+    if [ "${1}" == "-=ALL=-" ]; then
+        rm "${HISTORY_FILE}"
+        touch "${HISTORY_FILE}"
+        history -c
+    else
+        grep -v "${1}" ~/.bash_history  > "${TMP}/old-history"
+        mv "${TMP}/old-history" "${HISTORY_FILE}"
+        remove_last_command
+    fi
+    echo "History after cleanup: $(wc -l "${HISTORY_FILE}" | sed 's/^[ ]*//g')"
+}
+
+cmd=${1:-"--help"}
+case "${cmd}" in
+    search) shift; search "$1" ;;
+    compress) shift; compress ;;
+    cleanup|remove) shift; cleanup "${1}" ;;
+    clean-all) shift; cleanup "-=ALL=-" ;;
+    help|--help|h|-h) show_help  ;;
+    *) echo "ERROR: Unknown command ${1}."; show_help ;;
+esac
+

@@ -1,0 +1,19 @@
+really-quiet="1"                #Very very little console output
+stop-xscreensaver="yes"         # turns off xscreen saver...maybe
+geometry="50%:50%"              # Position window. (50%:50%: center of screen)
+# Display
+double="yes"	#double buffering(recommended for subtitles)
+framedrop="1"	# For slow machines
+
+# Subtitles
+subfont-encoding=unicode
+unicode=yes
+utf8=yes
+# Set subtitle position. (100: as low as possible)
+subpos=100
+# Set subtitle alignment at its position. (2: bottom)
+subalign=2
+
+# OSD
+# Set autoscale coefficient. (default: 6)
+subfont-osd-scale=4

@@ -1,0 +1,29 @@
+#!/bin/sh
+#=============================================================================
+## Open/Close tab in the iTerm
+## Usage: {SCRIPT_NAME} <new|close>
+#=============================================================================
+iterm_new_tab() {
+    osascript &>/dev/null <<EOF
+      tell application "iTerm"
+        activate
+        tell current window to set tb to create tab with default profile
+        tell current session of current window to write text "${1:-"pwd"}"
+      end tell
+EOF
+}
+
+iterm_close_tab() {
+    osascript &>/dev/null <<EOF
+      tell application "iTerm"
+        activate
+        tell current session of current window to write text "exit"
+      end tell
+EOF
+}
+
+case "$(echo ${1:-"new"} | sed 's/^[-]*//g')" in
+  new|open) iterm_new_tab "$2" ;;
+  close) iterm_close_tab ;;
+  *) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 255 ;;
+esac

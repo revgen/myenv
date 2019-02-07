@@ -1,0 +1,38 @@
+#!/bin/sh
+echo "Cleaning source code inside the '${PWD}' directory"
+read -p "Continue (yes/No)? " opt
+if [ "${opt}" != "yes" ]; then
+    echo "Skip"
+    exit 1
+fi
+echo "Size before cleaning: $(du -hd 0 ./ 2>/dev/null)"
+
+echo "Cleaning common output directories..."
+find ./ -type d -name build -exec rm -rf {} \;
+find ./ -type d -name obj -exec rm -rf {} \;
+find ./ -type d -name dist -exec rm -rf {} \;
+echo "  - Done"
+
+echo "Cleaning node sources..."
+find ./ -type d -name node_modules -exec rm -rf {} \;
+find ./ -type d -name bower_components -exec rm -rf {} \;
+echo "  - Done"
+
+echo "Cleaning .NET sources..."
+find ./ -type d -name Debug -exec rm -rf {} \;
+find ./ -type d -name Release -exec rm -rf {} \;
+find ./ -type d -name netcoreapp* -exec rm -rf {} \;
+echo "  - Done"
+
+echo "Cleaning java sources..."
+find ./ -type d -name target -exec rm -rf {} \;
+echo "  - Done"
+
+echo "Cleaning python sources..."
+find ./ -type d -name __pycache__ -exec rm -rf {} \;
+find ./ -type d -name venv -exec rm -rf {} \;
+find ./ -type d -name overlays -exec rm -rf {} \;
+find ./ -type d -name *.egg-info -exec rm -rf {} \;
+echo "  - Done"
+
+echo "Size after cleaning: $(du -hd 0 ./ 2>/dev/null)"

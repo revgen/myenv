@@ -1,0 +1,24 @@
+#!/bin/sh
+#=======================================================================
+## Run Microsoft Remote Desktop (RDP) client from command line.
+##
+## For OS X uses Microsoft Remote Desktop:
+##   https://itunes.apple.com/us/app/microsoft-remote-desktop/id715768417
+## For Ubuntu/Debian uses xfreerdp:
+##   apt install xfreerdp
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+case "$(uname -s)" in
+    Darwin)
+        if [ -z "$1" ]; then open -a Microsoft\ Remote\ Desktop.app ;
+        else open -a Microsoft\ Remote\ Desktop.app --args $@ ; fi
+        ;;
+    Linux)
+        xfreerdp --plugin cliprdr --plugin rdpdr -a 24 -z -g $(display --size) -D $@
+        ;;
+    *) echo "Error: unknown OS type"; exit 1 ;;
+esac

@@ -1,0 +1,82 @@
+#!/bin/sh
+#=============================================================================
+## Mount image file to the specific location
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2015-08-05
+#  version  :1.0
+#
+## Usage: {SCRIPT_NAME} <command> [file name] [mount point]"
+##   command      - mount/umount/help
+##   file name    - ISO or DMG file
+##   mount point  - must be a directory
+#
+#  TODO: add ability to work encrypted images
+#=============================================================================
+show_help() {
+  sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+  exit 255
+}
+
+cmd=$1; [ -z "$cmd" ] && cmd=help
+case "$cmd" in
+    detach|--detach|d|-d|umount|--umount) cmd=umount; shift ;;
+    attach|--attach|a|-a|mount|--mount) cmd=mount; shift ;;
+    help|--help|h|-h) show_help;;
+    *) cmd=mount ;;
+esac
+
+file=$1
+dest=$2
+
+if [ -z "${MOUNTPOINT}" ]; then
+    if [ "$(uname -s)" == "Darwin" ]; then MOUNTPOINT=/Volumes;
+    else MOUNTPOINT=/media; fi
+fi
+
+case "${cmd}" in
+    umount)
+        dest=$1
+        echo "Mount point ${dest} will be detached"
+        if [ "$(uname)" == "Darwin" ]; then
+            hdiutil detach ${dest}
+        else
+            umount ${dest}
+        fi
+        err=$?
+        if [ $err -eq 0 ]; then
+            echo "Umount success"
+        else
+            echo "Umount failed. Error=$err"
+        fi
+        ;;
+    mount-enc)
+        echo "ERROR: Not Implemented"
+        exit 1
+        # TODO: add functionality to mount encripted containers
+        # password/key from keychain or manually
+        # show mount point in Finder or not
+        # parameters: --hide (default: --show)
+        #
+        ;;
+    mount)
+        [ -z "${dest}" ] && dest=${MOUNTPOINT}/$(basename "${file%.*}")
+        echo "Mount file ${file} to ${dest}"
+        if [ "$(uname)" == "Darwin" ]; then
+            file=$(greadlink -f "$file")
+            hdiutil attach -mountpoint "${dest}" "${file}"
+        else
+            echo "Not Implemented yet"
+        fi
+        err=$?
+        if [ $err -eq 0 ]; then
+            echo "Mount success to the ${dest}"
+        else
+            echo "Mount failed. Error=${err}"
+        fi
+        ;;
+    *) show_help;;
+esac
+exit ${err}
+

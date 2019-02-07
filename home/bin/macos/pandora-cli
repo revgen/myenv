@@ -1,0 +1,83 @@
+#!/bin/sh
+#=============================================================================
+## Console utility fot Hermes (OS X Pandora client)
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2016-02-24
+#  version  :1.0
+#
+## use: {SCRIPT_NAME} <command>
+##   commands:
+##     open     - show Hermes Application
+##     play     - play selected channel
+##     pause    - pause
+##     toggle   - play or pause
+##     status   - show player status
+##     next     - go to the next track on the current channel
+##     like     - mark current track as favorite
+##     unlike   - remove favorite mark for current track
+##     tired    - tired of the current track
+##     info     - show full information about current track
+##     help     - show this help screen
+#
+#  TODO: add output messages
+#
+#=============================================================================
+show_help() {
+    if [ -n "$1" ]; then echo $1 >&2; fi
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+    exit 255
+}
+
+send_command() {
+    arg=$1
+    #echo "Send command: $arg"
+    osascript -e "tell application \"Hermes\"
+    ${arg}
+    end tell"
+}
+
+likeit() {
+    rating=$(send_command " current song's rating")
+    if [ "$rating" == "0" ]; then
+        send_command "thumbs up"
+    else
+        echo "You are already like it!"
+    fi
+    title=$(send_command "current song's title" | sed -e "s/\"/'/g")
+    artist=$(send_command "current song's artist" | sed -e "s/\"/'/g")
+    album=$(send_command "current song's album" | sed -e "s/\"/'/g")
+    #TODO: put other information to the "likeit" list
+    tolike --type music --title "${title}" --artist "${artist}" --album "${album}"
+}
+
+cmd=$(echo ${1:-open} | sed 's/[-]*//g')
+case "${cmd}" in
+    open|gui|o) open -a /Applications/Hermes.app ;;
+    play|P) send_command "play" ;;
+    pause|p) send_command "pause" ;;
+    playpause|toggle|t) send_command "playpause" ;;
+    status|stat|s) send_command "get playback state";;
+    next|n) send_command "next song" ;;
+    cool|star|thumbs-up|like|L) likeit;;
+    bad|unstar|thumbs-down|dislike|D) send_command "thumbs down" ;;
+    tired|pospone) send_command "tired of song" ;;
+#    volume) send_command "playback volume" ;;
+    info|i) send_command "
+    set nl to (ASCII character 10)
+    set res            to \"Station Name: \" & current station's name
+    set res to res & nl & \"  Station ID: \" & current station's station ID 
+    set res to res & nl & \"       Title: \" & current song's title
+    set res to res & nl & \"      Artist: \" & current song's artist
+    set res to res & nl & \"       Album: \" & current song's album
+    set res to res & nl & \"      Rating: \" & current song's rating
+    set res to res & nl & \"   Cover Url: \" & current song's artwork URL
+    set res to res & nl & \"  Artist Url: \" & current song's artist URL
+    set res to res & nl & \"   Album Url: \" & current song's album URL
+    set res to res & nl & \"   Track Url: \" & current song's track URL
+    set res to res & nl & \"    Duration: \" & current song duration
+    return res" ;;
+
+    *|help|h) show_help;;
+esac

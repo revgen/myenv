@@ -1,0 +1,28 @@
+#!/bin/sh
+if [ "${1}" == "--help" ] || [ "${1}" == "-h" ]; then
+    echo "Open excel document from command line"
+    echo "Uses: ${0##*/} <file name>"
+    exit 255
+else
+    if [ "${0}" == "open" ]; then shift; fi
+    if [ "$(uname -s)" == "Darwin" ]; then
+        if [ -d "/Applications/Microsoft Excel.app" ]; then
+            app="Microsoft Word.app"
+        else
+            app=Numbers.app
+        fi
+        if [ -z "${1}" ]; then
+            /usr/bin/open -a "${app}"
+        else
+            echo "Openning file '${1}'..."
+            /usr/bin/open -a "${app}" "${1}"
+        fi
+    else
+        if [ -z "${1}" ]; then
+            libreoffice
+        else
+            echo "Openning file '${1}'..."
+            libreoffice "${1}"
+        fi
+    fi
+fi

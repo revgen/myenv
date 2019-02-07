@@ -25,7 +25,7 @@ function openExplorer($path) {
     explorer "${path}"
 }
 function runVimDiff($file1, $file2) {
-    gvim -c \":set columns=200 lines=50\" -d "${file1}" "${file2}"
+    gvim -c ":set columns=200 lines=50" -d "${file1}" "${file2}"
 }
 function runExit() { [Environment]::Exit(0) }
 function cdToWorkspace() { Set-Location $WS }

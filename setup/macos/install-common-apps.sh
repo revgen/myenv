@@ -58,7 +58,8 @@ if [ "${opt}" == "Y" ] || [ "${opt}" == "y" ]; then
     brew_install cask macvim keepassxc
     brew_install cask iterm2 vnc-viewer kid3 balenaetcher handbrake sigil
     brew_install docker
-    brew_install awscli 
+    brew_install awscli
+    brew_install httping
     brew_install node java
     brew_install wine xquartz winetricks
     brew_install cask virtualbox virtualbox-extension-pack

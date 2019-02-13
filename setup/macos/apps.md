@@ -112,6 +112,8 @@
 |                   | Installation: **brew install ghostscript**. Link: [Site](http://ghostscript.com/) |
 | testdisk          | Powerful free data recovery console utility. |
 |                   | Installation: **brew install testdisk**. Link: [Site](https://www.cgsecurity.org/wiki/TestDisk) |
+| httping           | Httping is like 'ping' but for http-requests. |
+|                   | Installation: **brew install httping**. Link[Site](https://www.vanheusden.com/httping/) |
 | amazon-music      | - |
 |                   | Installation: **brew cask install amazon-music**, Link: [Site]() |
 | iFinance 4        | iFinance 4 allows you to keep track of your income and expenses in the most convenient and fastest way.  |

@@ -1,0 +1,18 @@
+#!/bin/bash
+disk=$(find ${HOME}/.local/var/ -maxdepth 1 -iname "${USER}.workspace*.*" | head -n 1)
+mpoint=${WORKSPACE}
+[ -z "${disk}" ] && echo "ERROR: can't find disk inside the ~/.local/var" && exit 1
+[ -z "${mpoint}" ] && echo "ERROR: can't find mount point path name (env:WORKSPACE)" && exit 1
+
+echo "Disk ${disk}"
+echo "will be mounted to '${mpoint}'"
+read -n 1 -p "Do you want to continue (Y/n)? " opt
+echo ""
+if [ "${opt:-"Y"}" == "Y" ] || [ "${opt}" == "y" ]; then
+    hdiutil attach -mountpoint "${mpoint}" "${disk}" && \
+    echo "List: ${mpoint}" && \
+    ls -hl ${mpoint} && \
+    echo "Done"
+else
+    echo "Skip"
+fi

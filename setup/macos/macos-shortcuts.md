@@ -20,14 +20,14 @@
 
 | Key combination       | Action                                            |
 | --------------------- | ------------------------------------------------- |
-| Cmd(⌘)+Space          | Open Spotlight search                            |
-| Opt(⌥)+Cmd(⌘)+Space   | Switch input source (keyboard layout)ss         |
-| Opt(⌥)+0              | Show Dashboard                                   |
-| Opt(⌥)+9              | Show Desktop                                     |
-| Opt(⌥)+8              | Show Notification Center                         |
-| Ctrl(⌃)+Cmd(⌘)+L      | Start screensaver                                |
-| Ctrl(⌃)+Cmd(⌘)+T      | Open iTerm                                       |
-| Ctrl(⌃)+Cmd(⌘)+R      | Show Launchpad                                   |
+| Command+Space         | Open Spotlight search                             |
+| Option+Command+Space  | Switch input source (keyboard layout)ss           |
+| Option+0              | Show Dashboard                                    |
+| Option+9              | Show Desktop                                      |
+| Option+8              | Show Notification Center                          |
+| Control+Command+L     | Start screensaver                                 |
+| Control+Command+T     | Open iTerm                                        |
+| Control+Command+R     | Show Launchpad                                    |
 
 
 ## System shortcuts

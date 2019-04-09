@@ -72,4 +72,5 @@ Resources where you can find an information about MacOS settings and tweaks
 
 * https://www.defaults-write.com
 * https://github.com/cfibmers/dotfiles/blob/master/osx/defaults.sh
-
+* [Awesome MacOS Command Line Tools](https://github.com/herrbischoff/awesome-macos-command-line)
+* [Hammerspoon](http://www.hammerspoon.org/) - powerful automation tool for Mac OS

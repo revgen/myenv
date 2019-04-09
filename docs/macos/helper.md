@@ -62,3 +62,13 @@ Delete Homebrew Cache
 ```bash
 rm -r ~/Library/Caches/Homebrew/*
 ```
+
+Install inxi tool
+```bash
+mkdir -p ${HOME}/.local/bin
+wget -qO ${HOME}/.local/bin/inxi http://smxi.org/inxi
+chmod +x ${HOME}/.local/bin/inxi
+brew install cavaliercoder/dmidecode/dmidecode
+
+
+```

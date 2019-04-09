@@ -50,3 +50,15 @@ Show logs for th past 3 minutes with a filter
 ```bash
 log show --last 3m | grep "logger:"
 ```
+
+### Tweaks and Notes
+
+Keep your Mac awake when this script is running
+```bash
+caffeinate -idum -t <timeout-in-seconds>
+```
+
+Delete Homebrew Cache
+```bash
+rm -r ~/Library/Caches/Homebrew/*
+```

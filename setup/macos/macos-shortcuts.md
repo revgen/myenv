@@ -1,5 +1,11 @@
 # Mac OS Shortcuts
 
+* [Key symbols](#key-symbols)
+* [Custom shortcuts](#custom-shortcuts)
+* [System shortcuts](#system-shortcuts)
+* [Startup shortcuts](#startup-shortcuts)
+* [Links](#links)
+
 ## Key symbols
 ```
 ⌘ - Command (or Cmd)
@@ -10,8 +16,21 @@
 ⎋ - Escape symbol
 ```
 
+## Custom shortcuts
 
-## Common system shortcuts
+| Key combination       | Action                                            |
+| --------------------- | ------------------------------------------------- |
+| Cmd(⌘)+Space          | Open Spotlight search                            |
+| Opt(⌥)+Cmd(⌘)+Space   | Switch input source (keyboard layout)ss         |
+| Opt(⌥)+0              | Show Dashboard                                   |
+| Opt(⌥)+9              | Show Desktop                                     |
+| Opt(⌥)+8              | Show Notification Center                         |
+| Ctrl(⌃)+Cmd(⌘)+L      | Start screensaver                                |
+| Ctrl(⌃)+Cmd(⌘)+T      | Open iTerm                                       |
+| Ctrl(⌃)+Cmd(⌘)+R      | Show Launchpad                                   |
+
+
+## System shortcuts
 
 | Key combination       | Action                                            |
 | --------------------- | ------------------------------------------------- |
@@ -31,7 +50,7 @@
 **Option+Click** - You can use the Option key with other menu bar items to access different or expanded menus (ex: Maximize or Full screen).
 
 
-## Mac startup key combinations
+## Startup shortcuts
 
 If your Mac is using a [firmware password](https://support.apple.com/kb/HT204455), all of these key combinations are disabled, except as noted below. 
 

@@ -17,25 +17,19 @@ Installation script support OS X and Linux system.
 When you need an environment only you can download [install.sh] script and execute it.
 
 Terminal command using **wget**:
-```
+```bash
 $ wget -qO- https://raw.githubusercontent.com/revgen/myenv/master/install.sh | bash
-or
-$ wget -O install.sh - https://raw.githubusercontent.com/revgen/myenv/master/install.sh
-$ bash ./install.sh
 ```
 
 Terminal command using **curl**:
-```
+```bash
 $ curl -L https://raw.githubusercontent.com/revgen/myenv/master/install.sh | bash
-or
-$ curl -L https://raw.githubusercontent.com/revgen/myenv/master/install.sh > install.sh
-$ bash ./install.sh
 ```
 
 When you need an ability to make a changes in the repository:
-```
+```bash
 $ git clone https://github.com/revgen/myenv.git ~/.local/var/myenv
-$ sh ~/.local/var/myenv/install.sh
+$ bash ~/.local/var/myenv/install.sh
 ```
 
 ## Settings

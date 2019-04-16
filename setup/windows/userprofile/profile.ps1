@@ -36,6 +36,7 @@ function runMidnightCommander() { & "C:\Program Files (x86)\Midnight Commander\m
 function runGitBash() { & "$env:PROGRAMFILES\Git\git-bash.exe" }
 # vim -d
 function runVimDiff() { runMeld }
+function resetPS() { [Console]::ResetColor(); cls }
 
 
 # == Aliases ==================================================================
@@ -47,6 +48,7 @@ Set-Alias -Name su      -Value runAs
 Set-Alias -name du      -Value dirSize
 Set-Alias -name du0     -Value dirSize
 Set-Alias -name open-explorer -Value openExplorer
+Set-Alias -Name reset   -Value resetPS
 
 Set-Alias -Name apk     -Value choco
 Set-Alias -Name apt     -Value choco

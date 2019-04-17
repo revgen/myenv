@@ -4,6 +4,7 @@ choco install telnet -y
 choco install notepad3 -y
 choco install procexp -y
 choco install snaketail -y
+choco install curl -y
 
 choco install 7zip -y
 choco install GoogleChrome -y

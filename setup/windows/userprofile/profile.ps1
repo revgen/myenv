@@ -9,6 +9,9 @@ if (Test-Path env:WORKSPACE) { $WS = (get-item env:WORKSPACE ).Value }
 else { $WS = [Environment]::GetFolderPath("MyDocuments") }
 
 # == Functions ================================================================
+function getIpAddress() {
+	 return (Get-NetIPAddress -AddressFamily ipV4 | Where {$_.InterfaceAlias -eq "Ethernet"} | Select -ExpandProperty  IPAddress)
+}
 function dirSize($path) {
     if (!$path) {
         $path = Get-Location
@@ -70,3 +73,24 @@ $localProfile = "$PSScriptRoot\profile.local.ps1"
 if ([System.IO.File]::Exists($localProfile)) {
     & "$localProfile"
 }
+
+# == Console colors ===========================================================
+$Host.UI.RawUI.BackgroundColor = ($bckgrnd = 'DarkGray')
+$Host.UI.RawUI.ForegroundColor = 'White'
+$Host.PrivateData.ErrorForegroundColor = 'DarkRed'
+$Host.PrivateData.ErrorBackgroundColor = $bckgrnd
+$Host.PrivateData.WarningForegroundColor = 'Yellow'
+$Host.PrivateData.WarningBackgroundColor = $bckgrnd
+$Host.PrivateData.DebugForegroundColor = 'Yellow'
+$Host.PrivateData.DebugBackgroundColor = $bckgrnd
+$Host.PrivateData.VerboseForegroundColor = 'Green'
+$Host.PrivateData.VerboseBackgroundColor = $bckgrnd
+$Host.PrivateData.ProgressForegroundColor = 'Blue'
+$Host.PrivateData.ProgressBackgroundColor = $bckgrnd
+Clear-Host
+Set-PSReadlineOption -TokenKind Parameter -ForegroundColor Yellow
+Set-PSReadlineOption -TokenKind Operator -ForegroundColor Yellow
+
+# == Default prompt ===========================================================
+Write-Host "User: ${env:USERNAME}, Host: $(hostname) / $(getIpAddress)"
+Write-Host "----------------------------------------------------------"

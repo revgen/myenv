@@ -10,19 +10,19 @@ choco install 7zip -y
 choco install GoogleChrome -y
 
 # choco install git -y
-choco install github-desktop -y
+# choco install github-desktop -y
 
 #choco install python -y
 #choco install pip -y
 
 
-choco install nodejs -y
-choco install yarn -y
+# choco install nodejs -y
+# choco install yarn -y
 
 choco install vim-console -y
 choco install vim -y
 choco install mc -y
-choco install SourceTree -y
+# choco install SourceTree -y
 
 # choco install meld -y
 # choco install awscli -y

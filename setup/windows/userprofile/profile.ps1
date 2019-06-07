@@ -74,10 +74,10 @@ if ([System.IO.File]::Exists($localProfile)) {
     & "$localProfile"
 }
 
-# == Console colors ===========================================================
+# == Console style ============================================================
 $Host.UI.RawUI.BackgroundColor = ($bckgrnd = 'Black')
 $Host.UI.RawUI.ForegroundColor = 'White'
-$Host.PrivateData.ErrorForegroundColor = 'DarkRed'
+$Host.PrivateData.ErrorForegroundColor = 'Red'
 $Host.PrivateData.ErrorBackgroundColor = $bckgrnd
 $Host.PrivateData.WarningForegroundColor = 'Yellow'
 $Host.PrivateData.WarningBackgroundColor = $bckgrnd
@@ -90,6 +90,10 @@ $Host.PrivateData.ProgressBackgroundColor = $bckgrnd
 Clear-Host
 Set-PSReadlineOption -TokenKind Parameter -ForegroundColor Yellow
 Set-PSReadlineOption -TokenKind Operator -ForegroundColor Yellow
+
+$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(120,50)
+$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size(120,9999)
+$host.UI.RawUI.WindowTitle = "PowerShell: ${env:USERNAME}@$(hostname)"
 
 # == Default prompt ===========================================================
 Write-Host "User: ${env:USERNAME}, Host: $(hostname) / $(getIpAddress)"

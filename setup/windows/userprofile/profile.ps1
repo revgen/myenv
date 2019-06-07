@@ -75,7 +75,7 @@ if ([System.IO.File]::Exists($localProfile)) {
 }
 
 # == Console colors ===========================================================
-$Host.UI.RawUI.BackgroundColor = ($bckgrnd = 'DarkGray')
+$Host.UI.RawUI.BackgroundColor = ($bckgrnd = 'Black')
 $Host.UI.RawUI.ForegroundColor = 'White'
 $Host.PrivateData.ErrorForegroundColor = 'DarkRed'
 $Host.PrivateData.ErrorBackgroundColor = $bckgrnd

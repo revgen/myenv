@@ -91,9 +91,14 @@ Clear-Host
 Set-PSReadlineOption -TokenKind Parameter -ForegroundColor Yellow
 Set-PSReadlineOption -TokenKind Operator -ForegroundColor Yellow
 
-$host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(120,50)
-$host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size(120,9999)
-$host.UI.RawUI.WindowTitle = "PowerShell: ${env:USERNAME}@$(hostname)"
+try {
+    $host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(120,50)
+    $host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size(120,9999)
+} catch { }
+
+try {
+    $host.UI.RawUI.WindowTitle = "PowerShell: ${env:USERNAME}@$(hostname)"
+} catch { }
 
 # == Default prompt ===========================================================
 Write-Host "User: ${env:USERNAME}, Host: $(hostname) / $(getIpAddress)"

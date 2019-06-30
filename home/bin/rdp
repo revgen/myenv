@@ -14,8 +14,8 @@ case "${1}" in
 esac
 case "$(uname -s)" in
     Darwin)
-        if [ -z "$1" ]; then open -a Microsoft\ Remote\ Desktop.app ;
-        else open -a Microsoft\ Remote\ Desktop.app --args $@ ; fi
+        if [ -z "$1" ]; then open "/Applications/Microsoft Remote Desktop.app" ;
+        else open "/Applications/Microsoft Remote Desktop.app" --args $@ ; fi
         ;;
     Linux)
         xfreerdp --plugin cliprdr --plugin rdpdr -a 24 -z -g $(display --size) -D $@

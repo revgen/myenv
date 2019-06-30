@@ -1,6 +1,6 @@
 #!/bin/sh
 echo "============================================================"
-tools="openssh-server, screen, mc, htop, git, vim, p7zip-full, jq, lynx, curl, wget, elinks, python3, python3-pip, dialog, tree"
+tools="openssh-server, screen, mc, htop, git, vim, p7zip-full, jq, lynx, curl, wget, elinks, python3, python3-pip, dialog, tree, ncdu"
 echo "Install core linux tools: ${tools}"
 sudo apt-get install $(echo ${tools} | sed 's/,/ /g')
 

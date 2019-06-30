@@ -1,3 +1,0 @@
-*/2  * * * * ${HOME}/.local/var/myenv/setup/macos/cron/cronjob.sh "hostname" 150
-*/15 * * * * ${HOME}/.local/var/myenv/setup/macos/cron/cronjob.sh "send-status.sh" 86400
-

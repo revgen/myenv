@@ -85,6 +85,8 @@
 |                   | Installation: **brew install imagemagick**. Link: [Site](https://www.imagemagick.org) |
 | ffmpeg            | It is a suite of libraries and programs for handling video, audio, and other multimedia files and streams. |
 |                   | Installation: **brew install ffmpeg**. Link: [Site](https://www.ffmpeg.org/) |
+| mps-youtube       | Youtube from command line |
+|                   | Installation: **brew install mps-youtube**. Link: [Site](https://github.com/mps-youtube/mps-youtube)  |
 | zenity, dialog    | Utility to display simple GTK+ dialogs from the command line |
 |                   | Installation: **brew install zenity dialog**                      |
 | dev tools pack    | Installation: **brew install node awscli** and **brew cask install java postman pv figlet**                      |

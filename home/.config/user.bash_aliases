@@ -38,6 +38,11 @@ alias line_number='awk '\''{printf("% 6d %s\n", NR, $0)}'\'
 alias mpg123='mpg123 -Cv'
 alias mplayer='mplayer -af volnorm'
 
+alias linuxdev-start='docker run -dit -v ${HOME}/Downloads:/root/Downloads --name=linuxdev ubuntu:18.04 bash'
+alias linuxdev-stop='docker stop linuxdev; docker rm linuxdev'
+alias linuxdev-sh='docker exec -it linuxdev bash'
+alias linuxdev-status='docker ps --filter name=linuxdev'
+
 # ------[ Custom tools ]-------------------------------------------------------
 mkcd() {
     case "${1:---help}" in

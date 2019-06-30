@@ -20,6 +20,7 @@
 ##   cat /tmp/secret-data.tar.gz.enc | crypt decrypt --aes --password secret-password | tar xz
 ##   crypt decrypt --7z --password secret-password /tmp/secret-data.tar.gz.enc
 ##
+# TODO: add compression: no, fast, best
 #=======================================================================
 set -a
 

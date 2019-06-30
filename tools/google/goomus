@@ -48,7 +48,8 @@ class GoogleMusicHelper:
 
     def login(self):
         print('Checking login...')
-        self._is_logged_in = self._manager.login()
+        self._is_logged_in = self._manager.login(oauth_credentials='~/.play-music.key', uploader_id='00:00:00:00:00:00')
+        # self._is_logged_in = self._manager.login()
         if not self.is_logged_in():
             print('You are not login to the system, please use an instruction below.')
             self._manager.perform_oauth()

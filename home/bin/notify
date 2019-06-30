@@ -19,6 +19,7 @@ show_macos_notification() {
     title=${1}
     msg=${2}
     echo "[${title}]: ${msg}"
+    logger -t "user.$(basename "${0}")" "[${title}]: ${msg}"
     if [ -n "$DISPLAY" ]; then
         if [ -n "$(which growlnotify)" ]; then
             growlnotify -n "${title}" -m "${msg}"

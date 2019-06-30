@@ -4,6 +4,7 @@ set -o errexit
 export MYENVHOME=${MYENVHOME:-"${HOME}/.local/var/myenv"}
 . ${MYENVHOME}/home/.config/user.env
 export PATH=${MYENVHOME}/home/bin:${PATH}
+ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
 
 make_links_from_all() {
     orig_dir=${1}
@@ -28,5 +29,5 @@ echo "Install tools from the myenv/home/bin directory"
 echo "Copy ${PWD} -> ${USERBIN}"
 mkdir -p "${USERBIN}" 2>/dev/null
 make_links_from_all "${PWD}" "${USERBIN}"
-make_links_from_all "${PWD}/${OSTYPE}" "${USERBIN}"
+make_links_from_all "${PWD}/${ostype}" "${USERBIN}"
 echo "==[ Install main tools: end   ]========================================="

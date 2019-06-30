@@ -3,7 +3,8 @@ set -o nounset
 set -o errexit
 export MYENVHOME=${MYENVHOME:-"${HOME}/.local/var/myenv"}
 . ${MYENVHOME}/home/.config/user.env
-[ "${OSTYPE}" != "macos" ] && echo "ERROR: Incorrect os type '${OSTYPE}'" && exit 1
+ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
+[ "${ostype}" != "macos" ] && echo "ERROR: Incorrect os type '${OSTYPE}'" && exit 1
 
 ${MYENVHOME}/home/install-bin.sh
 ${MYENVHOME}/home/install-settings.sh

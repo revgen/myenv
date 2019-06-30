@@ -1,0 +1,4 @@
+#!/bin/sh
+cd ~/Applications/KeePassXC.app/Contents/MacOS
+./KeePassXC $@
+

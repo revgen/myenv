@@ -1,0 +1,14 @@
+#!/bin/sh
+# crontab -e
+# */15 * * * * "${directory full path}/execute-once-per-day.cronjob"
+
+cd $(dirname "${0}")
+wd="${PWD}"
+
+# Initialize special system environment for cron
+cd ../../
+export MYENVHOME=${MYENVHOME:-"${PWD}"}
+export PATH=${HOME}/bin:${PWD}:${HOME}/.local/bin:${PATH}
+
+execute-once-per-period "${wd}/execute-once-per-day.sh" 86400 
+

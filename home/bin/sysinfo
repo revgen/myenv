@@ -7,13 +7,21 @@ ostype=$(uname -s)
 os_info() {
     if [ "${ostype}" == "Darwin" ]; then
         sw_vers | grep Product | cut -d":" -f2 | xargs
-    else
-        if [ -n "$(which lsb_release)" ]; then
-            lsb_release
-        else
-            uname -a
-        fi        
+        return 0
     fi
+    if [ -n "$(which lsb_release)" ]; then
+        lsb_release -d | sed 's/Description:[\t ]*//g'
+        return 0
+    fi
+    if [ -f /etc/debian_version ]; then
+        echo "Debian $(cat /etc/debian_version)"
+        return 0
+    fi
+    if [ -f "/etc/os-release" ]; then
+        cat /etc/os-release | sort | grep "^NAME\|VERSION_ID" |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs
+        return 0
+    fi
+    uname -a
 }
 cpu_info() {
     if [ "${ostype}" == "Darwin" ]; then

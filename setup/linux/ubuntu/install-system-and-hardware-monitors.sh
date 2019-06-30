@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo "--[Begin: $(basename "${0}")]-----------------"
 echo "Install glaces to the system"
 sudo pip3 install bottle glances && \

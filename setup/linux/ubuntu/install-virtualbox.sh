@@ -5,9 +5,24 @@ if [ $? -ne 0 ]; then
     echo "Error: use Ubuntu system only"
     exit 1
 fi
+set -e
+
 echo "================================================================"
-echo "Virtualbox On Ubuntu 18.04 can be easily installed from Ubuntu's multiverse repository"
-sudo apt install virtualbox virtualbox-ext-pack
+echo "Virtualbox 6.X"
+wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+sudo sh -c 'echo "deb http://download.virtualbox.org/virtualbox/debian $(lsb_release -sc) contrib" >> /etc/apt/sources.list.d/virtualbox.list'
+sudo apt update
+sudo apt-get install virtualbox-6.0
+
+echo "Installing Virtual Box Extension Pack"
+vbox_version=$(vboxmanage --version | cut -d"r" -f1)
+echo "Version is ${vbox_version}"
+[ -z "${vbox_version}" ] && echo "Error" && exit 1
+
+wget https://download.virtualbox.org/virtualbox/${vbox_version}/Oracle_VM_VirtualBox_Extension_Pack-${vbox_version}.vbox-extpack
+sudo VBoxManage extpack install Oracle_VM_VirtualBox_Extension_Pack-${vbox_version}.vbox-extpack
+
 
 echo "Add '${USER}' user to the vboxusers group"
 sudo usermod -aG vboxusers ${USER}

@@ -74,6 +74,7 @@ case "${1}" in
             echo "SSH tunnel exists (PID=${tunnel_pid})"
         else
             echo "Open SSH tunnel 'localhost:${PORT}' -> '${user}@${host}:${PORT_DEST}'"
+            echo "Command: ssh -L ${PORT}:localhost:${PORT_DEST} -N -f -l '${user}' '${host}'"
             ssh -L ${PORT}:localhost:${PORT_DEST} -N -f -l "${user}" "${host}" && \
             echo -n "PID=" && find_pid
         fi

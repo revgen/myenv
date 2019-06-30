@@ -11,7 +11,7 @@ newnode='
 '
 sudo cp ${CFG} ${CFG}.orig && \
 cat ${CFG} | sed 's/<\/channel>//g' > xfce4-session.xml
-echp -e '
+echo -e '
   <property name="shutdown" type="empty">
     <property name="ShowSuspend" type="bool" value="false"/>
     <property name="ShowHibernate" type="bool" value="false"/>

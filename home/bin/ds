@@ -12,7 +12,7 @@ border_line=$(printf "${border:1:1}%.0s" {1..78})
 echo "${border:0:1}${border_line}${border:2:1}"
 
 flag=1
-df -Ph | grep "^/dev\|^Filesystem" | grep -v "fuse" | \
+df -Ph | grep "^/dev\|^Filesystem" | grep -v "fuse" | grep -v "/loop" | \
         awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6}' | column -t | \
         while read line; do
             printf "%s %-76s %s\n" "${border:3:1}" "${line}" "${border:4:1}"

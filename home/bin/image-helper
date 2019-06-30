@@ -1,15 +1,82 @@
 #!/bin/sh
-
-## DRAFT
-
-clean_exif_info() {
-    exiftool -all= foo.jpg
+#=======================================================================
+## Image-helper script
+##
+## Usage: {SCRIPT_NAME} <command> <path>
+## Commands:
+##   exif show          - show exif image information
+##   exif clean         - clean all exif information
+##   exif <key> <value> - update exif image information
+##   preview            - create preview image for a specific file or a directory
+##
+## Requirements:
+##   imagemagick, exiftool, 
+#=======================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
 }
 
-update_exif_info() {
-    if [ "${2}" == "clean" ]; then
-        exiftool -all= "${1}"
-        return $?
+PREVIEW_SIZE=${PREVIEW_SIZE:-"256x256"}
+create_preview_for_image() {
+    src_img=${1}
+    preview_img_def="$(dirname "${src_img}")/${src_img%.*}.preview.jpg"
+    preview_img=${2:-"${preview_img_def}"}
+    echo "  - Create preview file '${preview_img}'"
+    [ ! -f "${src_img}" ] && echo "ERROR: file not found '${src_img}'" && return 1
+    mkdir -p "$(dirname "${preview_img}")" 2>/dev/null
+    convert -thumbnail ${PREVIEW_SIZE} "${src_img}" "${preview_img}" || echo "ERROR: Error create cover file from ${src_img} (errcode=${?})"
+    [ ! -f "${preview_img}" ] && echo "  - Create preview - failed!" && return 1
+    echo "  - Create preview - success: ${preview_img}"
+}
+
+create_preview_for_path() {
+    path=${1:-"${PWD}"}
+    preview=${2}
+    if [ -f "${path}" ]; then
+        create_preview_for_image "${path}" "${preview}"
+    else
+        preview="${preview:-"${path}/.cover.jpg"}"
+        echo "Create a cover file for the '${path}' directory"
+        cover_src_file=$(find "${path}" -type f -maxdepth 1 -iname "?cover.*" | head -n 1 | grep -ve '^$' || find "${path}" -type f -iname "*.jpg" -or -iname "*.png" | head -n 1 | grep -ve '^$')
+        if [ -n "${cover_src_file}" ]; then
+            echo "  - Preview file found: ${cover_src_file}"
+            create_preview_for_image "${cover_src_file}" "${preview}"
+        else
+            echo "  - Preview file not found: generate it"
+            convert -background gray -fill white -size ${PREVIEW_SIZE} -font Tahoma -pointsize 40 -gravity center label:'No Preview\nAvailable' "${preview}"
+            # convert -size ${preview_size} xc:gray "${preview}" 
+        fi
     fi
 }
+
+show_info() {
+    [ ! -f "$1" ] && echo "Error: image file required" && exit 1
+    exiftool "${1}"
+}
+
+clean_exif() {
+    [ ! -f "$1" ] && echo "Error: image file required" && exit 1
+    exiftool -all= "${1}"
+}
+
+update_exif() {
+    [ -z "${2-"${1}"}" ] && echo "Error: key and value field are required" && exit 1
+    [ ! -f "${3:-"/dev/${RANDOM}"}" ] && echo "Error: image file required" && exit 1
+    exiftool -${1}="${2}" "${3}"
+}
+
+arg=${1:-"help"}
+case "${arg}" in
+    exif)
+        case "${2}" in
+            show) show_info "$3";;
+            clean) clean_exif "$3" ;;
+            * ) update_exif "${2}" "${3}" "${4}" ;;
+        esac
+        ;;
+    preview) shift; create_preview_for_path "${1:-"${PWD}"}" "$2";;
+    help|--help) show_help ;;
+    *) echo "Error: unknown '${arg}' command" && exit 1 ;;
+esac
 

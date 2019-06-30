@@ -4,6 +4,7 @@ set -o errexit
 export MYENVHOME=${MYENVHOME:-"${HOME}/.local/var/myenv"}
 . ${MYENVHOME}/home/.config/user.env
 export PATH=${MYENVHOME}/home/bin:${PATH}
+ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
 
 SCRIPT_DIR=$(fullpath "$(dirname "${0}")")
 echo "==[ Install main settings: start ]========================================="
@@ -17,7 +18,8 @@ ln-safe "${MYENVHOME}/home/.config/mc" "$HOME/.config/mc"
 ln-safe "${MYENVHOME}/home/.elinks/elinks.conf" "$HOME/.elinks/elinks.conf"
 ln-safe "${MYENVHOME}/home/.moc/config" "$HOME/.moc/config"
 ln-safe "${MYENVHOME}/home/.moc/track-changed" "$HOME/.moc/track-changed"
-if ["${OSTYPE}" == "linux" ]; then
+ln-safe "${MYENVHOME}/home/.moc/themes" "$HOME/.moc/themes"
+if [ "${ostype}" == "linux" ]; then
     ln-safe "${MYENVHOME}/home/.config/openbox" "$HOME/.config/openbox"
 fi
 ln-safe  --copy "${MYENVHOME}/home/.config/wallpaper.jpg" "$HOME/.config/wallpaper.jpg"

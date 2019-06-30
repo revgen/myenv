@@ -27,11 +27,11 @@ if [ "${opt:-"N"}" == "Y" ] || [ "${opt}" == "y" ]; then
     ln-safe "${SRC}/screensaver/screensaver" "${DEST}/screensaver"
     ln-safe "${SRC}/google/goomus" "${DEST}/goomus"
     ln-safe "${SRC}/firefox/firefox" "${DEST}/firefox"
+    ln-safe "${SRC}/dockdb/dockdb" "${DEST}/dockdb"
     for name in $(ls "${SRC}/dev/"); do
         ln-safe "${SRC}/dev/${name}" "${DEST}/${name}"
     done
-    download_and_install "${DEST}/dockdb" "https://raw.githubusercontent.com/revgen/docker-repository/master/docker-database/bin/dockdb"
-    download_and_install "${DEST}/transmission" "https://raw.githubusercontent.com/revgen/docker-repository/master/docker-transmission/bin/transmission"
+    download_and_install "${DEST}/transmission" "https://raw.githubusercontent.com/revgen/docker-transmission/master/scripts/transmission"
 else
     echo "Skip"
 fi

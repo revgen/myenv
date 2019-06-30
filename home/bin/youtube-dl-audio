@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #=============================================================
 ## Download audio track from Youtube and convert it to mp3
 ## Usage: {SCRIPT_NAME} <youtube full url>
@@ -7,6 +7,8 @@
 #  date     : 2018-08-11
 #  license  : MIT
 #=============================================================
+set -eu
+
 show_help() {
     sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
     exit 255
@@ -15,6 +17,15 @@ show_help() {
 case "${1:-"help"}" in
     help|--help|h|-h) show_help;;
 esac
+log=/tmp/youtube-dl-$RANDOM.log
 echo "Downloading audio track (mp3) from ${1}..."
-youtube-dl --extract-audio --audio-format mp3 "${1}" && echo "Done"
+youtube-dl --extract-audio --audio-format mp3 "${1}" | tee "${log}"
+echo "Done"
+audio_file=$(grep "\[ffmpeg\] Destination" "${log}" | sed 's/\[ffmpeg\] Destination: //g')
+id=$(grep "Downloading webpage" "${log}" | sed 's/\[youtube\] //g' | cut -d":" -f1)
+rm "${log}"
+echo "Result audio file: ${audio_file}"
+image_file=${audio_file%.*}.jpg
+echo "Downloading image for ${id}"
+wget -O "${image_file}" "http://i3.ytimg.com/vi/${id}/hqdefault.jpg"
 

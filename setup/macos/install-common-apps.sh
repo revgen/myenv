@@ -35,7 +35,7 @@ title "Install common applications using Brew"
 
 brew_install mas
 brew_install bash bash-completion
-brew_install coreutils screen tree htop watch gettext wget jq unrar unzip p7zip lnav md5sha1sum ncdu pv figlet
+brew_install coreutils screen tree htop watch gettext wget jq unrar unzip p7zip lnav md5sha1sum ncdu pv figlet telnet
 brew_install cmatrix xscreensaver
 pip install --user termsaver
 brew_install lynx elinks openssl speedtest-cli youtube-dl

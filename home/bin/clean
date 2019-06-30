@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #=============================================================================
 ## Console tool to clean system: Trash, Downloads, Caches and etc.
 #
@@ -7,10 +7,10 @@
 #  date     :2017-07-24
 #  version  :1.0
 #
-## Usage: {SCRIPT_NAME} option"
-## Options:
+## Usage: {SCRIPT_NAME} <command>"
+## Commands:
 ##   trash          - clean system Trash
-##   downloads      - clean old files in Downloads
+##   downloads      - move files from Downloads to Trash (older than 30 days)
 ##   logs           - clean logs
 ##   temp           - remove all data in system temp directory
 ##
@@ -50,16 +50,17 @@ clean_temp() {
 
 clean_logs() {
     echo "Not Implemented"
+    exit 1
 }
 
 clean_downloads() {
     keep_days=${1:-"30"}
     location=${2:-"$HOME/Downloads"}
     echo "Search files in ${location} for deletion..."
-    old_files=$(find "${location}" -not -path '*/\.*' -maxdepth 1 -mindepth 1 -mtime +${keep_days})
+    old_files=$(find "${location}/" -not -path '*/\.*' -and -not path "*/KEEP*" -maxdepth 1 -mindepth 1 -mtime +${keep_days})
     if [ -n "${old_files}" ]; then
         echo "${old_files}"
-        count=$(echo ${old_files} | wc -l | sed 's/^[ ]*//g')
+        count=$(echo -e "${old_files}" | wc -l | sed 's/^[ ]*//g')
     else
         count=0
     fi
@@ -96,7 +97,7 @@ cmd=${1:-"--help"}
 
 case "${cmd}" in
     trash|--trash)          clean_trash ;;
-    downloads|--downloads)  clean_downloads 30 "$HOME/Downloads" ;;
+    downloads|--downloads)  clean_downloads ${DAYS:-"30"} "$HOME/Downloads" ;;
     history|--history)      clean_history ;;
     logs|--logs)            clean_logs ;;
     temp|--temp)            clean_temp ;;

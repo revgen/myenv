@@ -10,7 +10,7 @@ make_links_from_all() {
     orig_dir=${1}
     link_dir=${2}
     cd ${orig_dir}
-    for f in $(find "./" -type f; find "./" -type l); do
+    for f in $(find . -maxdepth 1 -type f; find "./" -maxdepth 1 -type l); do
         if [ -e "$f" ] && [ -x "$f" ]; then
             filename=$(basename "${f}")
             syslink=$(fullpath "${link_dir}/$filename")

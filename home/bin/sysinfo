@@ -54,12 +54,22 @@ show_slim_info() {
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
     echo "Uptime    : $(uptime)"
 }
+
+show_full_info() {
+    if [ -n "$(which inxi)" ]; then
+        inxi -F
+    else
+        echo "sudo apt-get install inxi"
+        echo "or"
+        echo "wget -O inxi smxi.org/inxi && chmod +x inxi && sudo mv inxi /usr/local/bin/"
+    fi
+}
 arg1=${1:-"--simple"}
 case "${arg1}" in
     help|--help|h|-h)
         sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
         exit 255;;
     simple|--simple) show_slim_info ;;
-    full|--full) inxi -F ;;
+    full|--full) show_full_info ;;
     *) inxi $@ ;;
 esac

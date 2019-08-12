@@ -19,6 +19,7 @@ case "${1:-"help"}" in
 esac
 log=/tmp/youtube-dl-$RANDOM.log
 echo "Downloading audio track (mp3) from ${1}..."
+echo "Log file is '${log}'"
 youtube-dl --extract-audio --audio-format mp3 "${1}" | tee "${log}"
 echo "Done"
 audio_file=$(grep "\[ffmpeg\] Destination" "${log}" | sed 's/\[ffmpeg\] Destination: //g')

@@ -1,0 +1,145 @@
+#!/bin/bash
+#=============================================================================
+## Helper script for docker
+## 
+## Usage: {SCRIPT_NAME} <command> <name> [options]
+## 
+##   name        - container or image name
+## Commands:
+##   create      - 
+##   remove      - 
+##   start       - 
+##   stop        - 
+##   status      - 
+##   logs        - 
+##   shell       - 
+##   help        - 
+## 
+## Options
+##   --service   - create a container with '--restart=always' flag
+##   --force     - force remove/stop a container
+##   --follow    - follow log output
+##   <command>   - command for execution (default: /bin/sh)
+##   <version>   - image version (default: readed from the )
+#
+#  Author  : Evgen Rusakov
+#  Version : 1.0.1
+#  Url     : https://github.com/revgen/docker-repository/bin/doki
+#
+#=============================================================================
+# Show help screen based on the commented text at the top of the currect script
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+    exit 255
+}
+
+# get current timezone: linux and os x version or UTC
+#TZ=$(ls -l /etc/localtime | awk -F"zoneinfo/" '{print $2}' 2>/dev/null || echo "UTC")
+
+create_image() {
+    img_name=${1}
+    img_version=${2}
+    echo "Build ${img_name} docker image from ${PWD}..."
+    [ ! -f "Dockerfile" ] && echo "Error: Dockerfile not found in the directory." && exit 1
+    if [ -z "${img_version}" ]; then
+        echo "Read version from Dockerfile"
+        img_version=$(grep "image.version" Dockerfile | cut -d"\"" -f2)
+    fi
+    if [ -z "${img_version}" ]; then
+        echo "ERROR: Version information not found. Please specify image version."
+        exit 1
+    fi
+    echo "Image name: ${img_name}:${img_version} docker image from ${PWD}..."
+    existed_image=$(docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' ${img_name}:${img_version})
+    if [ -n "${existed_image}" ]; then
+        echo "Image ${existed_image} exists"
+        read -n 1 -p "Do you want to update it {Y/n)? " opt; echo ""
+        if [ "${opt:-"Y"}" == "Y" ] || [ "${opt}" == "y" ]; then
+            echo "Remove image ${img_name}:${img_version}" && \
+            docker rmi ${img_name}:${img_version} >/dev/null && \
+            echo "Image ${img_name}:${img_version} removed"
+        else
+            echo "Keep existed image"
+        fi
+    fi
+    docker build -t ${img_name} ./ && \
+    echo "Add tag ${img_version}" && \
+    docker tag ${img_name}:latest ${img_name}:${img_version} && \
+    echo "Build docker image complete: $(docker images --format '{{.Repository}}:{{.Tag}} ({{.Size}})' ${img_name}:${img_version})"
+    if [ $? -eq 0 ]; then
+        echo ""
+        read -n 1 -p "Do you want to publish this image to the docker hub {Y/n)? " opt; echo ""
+        if [ "${opt:-"Y"}" == "Y" ] || [ "${opt}" == "y" ]; then
+            docker login && \
+            echo "Publishing..." && \
+            docker push ${img_name}:${img_version} && \
+            docker push ${img_name}:latest
+        else
+            echo "Skip publishing"
+        fi
+    else
+        echo "Error"
+    fi
+}
+
+#-----------------------------------------------------------------------------
+start_container() {
+    create_directories
+    echo "Starting '${NAME}' container..."
+    docker start "${NAME}" && echo "Started '${NAME} - successfully"
+}
+
+#-----------------------------------------------------------------------------
+stop_container() {
+    echo "Stopping '${NAME}' container ..."
+    docker stop "${NAME}" && echo "Stopped '${NAME}' - successfully"
+}
+
+#-----------------------------------------------------------------------------
+remove_container() {
+    stop_container
+    echo "Removing '${NAME}' container..."
+    docker rm "${NAME}" 2>/dev/null
+    echo "Done"
+}
+
+#-----------------------------------------------------------------------------
+# Show main information about a contaier
+status_container() {
+    img=$(docker images "${IMAGE}" --format "{{.Repository}}:{{.Tag}}")
+    if [ -n "${img}" ]; then echo "    Image: ${img}";
+    else echo "    Image: Error - Image '${NAME}' not found"; fi
+    id=$(docker ps --filter name=${NAME} --format "{{.ID}}")
+    echo "Container: ${NAME}"
+    if [ -n "${id}" ]; then
+        ports=$(docker ps --filter name="${NAME}" --format "{{.Ports}}")
+        status=$(docker ps --filter name="${NAME}" --format "{{.Status}}")
+        mounts=$(docker inspect --format="{{range .Mounts }}{{.Source}} -> {{.Destination}},{{end}}" "${NAME}" | tr -s ',' '; ')
+        started=$(docker inspect --format='{{.State.StartedAt}}' "${NAME}")
+        echo "*  Status: ${status}"
+        echo "* Started: ${started}"
+        echo "*      ID: ${id}"
+        echo "*   Ports: ${ports}"
+        echo "*  Mounts: ${mounts}"
+        return 0
+    else
+        echo "*  Status: stopped or not exists"   
+        return 1
+    fi    
+}
+
+#-----------------------------------------------------------------------------
+# Parse command line and handle a command
+case "${1:-"help"}" in
+    create|C)       shift; create $@ ;;
+    delete|remove)  shift; remove $@ ;;
+    start|s)        shift; start $@ ;;
+    stop|S)         shift; stop $@ ;;
+    shell|sh)       shift; docker exec -it "${NAME}" ${1:-"/bin/sh"} ;;
+    log|logs|l)     shift; docker logs "${NAME}" $@ ;;
+    status|st)      shift; status $@ ;;
+    info|I)         shift; status $@ ;;
+    help|h|H)       show_help ;;
+    *) echo "Error: Unknow command '${1}'."; show_help ;;
+esac
+

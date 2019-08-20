@@ -1,0 +1,28 @@
+#!/bin/bash
+
+show_help() {
+    echo "Encrypt/Decrypt file with AES256 (openssl required)"
+    echo "Usage: $(basename "${0}") <enc|dec> <src file> [output file]"
+    exit 1
+}
+
+case "${1:-"help"}" in
+    enc|encrypt)
+        src=${2}
+        out=${3:-"${src}.aes"}
+        echo "Encrypt: ${src} -> ${out}"
+        openssl enc -aes-256-cbc -salt -in "${src}" -out "${out}" \
+        && echo "Done: $(du -sh "${out}")"
+        ;;
+    dec|decryption)
+        src=${2}
+        out="${3:-"${src%.*}"}"
+        echo "Decrypt: ${src} -> ${out}"
+        openssl enc -aes-256-cbc -d -in "${src}" -out "${out}" \
+        && echo "Done: $(du -sh "${out}")"
+        ;;
+    help|--help|h|-h) show_help ;;
+    *) echo "Error: unknown command '${1}'."; exit 1;;
+esac
+
+

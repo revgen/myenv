@@ -6,7 +6,17 @@ play_file() {
         echo "Playing '${fn}'..."
         afplay "${fn}"
     else
-        echo "Not implemented"
+        fn=${1}
+        echo "Playing '${fn}'..."
+        if [ -n "$(which mplayer)" ]; then
+            mplayer "${fn}"
+        else
+            if [ -n "$(which mpg123)" ]; then
+                mpg123 "${fn}"
+            else
+                aplay "${fn}"
+            fi
+        fi
     fi
 }
 case "${1:-"test"}" in

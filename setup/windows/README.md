@@ -56,4 +56,5 @@ wget http://blog.stackexchange.com/ -UseBasicParsing -OutFile out.html
 
 ## Knowledge Base
 
+* Open startup folder in Windows 10: Open "Run" dialog (Win+R) -> Execute "shell:startup"
 * Docker sometimes doesn't work on the Windows inside the Virtual Machine - [see](https://github.com/docker/for-win/issues/574#issuecomment-442661635)

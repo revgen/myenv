@@ -44,9 +44,9 @@ get-netadapter
 1. Download git from the official site: https://git-scm.com/download/win
 2. Install in into the User Space: **%USERPROFILE%/AppData/Local/Programs/Git**
 
-Using ssh keys ([good docs](http://guides.beanstalkapp.com/version-control/git-on-windows.html)):
-1. Generate key with ```puttygen.exe```
-2. Add key into the ```pageagent.exe```
+Using ssh key with git on Windows ([documentation](http://guides.beanstalkapp.com/version-control/git-on-windows.html)):
+1. Generate key with ```puttygen.exe``` or use existed one.
+2. Add key into the ```pageagent.exe```.
 3. Use ```plink.exe``` as a SSH agent for the git by using a system environment variable:
 ```
 GIT_SSH=c:\Program Files\PuTTY\plink.exe

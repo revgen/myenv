@@ -14,7 +14,7 @@ fi
 
 alias c='clear'
 alias toclip='clip'
-alias ws='cd "$USERPROFILE\Documents\Workspace"; pwd'
+alias ws='cd "${HOME}/Workspace"; pwd'
 alias mc='start /MAX "mc.exe"'
 alias apk='choco'
 alias apt='choco'

@@ -1,6 +1,7 @@
 Windows notes
 ## Hotkeys (https://support.microsoft.com/en-us/help/12445/windows-keyboard-shortcuts)
 
+
 Win+Down - Restore (Maximized to regular) -> Minimized
 Win+Up - Restore (Minimized to regular) -> Maximized
 
@@ -46,6 +47,11 @@ get-netadapter
 
 
 ## Core tools inside the User Environment (you don't need Administration Permissions)
+
+Add any path to system envyronment PATH varibale (in User Space, you don't need Administrators permissions):
+```powershell
+PS> [Environment]::SetEnvironmentVariable("Path", $env:Path+";"+"<custom directory file name>", "User")
+```
 
 ### Node js
 1. Download zip package: https://nodejs.org/dist/v10.16.3/node-v10.16.3-win-x64.zip

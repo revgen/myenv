@@ -29,6 +29,11 @@ Invoke-WebRequest -Uri https://aka.ms/wsl-ubuntu-1804 -OutFile Ubuntu.appx -UseB
 
 ## Powershell
 
+### Allow running scripts in PowerShell (Fix: Running scripts is disabled on this system)
+```powershell
+PS > Set-ExecutionPolicy RemoteSigned 
+```
+
 ### Powershell profile
 
 Default powershell profile location: %USERPROFILE%\Documents\WindowsPowerShell\profile.ps1

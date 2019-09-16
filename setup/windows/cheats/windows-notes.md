@@ -39,6 +39,20 @@ Powershell
 get-netadapter
 ```
 
+## Git on Windows
+
+1. Download git from the official site:
+2. Install in into the User Space: 
+
+Using ssh keys ([good docs](http://guides.beanstalkapp.com/version-control/git-on-windows.html)):
+1. Generate key with ```puttygen.exe```
+2. Add key into the ```pageagent.exe```
+3. Use ```plink.exe``` as a SSH agent for the git by using a system environment variable:
+```
+GIT_SSH=c:\Program Files\PuTTY\plink.exe
+```
+4. Now you can use ```git clone git@github.com/username/project.git```
+
 
 ## Core tools inside the User Environment (you don't need Administration Permissions)
 

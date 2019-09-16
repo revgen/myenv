@@ -41,8 +41,8 @@ get-netadapter
 
 ## Git on Windows
 
-1. Download git from the official site:
-2. Install in into the User Space: 
+1. Download git from the official site: https://git-scm.com/download/win
+2. Install in into the User Space: **%USERPROFILE%/AppData/Local/Programs/Git**
 
 Using ssh keys ([good docs](http://guides.beanstalkapp.com/version-control/git-on-windows.html)):
 1. Generate key with ```puttygen.exe```

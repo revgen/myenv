@@ -1,4 +1,4 @@
-Windows notes
+# Windows notes
 
 ## [Windows Keyboard Shortcuts](https://support.microsoft.com/en-us/help/12445/windows-keyboard-shortcuts)
 

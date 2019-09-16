@@ -30,6 +30,9 @@ function openExplorer($path) {
 function runVimDiff($file1, $file2) {
     gvim -c ":set columns=200 lines=50" -d "${file1}" "${file2}"
 }
+function runWhich($path) {
+    Get-Command "${path}" | Select-Object -ExpandProperty Definition
+}
 function runExit() { [Environment]::Exit(0) }
 function cdToWorkspace() { Set-Location $WS }
 function runAs() { Start-Process PowerShell -Verb RunAs }
@@ -43,6 +46,7 @@ function resetPS() { [Console]::ResetColor(); cls }
 
 
 # == Aliases ==================================================================
+Set-Alias -Name which   -Value runWhich
 Set-Alias -Name :q      -Value runExit
 Set-Alias -Name ll      -Value ls
 Set-Alias -Name c       -Value cls

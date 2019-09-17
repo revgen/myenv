@@ -54,6 +54,11 @@ Download a file from the console:
 Invoke-WebRequest http://blog.stackexchange.com/ -UseBasicParsing -OutFile out.html
 ``````
 
+## Symbol links
+```
+cmd /c 'mklink /D c:\fruit c:\apples\bananas\oranges'
+```
+
 ## Knowledge Base
 * [Windows keyboard Shortcuts](./notes/windows-shortcuts.md)
 * Open startup folder in Windows 10: Open "Run" dialog (Win+R) -> Execute "shell:startup"

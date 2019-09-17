@@ -1,6 +1,8 @@
 # Windows notes
 
 ## Get MAC address
+
+Settings -> Wi-Fi / Ethernet -> Hardware properties
 ```
 ipconfig /all
 ```

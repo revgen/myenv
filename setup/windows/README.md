@@ -51,10 +51,10 @@ Set-Alias -Name ll -Value ls
 
 Download a file from the console:
 ```powershell
-wget http://blog.stackexchange.com/ -UseBasicParsing -OutFile out.html
+Invoke-WebRequest http://blog.stackexchange.com/ -UseBasicParsing -OutFile out.html
 ``````
 
 ## Knowledge Base
-
+* [Windows keyboard Shortcuts](./notes/windows-shortcuts.md)
 * Open startup folder in Windows 10: Open "Run" dialog (Win+R) -> Execute "shell:startup"
 * Docker sometimes doesn't work on the Windows inside the Virtual Machine - [see](https://github.com/docker/for-win/issues/574#issuecomment-442661635)

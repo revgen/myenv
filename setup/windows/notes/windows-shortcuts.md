@@ -8,7 +8,7 @@
 | Win+Ctrl+D             | Add virtual desktop                                  |
 | Win+Ctrl+F4            | Close virtual desktop                                |
 | Win+Shift+Left/Right   | Move current app to the next/prev display            |
-| Win+Shift+Shift+Left/Right  |Sticky left/right to the screen                       |
+| Win+Ctrl+Shift+Left/Right  |Sticky left/right to the screen                       |
 | Win+I                  | Open windows settings                                |
 | Win+A                  | Open action/notification center (right panel)        |
 | Win+Alt+D              | Show/hide calendar on the desktop                    |

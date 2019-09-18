@@ -56,6 +56,7 @@ Set-Alias -name du      -Value dirSize
 Set-Alias -name du0     -Value dirSize
 Set-Alias -name open-explorer -Value openExplorer
 Set-Alias -Name reset   -Value resetPS
+Set-Alias -Name toclip  -Value clip
 
 Set-Alias -Name apk     -Value choco
 Set-Alias -Name apt     -Value choco

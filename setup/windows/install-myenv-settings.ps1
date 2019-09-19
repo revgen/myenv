@@ -47,8 +47,16 @@ download "${repo}/setup/windows/install-core-tools.ps1" "${dest}\Downloads\insta
 # == Special settings ====================================================================
 
 # Settings for GIT
+# Settings for gvimdiff tool
 git config --global difftool.gvimdiff.cmd 'gvim -c \":set columns=200 lines=50\" -d \"$LOCAL\" \"$REMOTE\"'
-git config --global diff.tool gvimdiff
+
+# Settings for Compare It! v3 tool (default tool for diff and merge)
+git config --global difftool.compareit.cmd 'wincmp3.exe \"$LOCAL\" //=\"Old Version\" \"$REMOTE\"'
+git config --global diff.tool compareit
+git config --global mergetool.compareit.cmd 'wincmp3.exe \"$LOCAL\" //=\"Old Version\" \"$REMOTE\"'
+git config --global mergetool.compareit.trustExitCode false
+git config --global merge.tool compareit
+
 # Fix: git: 'credential-cache' is not a git command
 git config --global credential.helper wincred
 

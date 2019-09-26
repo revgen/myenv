@@ -20,6 +20,7 @@
     ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
     ls = log --pretty=format:"%C(yellow)%h\\ %C(green)%ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short --graph
     l = "!sh -c 'git ls'"
+    lt = log --all --decorate --oneline --graph
     tree = "log --graph --abbrev-commit --decorate --all --format=format:\"%C(bold blue)%h%C(reset) - %C(bold cyan)%aD%C(dim white) - %an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)%n %C(white)%s%C(reset)\""
     cfg = config --list
     info = "!sh -c 'printf \"Path:\n  %s\n\" ${PWD} && printf \"Git config:\n\" && git config --list | grep "^user" | sort | uniq && printf \"Git remote:\n  \" && git remote -v | tail -n 1 | cut -f2 && echo "Git local branches:" && git branch && git status --short --branch'"

@@ -18,5 +18,19 @@ alias ws='cd "${HOME}/Workspace"; pwd'
 alias mc='start /MAX "mc.exe"'
 alias apk='choco'
 alias apt='choco'
+alias vscode='code'
+
+# ---- Windows specific --------------
+export GIT_SSH="/c/Program Files/PuTTY/plink.exe"
+# force using color for node.js under the Windows Mintty
+export FORCE_COLOR=true
+
+sudo() {
+    if [ "${1:-"--help"}" == "--help" ]; then
+        echo "Usage: sudo <command>"
+        return 1
+    fi
+    powershell -Command "Start-Process cmd -Verb RunAs -ArgumentList '/c $@'"
+}
 
 uname -a

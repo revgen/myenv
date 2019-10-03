@@ -12,6 +12,9 @@ else
     export PS1="\u@\h:\W\$ "
 fi
 
+# Bash history settings
+export HISTCONTROL=ignoreboth:erasedups
+
 alias c='clear'
 alias toclip='clip'
 alias ws='cd "${HOME}/Workspace"; pwd'
@@ -19,6 +22,11 @@ alias mc='start /MAX "mc.exe"'
 alias apk='choco'
 alias apt='choco'
 alias vscode='code'
+alias du0='du -sh'
+
+du1() {
+    du -hd 1 "${1:-"."}" | sort -h
+}
 
 # ---- Windows specific --------------
 export GIT_SSH="/c/Program Files/PuTTY/plink.exe"
@@ -32,5 +40,9 @@ sudo() {
     fi
     powershell -Command "Start-Process cmd -Verb RunAs -ArgumentList '/c $@'"
 }
+
+if [ -z "$(which code 2>/dev/null)" ] && [ -z "$(alias | grep code | grep ' code=')" ]; then
+    alias code='"${USERPROFILE}/AppData/Local/Programs/Microsoft VS Code/Code.exe"'
+fi
 
 uname -a

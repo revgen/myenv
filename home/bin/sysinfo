@@ -78,9 +78,10 @@ show_slim_info() {
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
 }
 
-show_full_info() {
+execute_inxi() {
     if [ -n "$(which inxi)" ]; then
-        inxi -F
+        if [ "${DEBUG}" == "true" ]; then echo "Execute: inxi ${1} ${2} ${3}"; fi
+        $(which inxi) ${1} ${2} ${3}
     else
         echo "sudo apt-get install inxi"
         echo "or"
@@ -93,7 +94,7 @@ case "${arg1}" in
     help|--help|h|-h)
         sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
         exit 255;;
-    simple|--simple) show_slim_info ;;
-    full|--full) show_full_info ;;
-    *) inxi $@ ;;
+    simple|--simple|-S) show_slim_info ;;
+    full|--full|-F) execute_inxi -mF ;;
+    *) execute_inxi $@ ;;
 esac

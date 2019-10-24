@@ -9,6 +9,7 @@ echo "Mute the sound"
 amixer set Master mute
 
 echo "Lock workstation"
-gnome-screensaver-command -l
+xdg-screensaver lock
+#gnome-screensaver-command -l
 
 echo "Done"

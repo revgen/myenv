@@ -2,7 +2,7 @@
 echo "--[Begin: $(basename "${0}")]-----------------"
 
 sudo apt install docker.io
-sudo pip install docker-compose
+#sudo pip install docker-compose
 # The following commands will start Docker and ensure that starts after the reboot
 sudo systemctl start docker
 sudo systemctl enable docker

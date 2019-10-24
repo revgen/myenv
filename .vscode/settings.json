@@ -30,8 +30,8 @@
     "python.pythonPath": "/usr/local/bin/python3",
     "python.analysis.logLevel": "Warning",
     "python.linting.enabled": true,
-    "python.linting.pep8Enabled": true,
-    "python.linting.pep8Args": [ "--ignore=E501" ],
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pycodestyleArgs": [ "--ignore=E501" ],
     "python.jediEnabled": false,
 
     "[markdown]": {

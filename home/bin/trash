@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #=======================================================================
 ## Remove file or directory to the trash
 ## Usage: {SCRIPT_NAME} <path|--help|empty|size>
@@ -10,7 +10,11 @@
 ##   empty    - empty user's trash
 ##   help     - show this help screen
 #=======================================================================
-TRASH=$HOME/.Trash
+if [ "$(uname -s)" == "Darwin" ]; then
+    TRASH=${HOME}/.Trash
+else
+    TRASH=${HOME}/.local/share/Trash
+fi
 SIZE=$(du -hd 0 "${TRASH}" | awk '{print $1}')
 
 show_help() {

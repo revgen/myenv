@@ -12,6 +12,7 @@ alias moc='mocp'
 alias gksu='pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS'
 alias mvim='gvim'
 alias gnome-vim='gvim'
+alias xopen='xdg-open'
 
 export JAVA_HOME="/usr/lib/jvm/java-8-oracle/"
 

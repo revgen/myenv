@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #=============================================================================
 ## Chrome Command Line Interface
 ## Uses: {SCRIPT_NAME} [command]

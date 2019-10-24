@@ -1,12 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 
-install xdotool
-install xubuntu-restricted-extras
+sudo apt installl -y evince xdotool wmctrl xclip simple-scan remmina keepassxc gparted
+sudo apt install mplayer ffmpeg youtube-dl kid3
+sudo apt install -y lightdm lightdm-gtk-greeter-settings
 
-echo "============================================================"
-tools="xfce4-terminal parole keepassx evince"
-echo "Install core linux tools: ${tools}"
-sudo apt-get install $(echo ${tools} | sed 's/,/ /g')
+if [ -n "$(grep "^NAME" /etc/os-release | grep -i "ubuntu")" ]; then
+    # ubuntu specific tools
+    sudo apt install -y gnome-sound-recorder dconf-tools gnome-tweaks
+    sudo apt purge -y gnome-software
+    sudo apt purge gdm3
+fi
 
-echo "Done"
-
+sudo apt-get install blueman
+sudo apt install libreoffice-calc libreoffice-writer

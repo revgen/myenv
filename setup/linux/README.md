@@ -18,6 +18,22 @@ sudo dpkg-reconfigure console-setup
 ```
 
 ## SSH settings
+
+### Generate ssh keys and copy public key to the server
+
+```bash
+ssh-keygen -f <server-name>
+ssh-copy-id -i ~/.ssh/<serveer-name>.pub <server-name>
+```
+
+Check cnnection with key
+
+```bash
+ssh <server-name>
+```
+
+### Configuration
+
 ```bash
 sudo vim /etc/ssh/sshd_config
 ```
@@ -39,7 +55,6 @@ Who can use:
 AllowUsers user1 user2
 AllowGroup group1 group2
 ```
-
 
 ### Enable two-factor auth for SSH connection (draft - not tested) 
 1. sudo apt install google-authenticator

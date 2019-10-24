@@ -1,0 +1,156 @@
+#!/bin/bash
+#=======================================================================
+## Create thumbnail image file in different formats:
+##  images, pdf, audio, video, and etc.
+## -------------------------------------------
+##
+## Usage: {SCRIPT_NAME} <source path> [output file]
+##
+## Parameters:
+##  source  - path to  the file or directory
+##  output  - path to the output thumbnail file (jpg or png formats).
+##            If output file not specified then a thumbnail file will be
+##            created with the source file name in a '.thumbnail' subdirectory.
+##
+## System environments:
+##  THUMBNAIL_SIZE  - thumbnail image size (default: 480x480)
+##  THUMBNAIL_EXT   - thumbnail extension (default: jpg)
+##  TEMP            - directory fo temporary files (default: $TEMP or /tmp)
+##
+## Requirements: bash, imagemagick, ghostscript, paps
+##
+## -------------------------------------------
+#  author   : Evgen Rusakov
+#  version  : 1.0.0
+#  license  : MIT
+# 
+# Good example: https://stackoverflow.com/questions/8631076/what-is-the-fastest-way-to-generate-image-thumbnails-in-python
+#
+#=======================================================================
+THUMBNAIL_SIZE=${THUMBNAIL_SIZE:-"480x480"}
+THUMBNAIL_EXT=${THUMBNAIL_EXT:-"jpg"}
+TEMP=${TEMP:-"${TMP:-"${TMPDIR:-"/tmp"}"}"}
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+    echo ""
+    show_version
+    echo ""
+    exit 255
+}
+debug() { if [ "${DEBUG}" == "true" ]; then echo " - $@"; fi; }
+
+show_version() {
+    bash --version | grep version | grep bash
+    echo "$(basename "${0}") $(grep "version  :" "${0}" | head -n 1 | awk -F": " '{print $2}'), ${0}"
+    im_path=$(which convert)
+    im_version=$(convert --version | grep -i ^version | sed 's/Version: //g' | awk '{print $1" "$2}')
+    if [ -n "${im_path}" ]; then echo "${im_version}, ${im_path}";
+    else "Error: imagemagick not found"; fi
+    gs_path=$(which gs)
+    gs_version=$(echo "Ghostscript $(gs --version)")
+    echo "${gs_version}, $(which gs)"
+}
+
+_create_image_thumbnail() {
+    debug "Thumbnail (image): ${1} -> ${2}"
+    convert "${1}" -thumbnail "${3}" "${2}" \
+    && debug "Success: ${2}"
+}
+
+_create_pdf_thumbnail() {
+    debug "Thumbnail (pdf): ${1} -> ${2}"
+    convert "${1}[0]" -background white -alpha remove -thumbnail "${3}" "${2}" \
+    && debug "Success: ${2}"
+}
+
+_create_text_thumbnail() {
+    tmpfile="${TEMP}/${RANDOM}.pdf"
+    debug "Convert to PDF first: ${1} -> ${tmpfile}"
+    paps "${1}" > "${tmpfile}" && _create_pdf_thumbnail "${tmpfile}" "${2}" "${3}"
+    errcode=$?
+    rm "${tmpfile}"
+    return ${errcode}
+}
+
+_create_simple_thumbnail() {
+    text="$4"
+    font="DejaVu-Sans-Mono-Bold"        # all fonts: convert -list font
+    len=$(echo "${text}" | wc -m)       # real length = len - 1
+    if [ ${len} -le 3 ]; then font_size=500;
+    else if [ ${len} -lt 5 ]; then font_size=300; else font_size=200; fi;
+    fi
+    debug "Thumbnail (custom:${text}): ${1} -> ${2} (${font} / ${font_size})"
+    convert -size "${3}" \
+        -background "${5:-'White'}" -gravity Center \
+        -weight 700 -font "${font}" -pointsize ${font_size} \
+        caption:"${text}" "${2}" \
+    && debug "Success: ${2}"
+}
+
+create_thumbnail() {
+    src="${1}"
+    dest="${2}"
+    filename="$(basename "${src}")"
+    name="${filename%.*}"
+    ext=$(echo ${filename##*.} | tr "[:upper:]" "[:lower:]")
+    if [ -n "${dest}" ]; then
+        dest_dir=$(dirname "${dest}")
+        dest_path=${dest}
+    else
+        dest_dir="$(dirname "${src}")/.thumbnails"
+        dest_path="${dest_dir}/${filename}.${THUMBNAIL_EXT}"
+    fi
+    if [ ! -d "${dest_dir}" ]; then mkdir "${dest_dir}"; fi
+    case "${ext}" in
+        jpg|jpeg|png|bmp|tiff)
+            _create_image_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}";;
+        pdf)
+            _create_pdf_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}";;
+        txt|log|md)
+            _create_text_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}";;
+        doc|docx|rtf|ods)
+            _create_simple_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}" "DOC" '#A9D0F5';;
+        xls|xlsx|csv)
+            _create_simple_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}" "▦" '#D0F5A9';;
+        mp3|wav|ogg|wva)
+            _create_simple_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}" "♫" '#A9D0F5';;   # ♬
+        mov|avi|mpg|mpeg)
+            _create_simple_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}" "VIDEO" '#81F79F';;
+        zip|tar|gz|tzg|bz|bzip|rar|cab)
+            _create_simple_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}" "PACK" '#D0F5A9';;
+        *)
+            _create_simple_thumbnail "${src}" "${dest_path}" "${THUMBNAIL_SIZE}" "?" '#D8D8D8';;
+    esac
+    errcode=$?
+    if [ ${errcode} -ne 0 ]; then
+        echo "Thumbnail not crated: error code = ${errorcode}"
+        return 1
+    fi
+    echo "Thumbnail file created: ${dest_path}"
+}
+
+
+
+case "${1:-"--help"}" in
+    version|--version)  show_version ;;
+    help|--help)        show_help ;;
+    *)
+        find "${1}" -type f -not -path '*/\.*' | while read path; do
+            create_thumbnail "${path}" "${2}" "${3}" "${4}" "${5}" "${6}"
+        done;;
+esac
+
+#------------------------------------------------------------------------------
+# echo "The code below will fix the error:"
+# echo "convert-im6.q16: not authorized 'sample.pdf' @ error/constitute.c/ReadImage/412."
+# echo "Create symbol links for 'gs'"
+# sudo ln -s /usr/local/bin/gs /usr/bin/gs
+# sudo ln -s /usr/bin/gs /usr/local/bin/gs
+# [ ! -f "/etc/ImageMagick-6/policy.xml.orig" ] && cp /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.orig
+#
+# sudo sed -i "s/rights\=\"none\" pattern\=\"PS\"/rights\=\"read\|write\" pattern\=\"PS\"/" /etc/ImageMagick-6/policy.xml
+# sudo sed -i "s/rights\=\"none\" pattern\=\"EPI\"/rights\=\"read\|write\" pattern\=\"EPI\"/" /etc/ImageMagick-6/policy.xml
+# sudo sed -i "s/rights\=\"none\" pattern\=\"PDF\"/rights\=\"read\|write\" pattern\=\"PDF\"/" /etc/ImageMagick-6/policy.xml
+# sudo sed -i "s/rights\=\"none\" pattern\=\"XPS\"/rights\=\"read\|write\" pattern\=\"XPS\"/" /etc/ImageMagick-6/policy.xml
+#------------------------------------------------------------------------------

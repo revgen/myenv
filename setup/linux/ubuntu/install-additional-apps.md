@@ -14,6 +14,8 @@ sudo apt-get install -y webp imagemagick
 sudo apt-get install -y youtube-dl
 sudo apt-get install -y docker.io
 sudo apt-get install -y
+# support exfat
+sudo apt-get install -y exfat-fuse exfat-utils
 ```
 
 ### Additional X tools

@@ -1,5 +1,0 @@
-#!/bin/sh
-ostype=$(uname -s)
-/usr/bin/open -a DataGrip $@
-
-

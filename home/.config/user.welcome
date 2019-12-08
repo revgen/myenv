@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+show_platform() {
+    uname -m | sed 's/x86_/x/g' | sed 's/amd/x/g'
+}
+show_system() {
+    if [ "$(uname -s)" == "Darwin" ]; then
+        sw_vers | grep Product | cut -d":" -f2 | xargs
+        return 0
+    fi
+    if [ -f "/etc/os-release" ]; then
+        grep "^NAME\|VERSION_ID" /etc/os-release | sort |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs
+        return 0
+    fi
+    uname -sr
+}
+show_uptime() {
+    uptime | cut -d"l" -f1 | sed 's/[, ]*$//g' | sed 's/^ //g'
+}
+show_users() {
+    w -h | cut -d " " -f1 | sort -r | uniq -c | awk '{printf"%s%s (%d)",c,$2,$1;c=", "}'
+}
+show_ips() {
+    if which ifconfig 2>&1 >/dev/null; then
+        ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'
+    else
+        ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+    fi
+}
+# ------[ Customer welcome screen ]--------------------------------------------
+if which figlet > /dev/null; then
+    echo -en "\e[34m\e[1m"
+    hostname | figlet
+    echo -en "\e[0m"
+else
+    echo -e "\e[97m\e[1m  Hostname:\e[0m\e[34m $(hostname)\e[0m"
+fi
+echo -e "\e[97m\e[1m    System:\e[0m\e[32m $(show_system) ($(show_platform))\e[0m"
+echo -e "\e[97m\e[1m     Users:\e[0m\e[93m $(show_users)\e[0m"
+echo -e "\e[97m\e[1m Addresses:\e[0m\e[96m $(show_ips)\e[0m"
+echo -e "\e[97m\e[1m    Uptime:\e[0m\e[37m $(show_uptime)\e[0m"
+#echo -e "\e[37m══════════════════════════════════════════════════\e[0m"
+

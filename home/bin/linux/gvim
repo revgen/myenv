@@ -1,12 +1,14 @@
 #!/bin/bash
 
+reometry=80x0
+
 if [ -n "$(which gnome-terminal)" ]; then
-    terminal="gnome-terminal --hide-menubar --geometry=120x50 -- "
+    terminal="gnome-terminal --hide-menubar --geometry=${geometry} -- "
 else
     if [ -n "$(which xfce4-terminal)" ]; then
-        terminal="xfce4-terminal --hide-menubar --geometry=120x50 -- "
+        terminal="xfce4-terminal --hide-menubar --geometry=${geometry} -- "
     else
-        terminal="xterm -geometry 100x35"
+        terminal="xterm -geometry 80x35"
     fi
 fi
 if [ "${DEBUG}" == "true" ]; then

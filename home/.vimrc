@@ -48,10 +48,6 @@ set noswapfile
 
 
 "------------------------------------------------------------------------------
-" Security settings
-"set cm=blowfish2
-
-"------------------------------------------------------------------------------
 " Search / Replace
 nnoremap / /\v
 vnoremap / /\v
@@ -59,14 +55,6 @@ nnoremap <silent> <cr> :nohlsearch<cr><cr>  " disable higlighting on Enter key
 set hlsearch                    " highlight searche result
 set ignorecase smartcase        " make searches case-insensitive, unless they
                                 "   contain upper-case letters
-
-
-"------------------------------------------------------------------------------
-" Folding
-set foldmethod=manual           " manual fold
-set foldnestmax=3               " deepest fold is 3 levels
-set nofoldenable                " don't fold by default
-
 
 "------------------------------------------------------------------------------
 " show special characters settings
@@ -178,38 +166,18 @@ vmap <S-Up> k
 vmap <S-Down> j
 
 
-"-[Integrating with GPG]-------------------------------------------------------
-" Transparent editing of gpg encrypted files.
-" By Wouter Hanegraaff
-augroup encrypted
-  au!
 
-  " First make sure nothing is written to ~/.viminfo while editing
-  " an encrypted file.
-  autocmd BufReadPre,FileReadPre *.gpg set viminfo=
-  " We don't want a swap file, as it writes unencrypted data to disk
-  autocmd BufReadPre,FileReadPre *.gpg set noswapfile
+"-[Encrypt/Decrypt with AES (openssl)]-----------------------------------------
+" https://vim.fandom.com/wiki/Encryption
+" Specify a blowfish2 encryption method (requires Vim version 7.4.399+)
+set cm=blowfish2
+" Disable ~/.viminfo file for encrypted file.
+autocmd BufReadPre,FileReadPre *.aes set viminfo=
+" Disable swap for unencrypted data
+autocmd BufReadPre,FileReadPre *.aes set noswapfile
+" Disable backup
+autocmd BufReadPre,FileReadPre *.aes set nobackup
 
-  " Switch to binary mode to read the encrypted file
-  autocmd BufReadPre,FileReadPre *.gpg set bin
-  autocmd BufReadPre,FileReadPre *.gpg let ch_save = &ch|set ch=2
-  " (If you use tcsh, you may need to alter this line.)
-  autocmd BufReadPost,FileReadPost *.gpg '[,']!gpg --decrypt 2> /dev/null
 
-  " Switch to normal mode for editing
-  autocmd BufReadPost,FileReadPost *.gpg set nobin
-  autocmd BufReadPost,FileReadPost *.gpg let &ch = ch_save|unlet ch_save
-  autocmd BufReadPost,FileReadPost *.gpg execute ":doautocmd BufReadPost " . expand("%:r")
-
-  " Convert all text to encrypted text before writing
-  " (If you use tcsh, you may need to alter this line.)
-  autocmd BufWritePre,FileWritePre *.gpg '[,']!gpg --default-recipient-self -ae 2>/dev/null
-  " Undo the encryption so we are back in the normal text, directly
-  " after the file has been written.
-  autocmd BufWritePost,FileWritePost *.gpg u
-augroup END
-
-"-[Plugins]--------------------------------------------------------------------
-let g:GPGPossibleRecipients=["Example User <example@example.com>"]
-
+"------------------------------------------------------------------------------
 

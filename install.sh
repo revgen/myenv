@@ -5,7 +5,7 @@
 ## Description:
 ##   directory - myenv home directory, you can specify it with first argument or
 ##               with MYENVHOME environment veriable.
-##               Default: MYENVHOME = ${HOME}/.local/var/myenv
+##               Default: MYENVHOME = ${HOME}/.local/src/myenv
 #-----------------------------------------------------------------------------
 #                         WORKFLOW
 # install.sh
@@ -95,7 +95,7 @@ case "${1:-""}" in
         exit 255 ;;
     *) MYENVHOME=${1:-"${MYENVHOME:-""}"} ;;
 esac
-[ -z "${MYENVHOME}" ] && MYENVHOME=${HOME}/.local/var/myenv
+[ -z "${MYENVHOME}" ] && MYENVHOME=${HOME}/.local/src/myenv
 echo "MYENVHOME = ${MYENVHOME}"
 
 echo "==[OS: ${ostype}] ========================================="

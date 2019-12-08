@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 SYMBOL=█
 # 32 / 64 / 128
 DIVIDER=32

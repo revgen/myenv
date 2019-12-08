@@ -1,0 +1,19 @@
+#!/bin/bash
+#=============================================================================  
+## Locking Linux workstation  
+#=============================================================================
+echo "Mute the sound"
+amixer set Master mute
+
+if [ -n "${DISPLAY}" ]; then
+    echo "Switch keyboard layout to 'english'"
+    gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell \
+    --method org.gnome.Shell.Eval "imports.ui.status.keyboard.getInputSourceManager().inputSources[0].activate()"
+    # ibus engine xkb:us::eng
+    echo "Lock workstation"
+    xdg-screensaver lock
+    #gnome-screensaver-command -l
+    echo "Done"
+else
+    vlock -a
+fi

@@ -78,14 +78,11 @@ show_slim_info() {
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
 }
 
-execute_inxi() {
-    if [ -n "$(which inxi)" ]; then
-        if [ "${DEBUG}" == "true" ]; then echo "Execute: inxi ${1} ${2} ${3}"; fi
-        $(which inxi) ${1} ${2} ${3}
+show_ip_addr() {
+    if [ -z "$(which ifconfig)" ]; then
+        ip addr show
     else
-        echo "sudo apt-get install inxi"
-        echo "or"
-        echo "wget -O inxi smxi.org/inxi && chmod +x inxi && sudo mv inxi /usr/local/bin/"
+        ifconfig
     fi
 }
 
@@ -98,3 +95,4 @@ case "${arg1}" in
     full|--full|-F) execute_inxi -mF ;;
     *) execute_inxi $@ ;;
 esac
+

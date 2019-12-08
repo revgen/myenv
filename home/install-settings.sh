@@ -10,7 +10,6 @@ SCRIPT_DIR=$(fullpath "$(dirname "${0}")")
 echo "==[ Install main settings: start ]========================================="
 echo ">>> Copy private environment settings"
 ln-safe "${MYENVHOME}/home/.vimrc" "$HOME/.vimrc"
-ln-safe "${MYENVHOME}/home/.screenrc" "$HOME/.screenrc"
 ln-safe "${MYENVHOME}/home/.gitconfig" "$HOME/.gitconfig"
 ln-safe "${MYENVHOME}/home/.vim" "$HOME/.vim"
 ln-safe "${MYENVHOME}/home/.mplayer" "$HOME/.mplayer"

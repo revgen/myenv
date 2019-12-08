@@ -104,7 +104,8 @@ function! s:OpenSSLReadPost()
         let l:cipher = "bf"
         let l:expr = "0,$!openssl " . l:cipher . " -d -a -salt"
     else
-        let l:expr = "0,$!openssl " . l:cipher . " -d -salt"
+        " let l:expr = "0,$!openssl " . l:cipher . " -d -salt"
+        let l:expr = "0,$!openssl " . l:cipher . " -md sha256  -d -salt"
     endif
 
     silent! execute l:expr
@@ -146,7 +147,8 @@ function! s:OpenSSLWritePre()
         let l:cipher = "bf"
         let l:expr = "0,$!openssl " . l:cipher . " -e -a -salt"
     else
-        let l:expr = "0,$!openssl " . l:cipher . " -e -salt"
+        " let l:expr = "0,$!openssl " . l:cipher . " -e -salt"
+        let l:expr = "0,$!openssl " . l:cipher . " -md sha256  -e -salt"
     endif
 
     silent! execute l:expr

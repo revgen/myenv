@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #=======================================================================
 ## Test internet speed from the command line
 ## Using: {SCRIPT_NAME} [0..9] [servers] [url]
@@ -52,9 +52,10 @@ show_servers() {
     echo "[3] download - http://speedtest.wdc01.softlayer.com/downloads/test500.zip"
     echo "[4] download - http://ipv4.download.thinkbroadband.com/20MB.zip"
     echo "[5] download - http://ipv4.download.thinkbroadband.com/50MB.zip"
-    echo "[6] download - http://ipv4.download.thinkbroadband.com/100MB.zip"
-    echo "[7] download - http://ipv4.download.thinkbroadband.com/200MB.zip"
-    echo "[8] download - http://speedtest.tele2.net/100MB.zip"
+    echo "[6] download - http://ipv4.download.thinkbroadband.com/200MB.zip"
+    echo "[7] download - http://speedtest.tele2.net/100MB.zip"
+    echo "[8] download - https://cdimage.debian.org/cdimage/archive/9.11.0/amd64/iso-cd/debian-9.11.0-amd64-netinst.iso"
+    echo "[9] download - https://cdimage.debian.org/cdimage/archive/9.11.0/amd64/iso-cd/debian-9.11.0-amd64-xfce-CD-1.iso"
     echo "[x] exit"
 }
 

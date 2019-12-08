@@ -1,0 +1,47 @@
+#!/bin/sh
+#------------------------------------------------------
+# Install 'msmtp' to the system
+# Copy updated file 'msmtprc.tmpl' into the /etc/msmtprc
+# Create symlink in the PATH to this script
+# # ln -s ${PWD}/sendmailslim /usr/bin/
+#------------------------------------------------------
+APP=$(basename "$0")
+
+show_help() {
+    echo "Usage: echo 'Email body' | ${APP} [subject]"    
+}
+
+gmail_config_template() {
+    echo '
+# Set default values for all following accounts.
+defaults
+auth            on
+tls             on
+tls_starttls    on
+#tls_certcheck  off
+tls_trust_file  /etc/ssl/certs/ca-certificates.crt
+logfile
+syslog      LOG_MAIL
+
+# Gmail
+account	    default
+host        smtp.gmail.com
+port        587
+from        username@gmail.com
+user        username@gmail.com
+password    SuPeR_aSsW0Rd'
+}
+
+FROM=$(grep ^from /etc/msmtprc | head -n 1 | sed 's/from[ ]*//g')
+TO=${ADMIN_EMAIL}
+SUBJECT=${1:-"Notification"}
+BODY=$(tee)
+
+logger -st "${APP}" "Sending email to ${TO}..."
+echo "From: Notifier <${FROM}>
+To: Admin <${TO}>
+Subject: [${HOSTNAME}] ${SUBJECT}
+
+${BODY}
+" | msmtp "${TO}" && logger -st "${APP}" "Success sent email to ${TO}."
+

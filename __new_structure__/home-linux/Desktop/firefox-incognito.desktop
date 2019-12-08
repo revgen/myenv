@@ -1,8 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Name=Firefox Incognito
-Exec=firefox --private-window --no-first-run --disable-save-password-bubble --no-default-browser-check %u
-Terminal=false
-Type=Application
-Icon=firefox
-#Exec=firefox -private-window

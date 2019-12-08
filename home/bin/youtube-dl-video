@@ -16,5 +16,5 @@ case "${1:-"help"}" in
     help|--help|h|-h) show_help;;
 esac
 echo "Downloading video from ${1}..."
-youtube-dl -f bestvideo+bestaudio "${1}" && echo "Done"
+youtube-dl --no-check-certificate -f bestvideo+bestaudio "${1}" && echo "Done"
 

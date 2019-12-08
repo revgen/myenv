@@ -1,6 +1,6 @@
 #!/bin/bash
 #=======================================================================
-## Return the full path
+## Calculate sum of all numbers in a column.
 ## Usage: {SCRIPT_NAME} <file name>
 ##        or
 ##        <cmd> | {SCRIPT_NAME}

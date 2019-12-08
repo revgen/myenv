@@ -88,3 +88,4 @@ case "${1}" in
     help|--help) show_help ;;
     *) start_session $@ ;;
 esac
+

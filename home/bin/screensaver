@@ -1,0 +1,53 @@
+#!/bin/bash
+#=======================================================================
+## Start screensaver in current terminal
+## Usage: {SCRIPT_NAME} <pipe|matrix|clock|clock2>
+#=======================================================================
+user_bin=${HOME}/.local/bin
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+start_pipes() {
+    mkdir -p "${user_bin}" 2>/dev/null
+    fn="${user_bin}/screensaver-pipes.sh"
+    if [ ! -f "${fn}" ]; then
+        echo "File not found '${fn}', try to download it."
+        wget -O "${fn}" "https://raw.githubusercontent.com/pipeseroni/pipes.sh/master/pipes.sh"
+    fi
+    bash "${user_bin}/screensaver-pipes.sh" -p 3 -t ${1:-0} -R -f 20 -r 7000
+}
+start_matrix() {
+    if [ -z "$(which cmatrix)" ]; then
+        echo "Error: Can't find cmatrix application. Please install it first."
+        echo "  # apt-get install cmatrix"
+        echo "  # brew install cmatrix"
+        exit 1
+    fi
+    cmatrix -sab -u2
+}
+
+start_clock() {
+    while true; do tput clear; date +"%H : %M : %S" | figlet -c ; sleep 1; done
+}
+
+start_clock2() {
+    if [ -z "$(which termsaver)" ]; then
+        echo "Error: Can't find termsaver application. Please install it first."
+        echo "  # apt-get install termsaver"
+        echo "  # pip install termsaver"
+        exit 1
+    fi
+    termsaver clock
+}
+case "$(echo ${1:-"pipes"} | sed 's/^[-]*//g')" in
+    pipe|pipes) shift; start_pipes $@ ;;
+    matrix|cmatrix) shift; start_matrix $@ ;;
+    clock) shift; start_clock $@ ;; 
+    clock2) shift; start_clock2 $@ ;;
+    help|--help) show_help ;;
+    *) echo "Error: command '${1}' not found."; exit 1 ;;
+esac
+

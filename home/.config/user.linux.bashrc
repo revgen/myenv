@@ -13,6 +13,8 @@ alias gksu='pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY DBUS_SESSION_BUS_
 alias mvim='gvim'
 alias gnome-vim='gvim'
 alias xopen='xdg-open'
+alias ncdu-root='sudo ncdu / --exclude /run --exclude /dev --exclude /proc --exclude /media --exclude /mnt --exclude /sys'
+alias cparted='cgdisk'
 
 export JAVA_HOME="/usr/lib/jvm/java-8-oracle/"
 

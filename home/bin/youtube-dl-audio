@@ -17,16 +17,12 @@ show_help() {
 case "${1:-"help"}" in
     help|--help|h|-h) show_help;;
 esac
-log=/tmp/youtube-dl-$RANDOM.log
+log=$(mktemp)
 echo "Downloading audio track (mp3) from ${1}..."
-echo "Log file is '${log}'"
-youtube-dl --extract-audio --audio-format mp3 "${1}" | tee "${log}"
-echo "Done"
+#echo "Log file is '${log}'"
+youtube-dl --no-check-certificate --extract-audio --embed-thumbnail --audio-format mp3 "${1}" | tee "${log}" 2> /dev/null
 audio_file=$(grep "\[ffmpeg\] Destination" "${log}" | sed 's/\[ffmpeg\] Destination: //g')
-id=$(grep "Downloading webpage" "${log}" | sed 's/\[youtube\] //g' | cut -d":" -f1)
-rm "${log}"
-echo "Result audio file: ${audio_file}"
-image_file=${audio_file%.*}.jpg
-echo "Downloading image for ${id}"
-wget -O "${image_file}" "http://i3.ytimg.com/vi/${id}/hqdefault.jpg"
+if [ ! -f "${audio_file}" ]; then exit 1; fi
+echo "Done: $(du -h "${audio_file}" | cut -f1 | sed 's/^[ ]*//g') ${audio_file}"
+rm -f "${log}"
 

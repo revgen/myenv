@@ -1,0 +1,29 @@
+#!/bin/sh
+#=======================================================================
+## Test disk speed with dd command
+## Usage: {SCRIPT_NAME} [directory where temp file willl be created]
+#=======================================================================
+test_speed() {
+    size=${1}
+    count=${2}
+    tmpfile=${path}/test-disk-speed-${RANDOM}.zero.img
+    >&2 echo "Creating temp file ${tmpfile} with a ${size} size ${count} times ..."
+    dd if=/dev/zero of=./testDiskSpeed.img bs=256m count=1 conv=sync  2>&1 |\
+        grep transferred |\
+        cut -d"(" -f2 | sed 's/)//g'
+
+    >&2 echo "Remove temp file ${tempfile}"
+    rm "${tmpfile}" 2>/dev/null
+}
+
+case "${1:-"$(pwd)"}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+path=${1:-"${PWD}"}
+tmpfile=${path}/test-disk-speed-${RANDOM}.zero.img
+
+test_speed 256m 1
+test_speed 10k 100
+

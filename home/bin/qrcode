@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+# pip install pyqrcode
+# pip install pyzbar
+# pip install pypng     - for encode
+
+# pip install Pillow    - for decode
+import sys
+
+def encode(output_file, text=None, scale=6):
+    import pyqrcode
+    if not text:
+        text = sys.stdin.read()
+
+    print(f'--[Encoding text]-----------------------------')
+    print(text)
+    print(f'Size: {len(text)}')
+    print('')
+    print(f'Output file: {output_file}')
+    qr = pyqrcode.create(text)
+    qr.png(output_file, scale=scale)
+    print(f'--[Text encoded]------------------------------')
+
+def decode(image_file, output_file=None):
+    from PIL import Image
+    from pyzbar.pyzbar import decode
+    print(f'--[Decoding image]----------------------------')
+    print(f'Image file: {image_file}')
+    res = decode(Image.open(image_file))
+    text = ''
+    if res and len(res) > 0 and res[0].data:
+        text = res[0].data.decode('utf8')
+
+    if output_file:
+        print(f'Save to file: {image_file}')
+    else:
+        print('Decoded text:')
+        print(text)
+    print(f'--[Image decoded]-----------------------------')
+
+encode('/tmp/test.png')
+decode('/tmp/test.png')

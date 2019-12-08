@@ -1,17 +1,0 @@
-—————[ Console Radio Player ]—————————————
-1. language: python
-2. Pandora: https://github.com/PromyLOPh/pianobar
-3. DI: https://friezy.ru, Current status: https://api.audioaddict.com/v1/di/track_history/channel/90/
-4. Other public list
-5. GitHub.com
-6. simple web server for control
-7.  
-
-List of all radio 
-https://hqradio.ru/data/config.json?t=1496420189812
-Current track info: 
-https://api.audioaddict.com/v1/di/track_history/channel/90/?per_page=5&time=1496420190108
-https://api.audioaddict.com/v1/di/track_history/channel/<channel-id>/?per_page=20&time=1496420190108
-[x].type == ‘track’ -> item.title, item.track, item.artist, item.display_artist, item.display_title 
-
-

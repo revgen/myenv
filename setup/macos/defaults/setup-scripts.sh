@@ -1,5 +1,5 @@
 #!/bin/bash
-export MYENVHOME=${MYENVHOME:-"${HOME}/.local/var/myenv"}
+export MYENVHOME=${MYENVHOME:-"${HOME}/.local/src/myenv"}
 . ${MYENVHOME}/home/.config/user.env
 export PATH=${MYENVHOME}/home/bin:${PATH}
 SCRIPT_DIR=${PWD}

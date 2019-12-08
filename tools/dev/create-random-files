@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+sizeMB=500
+echo "Work in '${PWD}' directory"
+read -p "Create random files with ${sizeMB}MB size. Continue (Y/n)? " opt
+if [ "${opt:-"y"}" != "y" ] && [ "${opt}" != "Y" ]; then echo "Skip"; exit 1; fi
+echo ""
+echo "Use Ctrl+C many time to stop"
+
+while true; do
+    dn=$(date +%d)
+    fn=$(date +%s)
+    mkdir -p ./${dn} 2>/dev/null
+    echo "Create empty file ${dn}/${fn} (${sizeMB}MB)"
+    dd if=/dev/random of=./${dn}/${fn}img bs=1m count=${sizeMB} || exit 1
+done

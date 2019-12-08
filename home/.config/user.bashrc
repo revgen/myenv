@@ -54,9 +54,9 @@ fi
 if [ -f "${WORKSPACE}/.config/.bashrc" ]; then . "${WORKSPACE}/.config/.bashrc"; fi
 
 # ------[ Customer welcome screen ]--------------------------------------------
-w | head -n 1
-echo -e "   Active users: $(w -h | cut -d " " -f1 | sort -r | uniq | awk '{printf"%s%s",c,$0;c=", "}')
-Local addresses: $(localip | awk '{printf"%s%s",c,$0;c=", "}')"
+if [ -f "${MYENVHOME}/home/.config/user.welcome" ]; then
+    ${MYENVHOME}/home/.config/user.welcome
+fi
 
 # ------[ Log ] ---------------------------------------------------------------
 if [ -n "$DISPLAY" ]; then

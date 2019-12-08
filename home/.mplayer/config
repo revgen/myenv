@@ -17,3 +17,7 @@ subalign=2
 # OSD
 # Set autoscale coefficient. (default: 6)
 subfont-osd-scale=4
+
+# Specify default video driver (see -vo help for a list).
+vo=xv
+

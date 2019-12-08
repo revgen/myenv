@@ -1,8 +1,10 @@
 #!/bin/sh
-path=${1:-"${HOME}/Music"}
-echo "Openning '${path}' with VLC.app"
+filename=${1:-"${HOME}/Music"}
+echo "Openning '${filename}' with VLC.app"
 if [ "$(uname -s)" == "Darwin" ]; then
-    /usr/bin/open -a VLC.app "${path}"
+    # Do not store a history
+    # sudo chflags schg "${HOME}/Library/Preferences/org.videolan.vlc.plist"
+    /usr/bin/open -a VLC.app "${filename}"
 else
-    /usr/bin/vlc "${1}"
+    /usr/bin/vlc "${filename}"
 fi

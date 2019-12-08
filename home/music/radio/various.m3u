@@ -1,4 +1,6 @@
 #EXTM3U
+#EXTINF: 0, Chocoradio
+https://choco.hostingradio.ru:10010/fm
 #EXTINF: 0, Classical WETA 90.9
 http://stream.weta.org:8000/fmlive?nocache=14207
 #EXTINF: 0, Ambient: stillstream.fm

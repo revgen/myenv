@@ -1,6 +1,0 @@
-#!/bin/sh
-if [ -z "${1}" ]; then
-    echo ${JAVA_HOME:-"$(/usr/libexec/java_home)"}
-else
-    /usr/libexec/java_home $@
-fi

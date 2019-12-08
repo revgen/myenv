@@ -1,7 +1,7 @@
 #!/bin/sh
 set -o nounset
 set -o errexit
-export MYENVHOME=${MYENVHOME:-"${HOME}/.local/var/myenv"}
+export MYENVHOME=${MYENVHOME:-"${HOME}/.local/src/myenv"}
 . ${MYENVHOME}/home/.config/user.env
 ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
 [ "${ostype}" != "linux" ] && echo "ERROR: Incorrect os type '${OSTYPE}'" && exit 1

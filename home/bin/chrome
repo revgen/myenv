@@ -76,5 +76,3 @@ case "${1:-"open"}" in
     * ) echo "Error: unknown command '${1}'"; exit 1
 esac
 
-
-# https://askubuntu.com/questions/631631/getting-internet-browsing-history-from-shell

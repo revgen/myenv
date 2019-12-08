@@ -1,0 +1,76 @@
+#!/bin/bash
+#=======================================================================
+## Show system information
+## Usage: {SCRIPT_NAME} [--full]
+#=======================================================================
+ostype=$(uname -s)
+os_info() {
+    if [ "${ostype}" == "Darwin" ]; then
+        sw_vers | grep Product | cut -d":" -f2 | xargs
+        return 0
+    fi
+    if [ -n "$(which lsb_release)" ]; then
+        lsb_release -d | sed 's/Description:[\t ]*//g'
+        return 0
+    fi
+    if [ -f /etc/debian_version ]; then
+        echo "Debian $(cat /etc/debian_version)"
+        return 0
+    fi
+    if [ -f "/etc/os-release" ]; then
+        cat /etc/os-release | sort | grep "^NAME\|VERSION_ID" |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs
+        return 0
+    fi
+    uname -a
+}
+cpu_info() {
+    if [ "${ostype}" == "Darwin" ]; then
+        top -l 1 -s 0 | awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+    else
+        top -n  1 | awk ' /Cpu/ || /Mem/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+    fi
+}
+sys_disk_size() {
+    if [ "${ostype}" == "Darwin" ]; then
+        df -h | grep "/$" | awk '{print ""$4" of "$2" available (capacity="$5")"}'
+    else
+        # TODO
+        df -h | grep "/$" | awk '{print ""$4" of "$2" available (capacity="$5")"}'
+    fi
+}
+active_users() {
+    w -h | cut -d " " -f1 | sort -r | uniq | awk '{printf"%s%s",c,$0;c=", "}'
+}
+show_slim_info() {
+    echo "==[ System information ]=="
+    echo "Hostname  : $(hostname)"
+    echo "Users     : $(active_users)"
+    echo "OS        : $(os_info)"
+    echo "Platform  : $(uname -m | sed 's/x86_64/x64/g')"
+    echo "Local IP  : $(localip | awk '{printf"%s%s",c,$0;c=", "}')"
+    cpu_info
+    echo "Disk      : $(sys_disk_size)"
+    echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
+    echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
+    echo "Uptime    : $(uptime)"
+}
+
+execute_inxi() {
+    if [ -n "$(which inxi)" ]; then
+        if [ "${DEBUG}" == "true" ]; then echo "Execute: inxi ${1} ${2} ${3}"; fi
+        $(which inxi) ${1} ${2} ${3}
+    else
+        echo "sudo apt-get install inxi"
+        echo "or"
+        echo "wget -O inxi smxi.org/inxi && chmod +x inxi && sudo mv inxi /usr/local/bin/"
+    fi
+}
+arg1=${1:-"--simple"}
+case "${arg1}" in
+    help|--help|h|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    simple|--simple|-S) show_slim_info ;;
+    full|--full|-F) execute_inxi -mF ;;
+    *) execute_inxi $@ ;;
+esac

@@ -41,6 +41,12 @@ alias srm='rm -rvP'
 alias sdelete='rm -rvP'
 alias brew-cleanup='brew cleanup; rm -f -r /Library/Caches/Homebrew/*'
 alias xopen='/usr/bin/open'
+alias ncdu-root='sudo ncdu / --exclude /Volumes --exclude /System/Volumes --exclude /dev --exclude /private'
+alias qview='open -a qview.app'
+alias filerestore='testdisk'
+
+# supress zsh verbose message in macOS Catalina
+export BASH_SILENCE_DEPRECATION_WARNING=1
 
 export JAVA_HOME=$(/usr/libexec/java_home)
 export NODE_PATH=/usr/local/lib/node_modules

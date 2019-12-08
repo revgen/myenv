@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o nounset
 set -o errexit
-export MYENVHOME=${MYENVHOME:-"${HOME}/.local/var/myenv"}
+export MYENVHOME=${MYENVHOME:-"${HOME}/.local/src/myenv"}
 . ${MYENVHOME}/home/.config/user.env
 
 download_url() {
@@ -23,10 +23,7 @@ DEST=${HOME}/.local/bin
 read -p "Do you want install additional tools into you home environment (y/N)? " opt
 if [ "${opt:-"N"}" == "Y" ] || [ "${opt}" == "y" ]; then
     ln-safe "${SRC}/crypt/crypt" "${DEST}/crypt"
-    ln-safe "${SRC}/pdfutil/pdfutil" "${DEST}/pdfutil"
-    ln-safe "${SRC}/screensaver/screensaver" "${DEST}/screensaver"
     ln-safe "${SRC}/google/goomus" "${DEST}/goomus"
-    ln-safe "${SRC}/firefox/firefox" "${DEST}/firefox"
     ln-safe "${SRC}/dockdb/dockdb" "${DEST}/dockdb"
     for name in $(ls "${SRC}/dev/"); do
         ln-safe "${SRC}/dev/${name}" "${DEST}/${name}"

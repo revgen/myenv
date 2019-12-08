@@ -1,0 +1,12 @@
+#!/bin/bash
+java_path=$(which java)
+if [ -z "${java_path}" ]; then
+    echo "Java not found on the system."
+    exit 1
+fi
+if [ "$(uname -s)" == "Darwin" ]; then
+    echo "JAVA_HOME=$(dirname $(readlink ${java_path}))/java_home"
+else
+    echo "JAVA_HOME=$(dirname $(dirname $(readlink -f ${java_path})))"
+fi
+

@@ -8,6 +8,6 @@ case "${1}" in
         sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
         exit 255;
 esac
-
+# -WavP --human-readable
 rsync -avhW --progress "${1}" "${2}"
 

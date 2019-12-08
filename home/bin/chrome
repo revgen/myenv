@@ -1,50 +1,80 @@
 #!/bin/bash
 #=============================================================================
 ## Chrome Command Line Interface
-## Uses: {SCRIPT_NAME} [command]
+## Uses: {SCRIPT_NAME} [command] [profile name]
 ## Commands:
-##   <empty>            - launch chrome application
-##   bookmarks          - show bookmarks
-##   history            - show full history
-## Options:
+##   open       - launch chrome application
+##   profiles   - show all chrome profiles
+##   location   - show chrome directory
+##   bookmark   - show bookmarks for the specific profile
+##   history    - show full history for the specific profile
 #=============================================================================
+os=$(uname -s)
+temp=${TMP:-"${TEMP:-"${TMPDIR:-"/tmp"}"}"}
+if [ "${os}" == "Darwin" ]; then work_dir="${HOME}/Library/Application Support/Google/Chrome";
+else if [ "${os}" == "Linux" ]; then work_dir="${HOME}/.config/google-chrome";
+else echo "Error: Unsupported OS -${os}."; exit 1; fi
+fi
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+debug() { if [ "${DEBUG}" == "true" ]; then echo $@; fi; }
+
+list_profiles() {
+    debug "List of all Chrome profiles:"
+    cat "${work_dir}/Local State" | jq -r '.profile.info_cache | keys[]'
+}
+
+open_browser() {
+    if [ "${os}" == "Darwin" ]; then
+        if [ -z "${1}" ]; then /usr/bin/open -a Google\ Chrome.app ;        
+        else /usr/bin/open -a Google\ Chrome.app "${1}" "${2}" "${3}" "${4}" "${5}"; fi
+    else if [ "${os}" == "Linux" ]; then
+            /usr/bin/google-chrome "${1}" "${2}" "${3}" "${4}" "${5}";
+        else
+            echo "Error: Unsupported OS -${os}."
+            return 1;
+        fi
+    fi
+}
 
 
-case "$(echo ${1:-"open"} | sed 's/^[-]*//g')" in
-    bookmarks)
-        file=/tmp/browser.tmp
-        if [ "$(uname -s)" == "Darwin" ]; then
-            cp -f ${HOME}/Library/Application\ Support/Google/Chrome/Profile*/Bookmarks "${file}"
-        else
-            echo "Not implemented for Linux"
-            exit 1
-        fi
-        jq ".roots[].children[].url" "${file}" 2>/dev/null \
-        | sed 's/^"//g' | sed 's/"$//g' | sort
-        ;;
-    history)
-        file=/tmp/browser.tmp
-        if [ "$(uname -s)" == "Darwin" ]; then
-            cp ~/Library/Application\ Support/Google/Chrome/Profile*/History "${file}"
-        else
-            echo "Not implemented for Linux"
-            exit 1
-        fi
-        echo "SELECT datetime(last_visit_time/1000000-11644473600,'unixepoch','localtime'), url FROM urls ORDER BY last_visit_time;" \
-        | sqlite3 "${file}"
-        ;;
-    help|h)
-        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
-        exit 255
-        ;;
-    *)
-        if [ "${0}" == "open" ]; then shift; fi
-        if [ "$(uname -s)" == "Darwin" ]; then
-            if [ -z "${1}" ]; then /usr/bin/open -a Google\ Chrome.app ;
-            else /usr/bin/open -a Google\ Chrome.app "${1}"; fi
-        else
-            echo "Not implemented for Linux"
-            exit 1
-        fi
-        ;;
+show_history() {
+    profile=${1:-"Default"}
+    debug "Chrome history for '${profile}'"
+    if [ -z "${profile}" ]; then echo "Error: profile name is required"; return 1; fi
+    hfile="${work_dir}/${profile}/History"
+    tmpfile=${temp}/.${RANDOM}.tmp
+    debug "Check profile history: ${hfile}"
+    if [ ! -f "${hfile}" ]; then echo "Error: can't find profile '${profile}' history."; return 1; fi
+    cp "${hfile}" "${tmpfile}" \
+        && echo "SELECT datetime(last_visit_time/1000000-11644473600,'unixepoch','localtime'), url FROM urls ORDER BY last_visit_time;" \
+            | sqlite3 "${tmpfile}"
+    rm "${tmpfile}"
+}
+
+show_bookmarks() {
+    profile=${1:-"Default"}
+    debug "Chrome bookmarks for '${profile}'"
+    if [ -z "${profile}" ]; then echo "Error: profile name is required"; return 1; fi
+    bfile="${work_dir}/${profile}/Bookmarks"
+    debug "Check profile bookmarks: ${bfile}"
+    if [ ! -f "${bfile}" ]; then echo "Error: can't find profile '${profile}' bookmarks."; return 1; fi
+    jq ".roots[].children[].url" "${bfile}" 2>/dev/null \
+    | sed 's/^"//g' | sed 's/"$//g' | grep -v "null" | sort
+}
+
+case "${1:-"open"}" in
+    open) open_browser "$2" "$3" "$4" "$5" "$6" ;;
+    location) echo "Chrome working directory: ${work_dir}" ;;
+    profiles) list_profiles "$2" "$3" "$4" "$5" "$6" ;;
+    history) show_history "$2" "$3" "$4" "$5" "$6" ;;
+    bookmarks) show_bookmarks "$2" "$3" "$4" "$5" "$6" ;;
+    help|--help) show_help ;;
+    * ) echo "Error: unknown command '${1}'"; exit 1
 esac
+
+
+# https://askubuntu.com/questions/631631/getting-internet-browsing-history-from-shell

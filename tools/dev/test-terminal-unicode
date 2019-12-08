@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 clear
 echo "
 UTF-8 encoded sample plain-text file
@@ -216,9 +216,10 @@ Box drawing alignment tests:                                          █
 Other
 
  ☺ ☻ ✌ ☹ ♡ ♥ ❤ ⚘ ❀ ❃ ❁ ✼ ☀ ✌ ♫ ♪ ☃ ❄ ❅ ❆ ☕ ☂ ★ 
- ✓ ♞ ☯ ☭ € ☎ ∞ ♫  ◐ ◑ ◒ ◓ ◔ ◕ ◖ ◗ 
+ ✓ ♞ ☯ ☭ € ☎ ∞ ♫  ◐ ◑ ◒ ◓ ◔ ◕ ◖ ◗ "
+echo -e " \xE2\x98\xA0 \xE2\x98\xA1 \xE2\x98\xA2 \xE2\x98\xA3"
 
-
+echo "
 Arrows
 
  ← ↑ → ↓ ↔ ↕ ↖ ↗ ↘ ↙ ↚ ↛ ↜ ↝ ↞ ↟ 
@@ -230,3 +231,4 @@ Arrows
  ⇰ ⇱ ⇲ ⇳ ⇴ ⇵ ⇶ ⇷ ⇸ ⇹ ⇺ ⇻ ⇼ ⇽ ⇾ ⇿
 
 "
+

@@ -47,6 +47,8 @@ export NODE_PATH=/usr/local/lib/node_modules
 export PATH="$HOME/Library/Python/2.7/bin:$PATH:/usr/local/sbin"
 export BACKUP_DIRECTORIES="${HOME}/Library/Containers/com.syniumsoftware.ifinance4;/Applications/1Password.app;${HOME}/Library/Containers/*com.agilebits.onepassword-osx-helper;"
 
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
 if [ -z "$SSH_TTY" ]; then
     # Fix the DISPLAY variable if it is empty
     if [ -z "$DISPLAY" ]; then

@@ -11,6 +11,9 @@
 
 Most of the System Settings can be changed by [MacOS defaults settings](https://github.com/revgen/myenv/tree/master/setup/macos/defaults).
 
+### Terminal
+
+Use bash instead of zsh: ```chsh -s /bin/bash```
 
 ### Keyboard
 

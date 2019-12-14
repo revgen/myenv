@@ -1,8 +1,8 @@
 # Mac OS settings, tools and applications
 
 * [System settings](#system-settings)
-* [Russian Keyboard Layout](https://revgen.github.io/tags/osx)
-* [Dictionaries](https://revgen.github.io/tags/osx)
+* [Russian Keyboard Layout](https://github.com/revgen/revgen.github.io/tree/master/storage/macos/russian-keyboard)
+* [Dictionaries](https://github.com/revgen/revgen.github.io/tree/master/storage/macos/dictionaries)
 * [Shortcuts](./macos-shortcuts.md)
 * [Links](#links)
 

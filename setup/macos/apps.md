@@ -8,7 +8,7 @@
 |                   | Installation:
 |                   | 1. Install XCode |
 |                   | 2. Install command line tool: xcode-select --install |
-|                   | 3. Agree to the license: sudo xcodebuild -license |
+|                   | 3. Agree to the license if you have XCode: sudo xcodebuild -license |
 |                   | 4. ```/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"``` |
 | mas-cli           | Mac App Store command-line interface |
 |                   | Installation: **brew install mas**. Link: [Site](https://github.com/mas-cli/mas) |
@@ -28,8 +28,6 @@
 |                   | Installation: **brew install vim** and **brew cask install macvim**. Link: [Site](https://www.vim.org/) |
 | UnArchiver        | Program that can unarchive many different kinds of archive files: zip, 7zip, RAR and etc. |
 |                   | Installation: **mas install 425424353** or **brew cask install the-unarchiver**. Link: [iTunes](https://itunes.apple.com/us/app/the-unarchiver/id425424353) |
-| Monosnap          | Capture screenshots, share files, record video and .gifs!  |
-|                   | Installation: **mas install 540348655**. Link: [iTunes](https://itunes.apple.com/us/app/monosnap/id540348655) |
 | Free Ruler        | It is a free screen ruler for Mac OS X.    |
 |                   | Installation: **brew cask install free-ruler**. Link: [Site](http://www.pascal.com/software/freeruler/) |
 | DjView4           | It is a new portable DjVu viewer and browser plugin.  |
@@ -135,3 +133,5 @@
 |                   | Installation: **mas install 409203825**, Link: [iTunes](https://itunes.apple.com/us/app/numbers/id409203825) |
 | OneDrive          | Desktop client for MS OneDrive, OneDrive is a file hosting service and synchronization service operated |
 |                   | Installation: **mas install 823766827**, Link: [iTunes](https://itunes.apple.com/us/app/onedrive/id823766827) |
+| Monosnap          | Capture screenshots, share files, record video and .gifs!  |
+|                   | Installation: **mas install 540348655**. Link: [iTunes](https://itunes.apple.com/us/app/monosnap/id540348655) |

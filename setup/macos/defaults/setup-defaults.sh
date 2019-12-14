@@ -60,8 +60,8 @@ echo ""
 echo "########################################################################"
 echo "# Dock                                                                 #"
 echo "########################################################################"
-echo "* Set position the Dock on the left"
-    defaults write com.apple.dock orientation left
+#echo "* Set position the Dock on the left"
+#    defaults write com.apple.dock orientation left
 echo "* Set the icon size of Dock items to 40 pixels"
     defaults write com.apple.dock tilesize -int 40
 echo "* Magnification settings"

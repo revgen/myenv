@@ -1,5 +1,0 @@
-#!/bin/sh
-fn=${1:---help}
-shift
-/usr/bin/open "${fn}" $@
-

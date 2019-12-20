@@ -30,4 +30,7 @@ echo "Copy ${PWD} -> ${USERBIN}"
 mkdir -p "${USERBIN}" 2>/dev/null
 make_links_from_all "${PWD}" "${USERBIN}"
 make_links_from_all "${PWD}/${ostype}" "${USERBIN}"
+if [ -d "${PWD}/${ostype}/mc" ]; then 
+    make_links_from_all "${PWD}/${ostype}/mc" "${USERBIN}"
+fi
 echo "==[ Install main tools: end   ]========================================="

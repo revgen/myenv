@@ -69,8 +69,6 @@
 |                   | Installation: **brew cask install vnc-viewer**. Link: [Site](https://www.realvnc.com/en/connect/download/viewer/) |
 | kid3              | Kid3 is an open-source cross-platform audio tag editor. |
 |                   | Installation: **brew cask install kid3**, Link: [Site](https://kid3.sourceforge.io/) |
-| Sigil             | It is a epub editior and ePUB creator. |
-|                   | Installation: **brew cask install sigil**, Link: [Site](https://sigil-ebook.com/) |
 | itsycal           | A tiny calendar for your Mac's menu bar. |
 |                   | Installation: **brew cask install itsycal**, Link: [Site](https://www.mowglii.com/itsycal/) |
 | Growl ($$$)       | Growl is the is ultimate notification system for the Mac. |
@@ -94,12 +92,20 @@
 
 | Name              | Description                                             |
 | ----------------- | ------------------------------------------------------- |
+| Visual Studio Code| Visual Studio Code is a source-code editor developed by Microsoft for Windows, Linux and macOS. |
+|                   | Installation: **brew cask install visual-studio-code**. Link: [Site](https://code.visualstudio.com/) |
 | 1Password (???)   |  |
 |                   | Installation: **mas install 443987910**, Link: [iTunes](https://itunes.apple.com/us/app/growl/id443987910) |
 | OpenEmu           | Good video game emulator for Atari, Nintendo, Sega and etc. |
 |                   | Installation: **brew cask install openemu**. Link: [Site](http://openemu.org) |
+| Sigil             | It is a epub editior and ePUB creator. |
+|                   | Installation: **brew cask install sigil**, Link: [Site](https://sigil-ebook.com/) |
+| Draw.io           | Draw.io desktop is free diagram software for making flowcharts, process diagrams, org charts, UML, ER and network diagrams.|
+|                   | Installation: **brew cask install drawio**. Link: [Site](https://github.com/jgraph/drawio-desktop) |
 | SourceTree        | Simplicity and power in a beautiful Git GUI. |
 |                   | Installation: **brew cask install sourcetree**. Link: [Site](https://www.sourcetreeapp.com) |
+| GitHub            | GitHub Desktop is an open source Electron-based GitHub app. |
+|                   | Installation: **brew cask install github**. Link: [Site](https://desktop.github.com/) |
 | Skype             | It is an application that provides video chat and voice call services. |
 |                   | Installation: **brew cask install skype**. Link: [Site](https://www.skype.com/en/download-skype/skype-for-mac/) |
 | Hermes            | It is a compact OS X player for [Pandora Online Radio](https://www.pandora.com).  |
@@ -135,3 +141,22 @@
 |                   | Installation: **mas install 823766827**, Link: [iTunes](https://itunes.apple.com/us/app/onedrive/id823766827) |
 | Monosnap          | Capture screenshots, share files, record video and .gifs!  |
 |                   | Installation: **mas install 540348655**. Link: [iTunes](https://itunes.apple.com/us/app/monosnap/id540348655) |
+
+## 5. Games
+
+
+| Name              | Description                                             |
+| ----------------- | ------------------------------------------------------- |
+| GOG Galaxy        | GOG GALAXY allows you to combine multiple game libraries into one across all gaming platforms, consoles included!|
+|                   | Installation: **brew cask install gog-galaxy**. Link: [Site](https://www.gog.com/galaxy) |
+| Steam             | |
+|                   | Installation: **brew cask install steam**. Link: [Site](https://store.steampowered.com/macos) |
+
+
+
+
+## 6. Other
+```
+brew cask install zoomus
+brew cask install amazon-workspaces
+```

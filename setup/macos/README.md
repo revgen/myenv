@@ -68,6 +68,25 @@ Show scroll bars every time
     2. [Link](https://get.adobe.com/flashplayer/) to get Flash Player for Safari. Other version [link](https://get.adobe.com/flashplayer/otherversions/).
 2. Extensions: Stop/Reload Button, Adblock Plus, Session Restore
 
+### Notifications
+
+Disable preview for everything when locked
+
+
+### Spotlight
+
+On Search Result tab:
+* Disable: History, Contacts, Documents, Images, Mail, Movies, Music, PDF, Presentations, Spreadsheets, Suggestions
+* Uncheck: Allow Spottlight suggestion
+
+On Privacy tab:
+* Ignore in: ~/Documents, ~/Workspace, /Volumes
+
+### Accounts
+
+* Add iCloud account
+* Add Google account
+
 
 ## Links
 

@@ -1,0 +1,14 @@
+#!/bin/bash
+output_dir=${HOME}/Desktop/Screenshots
+if [ ! -d "${output_dir}" ]; then mkdir -p "${output_dir}"; fi
+
+output_file="${output_dir}/screenshot-$(date +"%Y%m%d-%H%M%S").png"
+import "${output_file}"
+errorcode=$?
+
+if [ ${errorcode} -eq 0 ]; then
+    notify-send "Screenshot created" "${output_file}"
+else
+    notify-send "Screenshot error" "Failed to create a screenshot at ${output_file}"
+    exit ${errorcode}
+fi

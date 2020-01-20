@@ -21,7 +21,7 @@ os_info() {
         cat /etc/os-release | sort | grep "^NAME\|VERSION_ID" |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs
         return 0
     fi
-    uname -a
+    uname -mrs
 }
 cpu_info() {
     if [ "${ostype}" == "Darwin" ]; then

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #=======================================================================
 ## Show system information
 ## Usage: {SCRIPT_NAME} [--full]

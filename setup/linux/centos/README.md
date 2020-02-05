@@ -86,7 +86,7 @@ sudo yum remove -y simple-scan
 
 ## RPM packages
 
-### If you need download a RPM package withot a package manager:
+### If you need to download specific RPM package withot a package manager:
 * Epel epository: https://centos.pkgs.org/7/epel-x86_64/
 * Node.js 10.x: https://rpm.nodesource.com/pub_10.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm
 * Draw.io: https://github.com/jgraph/drawio-desktop/releases/

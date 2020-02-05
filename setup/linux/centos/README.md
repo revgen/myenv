@@ -11,6 +11,7 @@
     - [Visual Studio Code](#install-visual-studio-code)
     - [Console tools](#install-core-tools)
 * [Remove unused packages](#remove-unused-packages)
+* [RPM packages](#rpm-packages)
     
 
 ## Install CentOS 7
@@ -81,4 +82,25 @@ sudo yum remove -y firefox
 sudo yum remove -y filezilla
 sudo yum remove -y transmission*
 sudo yum remove -y simple-scan
+```
+
+## RPM packages
+
+### If you need download a RPM package withot a package manager:
+* Epel epository: https://centos.pkgs.org/7/epel-x86_64/
+* Node.js 10.x: https://rpm.nodesource.com/pub_10.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm
+* Draw.io: https://github.com/jgraph/drawio-desktop/releases/
+* Visual Studio Code: https://code.visualstudio.com/download
+* Mattermost: https://github.com/mattermost/desktop/releases (AppImage)
+* Postman: https://www.getpostman.com/downloads/
+
+### Install RPM package
+```bash
+rpm -i package-file-name.rpm
+rpm -i --nosignature --force  package-file-name.rpm
+```
+
+### Search installed rpm packages in the system
+```bash
+rpm -qa 'vim*' or rpm -qa 'node|npm'
 ```

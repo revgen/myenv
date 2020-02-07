@@ -86,6 +86,8 @@
 | zenity, dialog    | Utility to display simple GTK+ dialogs from the command line |
 |                   | Installation: **brew install zenity dialog**                      |
 | dev tools pack    | Installation: **brew install node awscli** and **brew cask install java postman pv figlet**                      |
+| Enjoyable         | Use your gamepad or joystick like a mouse and keyboard on Mac OS X |
+|                   | Installation: **brew cask install enjoyable**. Link: [Site](https://yukkurigames.com/enjoyable/) |
 
 
 ## 4. Additional or historical tools list

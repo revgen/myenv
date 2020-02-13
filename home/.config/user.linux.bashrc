@@ -9,6 +9,7 @@ alias psc='ps aux --sort=-pcpu | head'
 alias psm='ps aux --sort=-pmem | head'
 alias sdelete='shred -vfz'
 alias moc='mocp'
+alias gksu='pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS'
 
 export JAVA_HOME="/usr/lib/jvm/java-8-oracle/"
 

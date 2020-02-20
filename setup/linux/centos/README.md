@@ -33,7 +33,7 @@ sudo systemctl set-default graphical.target
 
 ### Install core console tools
 ```bash
-sudo yum install -y mc htop screen git tig  wget ncdu ImageMagick
+sudo yum install -y mc htop screen git tig vim wget ncdu elinks ImageMagick p7zip
 ```
 
 ### Install core GUI tools
@@ -54,19 +54,35 @@ sudo yum localinstall google-chrome-stable_current_x86_64.rpm
 curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
 sudo yum info nodejs
 sudo yum install nodejs
+
+# check installation
+echo "node $(node --version), npm v$(npm --version)"
 ```
 
 ### Install Python 3.8
 ```bash
-sudo yum install gcc openssl-devel bzip2-devel libffi-devel
-mkdir /tmp/src; cd /tmp/src
-wget https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz
-tar xzf Python-3.8.0.tgz
-cd Python3.*
+sudo yum install -y gcc openssl-devel bzip2-devel libffi-devel
+rm -rf /tmp/src; mkdir /tmp/src; cd /tmp/src
+wget https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tgz
+tar xzf Python-3.*.tgz
+cd Python-3.*
 ./configure --enable-optimizations
-make altinstall
+# make altinstall
+sudo make install
 cd ~/
 rm -rf /tmp/src/Python*
+
+# Make python3.8 default for python3
+sudo update-alternatives --install /usr/bin/python3 python3 $(which python3.8) 0
+sudo update-alternatives --config python3
+
+# Install pip for Python3.8 if needed
+python3.8 -m pip install pip
+# or create a symlink if needed
+sudo update-alternatives --install /usr/bin/pip3 pip3 $(which pip3.8) 0
+
+# check installation
+echo "$(python3 --version), $(pip3 --version)"
 ```
 
 ### Install Visual Studio Code

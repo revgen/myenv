@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+###############################################################################
+# Check bad domain names from the files:
+# * /etc/bad-domains.lst
+# * ~/.bad-domains.lst
+#
+###############################################################################
+wd=$(dirname "${0}")
+domains_file="${wd}/bad-domains.lst"
+if [ ! -f "${domains_file}" ]; then domains_file="${HOME}/.bad-domains.lst"; fi
+if [ ! -f "${domains_file}" ]; then domains_file=/etc/bad-domains.lst; fi
+if [ ! -f "${domains_file}" ]; then
+    domains_file="${HOME}/.bad-domains.lst"
+    echo "internetbadguys.com" > "${domains_file}"
+    echo "doubleclick-xxx.net" > "${domains_file}"
+fi
+
+tmpres=$(mktemp -t "$(basename "${0}")")
+rm -rf "${tmpres}"
+
+cat "${domains_file}" | while read domain;
+do
+    if [ -z "${domain}" ]; then continue; fi
+    get-http-status-code "${domain}" | tee -a "${tmpres}"
+done
+
+success_res=$(grep -v "\[403" "${tmpres}" | grep -v "\[ERR")
+rm -rf "${tmpres}"
+echo ""
+if [ -n "${success_res}" ]; then
+    echo "[ERR]: has passed results"
+    echo "${success_res}"
+    exit 1
+else
+    echo "[OK ]: the proxy works good"
+fi
+

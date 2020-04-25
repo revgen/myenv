@@ -1,0 +1,30 @@
+#!/bin/sh
+###############################################################################
+# Script to check OpenDNS settings.
+# Parse result from "https://welcome.opendns.com" in terminal.
+###############################################################################
+check() {
+    if [ -n "$(curl -sIL "${1}" | grep 403)" ]; then
+        echo "[OK ] Closed - ${1}"
+        return 0
+    fi
+    echo "[ERR] Opened - ${1}"
+    return 1
+}
+
+set -e
+
+echo "Check OpenDNS welcome page"
+if [ -n "$(curl -s https://welcome.opendns.com | grep "Welcome to OpenDNS")" ]; then
+    logger -st "opendns" "[OK ] OpenDNS - Welcome to OpenDNS"
+else
+    logger -st "opendns" "[ERR] OpenDNS - Oops"
+    exit 1
+fi
+echo "Check bad sites..."
+check "http://www.internetbadguys.com" && \
+check "http://www.exampleadultsite.com" && \
+logger -st "opendns" "[OK ] Success check settings" && exit 0
+
+logger -st "opendns" "[ERR] Failed check settings"
+exit 1

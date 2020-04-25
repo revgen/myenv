@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+case "${1:-"help"}" in
+    help|--help) echo "Usage: $(basename "${0}") <ip address>"; exit 1;;
+esac
+name=$(nslookup "${1}" | grep name | awk -F" = " '{print $2}' | sed 's/\.$//g')
+if [ -n "${name}" ]; then
+    echo "${name}"
+else
+    echo "Error: Can not get name"
+    exit 1
+fi
+

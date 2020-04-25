@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+import os
+import socket
+import sys
+from urllib.parse import urlparse
+from datetime import datetime
+
+dns_cache = {}
+def get_dns_name(ip):
+    if ip not in dns_cache:
+        try:
+            dns_cache[ip] = socket.gethostbyaddr(ip)[0]
+        except:
+            pass
+    return dns_cache[ip] if ip in dns_cache else ''
+
+def parse_url(url_orig):
+    # TODO:/ other not http protocols ???
+    if not url_orig.startswith('http'):
+        prefix = 'https' if url_orig.find(':443') else 'http'
+        url = urlparse(f'{prefix}://{url_orig}')
+    else:
+        url = urlparse(url_orig)
+    scheme = url.scheme or ('https' if url.port == 443 else 'http')
+    port = int(url.port or (443 if scheme == 'https' else 80))
+    return (scheme, url.hostname, port, url.path, url.query, url_orig)
+
+# default format:
+# time elapsed remotehost code/status bytes method URL rfc931 peerstatus/peerhost type
+# 1580000590.183    115 192.168.2.91 TCP_MISS/200 658508 GET http://ngfts.lge.com/fts/gftsDownload.lge? - ORIGINAL_DST/184.25.98.209 image/gif
+# 1580000588.709   3066 192.168.2.91 TCP_MISS/502 4127 POST http://snu.lge.com/CheckSWAutoUpdate.laf - ORIGINAL_DST/136.166.4.75 text/html
+# 1579651935.413 178865 192.168.2.51 TCP_TUNNEL/200 10334 CONNECT static-asm.secure.skypeassets.com:443 - ORIGINAL_DST/93.184.215.201 -
+print(f'date,time,elapsed,remoteip,remotehost,code,status,'
+    f'bytes,method,scheme,host,port,path,query,'
+    f'rfc931,peerstatus,peerhost,type,fullurl')
+for line in sys.stdin:
+    parts = [x for x in line.strip().split(' ') if x]
+    if not parts:
+        continue
+    time_orig = datetime.fromtimestamp(float(parts[0]))
+    date = time_orig.strftime('%Y-%m-%d')
+    time = time_orig.strftime('%H:%M:%S')
+    elapsed =  parts[1]
+    remoteip = parts[2]
+    remotehost = get_dns_name(remoteip)
+    (code, status_orig) = parts[3].split('/')
+    http_status = int(status_orig)
+    status = 'OK' if http_status >= 200 and http_status < 400 else 'ERR'
+    size = int(parts[4] or 0)
+    method = parts[5]
+    (scheme, hostname, port, path, query, url) = parse_url(parts[6])
+    rfc931 = parts[7]
+    (peerstatus, peerhost) = (parts[8] or '/').split('/')
+    resource_type = parts[9]
+    print(f'{date},{time},{elapsed},{status},{remoteip},{remotehost},{code},{http_status},'
+        f'{size},{method},{scheme},{hostname},{port},{path},{query},'
+        f'{rfc931},{peerstatus},{peerhost},{resource_type},{url}')
+

@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: httpserver
+# REQUIRE: DAEMON
+# BEFORE: LOGIN
+# KEYWORD: shutdown
+
+# put this script into the /usr/local/etc/rc.d/ directory
+
+. /etc/rc.subr
+
+name="httpserver"
+pidfile="/var/run/${name}.pid"
+nginx_config_file=/usr/local/etc/nginx/nginx.conf
+
+get_pid() {
+	 ps -A | grep '/usr/local/sbin/nginx -c ${nginx_config_file}' | grep -v grep | awk '{print $1}'
+ }
+
+start_service() {
+	pid=$(get_pid)
+	if [ -n "$pid" ]; then
+		echo "Service $name already started with $pid pid"
+	else
+		/usr/local/sbin/nginx -c ${nginx_config_file} &
+		echo "Started"
+	fi
+}
+
+stop_service() {
+	pid=$(get_pid)
+	if [ -z "$pid" ]; then
+		echo "Service $name stopped"
+	else
+		echo "Stopping $name with $pid pid..."
+		kill $pid && echo "Stopped"
+	fi
+}
+
+case "$1" in
+	start) start_service ;;
+	stop) stop_service ;;
+	restart) stop_service; sleep 1; start_service ;;
+	help|--help) echo "Usage: service ${name} <stop|start|restart>"; exit 1 ;;
+	*) echo "Error: unknown command '$1'."; exit 1 ;;
+esac
+

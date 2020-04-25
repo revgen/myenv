@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#=======================================================================
+## Helper script to send email from the command line under the pfSense
+## Usage: echo "email's body text" | {SCRIPT_NAME} [email's subject]
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+/usr/local/bin/mail.php -s"[$(hostname)] ${1:-"Notification"}"

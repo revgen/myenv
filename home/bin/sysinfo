@@ -23,6 +23,9 @@ os_info() {
     fi
     uname -mrs
 }
+platform() {
+    uname -m | sed 's/x86_64/x64/g' | sed 's/amd64/x64/g'
+}
 cpu_info() {
     if [ "${ostype}" == "Darwin" ]; then
         top -l 1 -s 0 | awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
@@ -30,29 +33,49 @@ cpu_info() {
         top -n  1 | awk ' /Cpu/ || /Mem/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
     fi
 }
-sys_disk_size() {
+disk_info() {
     if [ "${ostype}" == "Darwin" ]; then
-        df -h | grep "/$" | awk '{print ""$4" of "$2" available (capacity="$5")"}'
+        df -h | grep "/dev/disk" | grep -v "/private" | grep -v "auto_home" | awk '{print ""$4" of "$2" available (capacity="$5") "$9}'
     else
-        # TODO
-        df -h | grep "/$" | awk '{print ""$4" of "$2" available (capacity="$5")"}'
+        df -h | grep "/$\|/mnt/" | awk '{print ""$4" of "$2" available (capacity="$5") "$6}'
     fi
 }
 active_users() {
     w -h | cut -d " " -f1 | sort -r | uniq | awk '{printf"%s%s",c,$0;c=", "}'
 }
+local_ip() {
+    if which ifconfig 2>&1 >/dev/null; then
+        ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'
+    else
+        ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+    fi
+}
+public_ip() {
+    wget -q -O - icanhazip.com
+}
+internet_status() {
+    internet=$(curl -sIL -m 3 "https://google.com" | grep "HTTP[^ ]* 200")
+    if [ -n "${internet}" ]; then echo "CONNECTED";
+    else echo "ERROR"; fi
+}
+
 show_slim_info() {
-    echo "==[ System information ]=="
+    echo "----[ System information ]----"
     echo "Hostname  : $(hostname)"
     echo "Users     : $(active_users)"
-    echo "OS        : $(os_info)"
-    echo "Platform  : $(uname -m | sed 's/x86_64/x64/g')"
-    echo "Local IP  : $(localip | awk '{printf"%s%s",c,$0;c=", "}')"
+    echo "OS        : $(os_info) ($(platform))"
+    echo "Uptime    : $(uptime)"
+    echo "------------------------------"
     cpu_info
-    echo "Disk      : $(sys_disk_size)"
+    echo "------------------------------"
+    disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
+    echo "------------------------------"
+    echo "Local IP  : $(local_ip | sort | xargs | sed 's/ /,/g')"
+    echo "Internet  : $(internet_status)"
+    echo "Public IP : $(public_ip)"
+    echo "------------------------------"
     echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
-    echo "Uptime    : $(uptime)"
 }
 
 show_full_info() {
@@ -64,6 +87,7 @@ show_full_info() {
         echo "wget -O inxi smxi.org/inxi && chmod +x inxi && sudo mv inxi /usr/local/bin/"
     fi
 }
+
 arg1=${1:-"--simple"}
 case "${arg1}" in
     help|--help|h|-h)

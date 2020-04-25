@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #=======================================================================
 ## User session in the terminal using GNU screen tool (https://www.gnu.org/software/screen/)
 #
@@ -17,47 +17,74 @@
 PREFIX=screen-session-${USER}
 SCREEN_CONFIG=${SCREEN_CONFIG:-"${HOME}/.screenrc"}
 
-case "${1}" in
-    list|-l|-list|--l|--list)
-        res=$(screen -list | grep "${PREFIX}" | awk '{gsub("\t"," ",$0); print $0}' \
-        | sed 's/^[ 0-9.]*//g' \
-        | awk '{gsub("'${PREFIX}'-","",$0); print $0}')
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
 
-        if [ -z "${res}" ]; then
-            echo "There are now screen sessions."
-        else
-            echo "$res"
-        fi
-        exit 0
-        ;;
-    listall|-la|-listall|--listall|list-all|-list-all|--list-all)
-        screen -list
-        exit 0
-        ;;
-    help|--help)
-        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
-        exit 255;;
-    *)
-        name=$1
-        ;;
-esac
+default_config() {
+    echo 'startup_message off
+vbell off
+defscrollback 4096
+defutf8 on
+# Do not block command output if the terminal stops responding
+# (like if the ssh connection times out for example).
+nonblock on
+shelltitle " screen"
+shell -$SHELL
+hardstatus string "%{= kb}[$USER@%H:%n] %{= kw}%-w%{= bw}%n*%t%{-}%+w %-= %{= kb}[%D %Y-%m-%d %c]"
+hardstatus alwayslastline
+# F11/F12 - open prev/next window
+bindkey -k F2 next
+bindkey -k F1 prev
+# Lock screen by Ctrl+L
+bindkey "^L" lockscreen
+select 0
+'
+}
 
-name=${name:-"main"}
-session_name=${PREFIX}-${name}
-screen_list=$(screen -ls | grep ${session_name})
-if [ -n "${screen_list}" ]; then
-    if [ -n "$(echo ${screen_list} | grep Attached)" ]; then
-        if [ -z "$(echo ${TERMCAP} | grep screen)" ]; then
-            echo "Enter into \"${name}\" screen session";
-            sleep 1;
-            screen -x "${session_name}" ;
+list_screen_sessions() {
+    res=$(screen -list | grep "${PREFIX}" | awk '{gsub("\t"," ",$0); print $0}' \
+    | sed 's/^[ 0-9.]*//g' \
+    | awk '{gsub("'${PREFIX}'-","",$0); print $0}')
+    if [ -z "${res}" ]; then
+        echo "There are now screen sessions."
+    else
+        echo "$res"
+    fi
+    exit 0
+}
+
+start_session() {
+    name=${1:-"main"}
+    session_name=${PREFIX}-${name}
+    screen_list=$(screen -ls | grep ${session_name})
+    if [ -n "${screen_list}" ]; then
+        if [ -n "$(echo ${screen_list} | grep Attached)" ]; then
+            if [ -z "$(echo ${TERMCAP} | grep screen)" ]; then
+                echo "Enter into \"${name}\" screen session.";
+                sleep 1;
+                screen -x "${session_name}" ;
+            else
+                echo "Already in \"${name}\" session." ;
+            fi
         else
-            echo "Already in ${name} session" ;
+            screen -r "${session_name}" ;
         fi
     else
-        screen -r "${session_name}" ;
+        if [ ! -f "${SCREEN_CONFIG}" ]; then
+            echo "Configuration file '${SCREEN_CONFIG}' doesn't exist. Creating..."
+            mkdir -p "$(dirname "${SCREEN_CONFIG}")" 2>/dev/null
+            default_config > "${SCREEN_CONFIG}"
+        fi
+        echo "Create screen session \"${name}\". Configuration file is \"${SCREEN_CONFIG}\""
+        screen -S "${session_name}" -c "${SCREEN_CONFIG}"
     fi
-else
-    echo "Create screen session \"${name}\". Configuration from \"${SCREEN_CONFIG}\""
-    screen -S "${session_name}" -c "${SCREEN_CONFIG}"
-fi
+}
+
+case "${1}" in
+    list|-l|--list) list_screen_sessions ;;
+    --list-all) screen -list; exit 0 ;;
+    help|--help) show_help ;;
+    *) start_session $@ ;;
+esac

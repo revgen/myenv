@@ -45,10 +45,19 @@ cd $(mktemp -d) && cd $_
 wget -O ./lsblk lsblk https://raw.githubusercontent.com/vermaden/scripts/master/lsblk.sh
 wget -O ./inxi https://raw.githubusercontent.com/smxi/inxi/master/inxi
 
-wget -O ./localip https://raw.githubusercontent.com/revgen/myenv/master/home/bin/localip
-wget -O ./externalip https://raw.githubusercontent.com/revgen/myenv/master/home/bin/externalip
-wget -O ./session https://raw.githubusercontent.com/revgen/myenv/master/home/bin/session
-wget -O ./sysinfo https://raw.githubusercontent.com/revgen/myenv/master/home/bin/sysinfo
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/localip
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/externalip
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/session
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/sysinfo
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/check-bad-domains
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/check-internet-speed
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/check-opendns
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/dns-name-by-ip
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/get-http-status-code
+wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/xml-to-json
+
+wget https://raw.githubusercontent.com/revgen/myenv/master/setup/freebsd/pfsence/usr/local/bin/notify-send
+wget https://raw.githubusercontent.com/revgen/myenv/master/setup/freebsd/pfsence/usr/local/bin/view-squid-log
 
 # Change script attributes
 chmod +x ./*

@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+##############################################################################
+## Bash No-IP Updater
+## It is a bash script to update the IP address on the no-ip.com service.
+##
+#  Required: bash, curl or wget, GNU coreutils
+#
+## Usage: {SCRIPT_NAME} [-C] [--config]
+##   --config <file> - specify a config file (default: /etc/noip-updater.conf)
+##   -C              - show template config file
+##   --help          - show help screen
+##
+#  Put MIT licence
+##############################################################################
+set -eo pipefail
+cfg=/etc/noip-updater.conf
+
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+
+create_template_config() {
+    echo "HOST=${DDNS_HOST:-"testhost.ddns.net"}"
+    echo "USERNAME=${DDNS_USERNAME:-"john"}"
+    echo "PASSWORD=${DDNS_PASSWORD:-"SupErPaSS"}"
+    exit 1
+}
+
+request() {
+    if [ -n "$(which curl)" ]; then
+        curl -s --user "${USERNAME}:${PASSWORD}" "https://dynupdate.no-ip.com/nic/update?hostname=${HOST}"
+    elif [ -n "$(which wget)" ]; then
+        echo '!!! Not implemented'; exit 1
+    else
+        echo 'Install curl or wget first.' >&2
+        exit 1
+    fi
+}
+
+parse_response() {
+    code="${1}"
+    ipaddr="${2}"
+
+    case $code in
+        "good") echo "(good) [$HOST] DNS hostname successfully updated to ${ipaddr}." ;;
+        "nochg") echo "(nochg) [$HOST] IP address is current: ${ipaddr} - no update performed." ;;
+        "nohost") echo "(nohost) [$HOST] Hostname supplied does not exist under specified account. Revise config file." ;;
+        "badauth") echo "(badauth) [$HOST] Invalid username password combination." ;;
+        "badagent") echo "(badagent) [$HOST] Client disabled - No-IP is no longer allowing requests from this update script." ;;
+        '!donator') echo '(!donator)'" [$HOST] An update request was sent including a feature that is not available." ;;
+        "abuse") echo "(abuse) [$HOST] Username is blocked due to abuse." ;;
+        "911") echo "(911) [$HOST] A fatal error on our side such as a database outage. Retry the update in no sooner than 30 minutes." ;;
+        "") echo "(empty) [$HOST] No response received from No-IP. This may be due to rate limiting or a server-side problem." ;;
+        *) echo "(error) [$HOST] Could not understand the response from No-IP. The DNS update server may be down." ;;
+    esac
+}
+
+
+case "${1:-"update"}" in
+    --update|update) ;;
+    --config|-c) cfg=${2};;
+    --help|help|-h|-H) show_help ;;
+    -C) create_template_config;;
+    *) echo "Error: unknown '${8}' command."; exit 1;;
+esac
+
+if [ ! -f "${cfg}" ]; then
+    echo "Error: configuration file '${cfg}' not found"
+    exit 1
+fi
+
+# load configuration file
+export $(cat "${cfg}" | xargs)
+if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ] || [ -z "$HOST" ]; then
+   echo "USERNAME, PASSWORD, or HOST are required." >&2
+   exit 1
+fi
+
+response=$(request)
+code=$(echo "${response}" | head -n 1 | awk '{print $1}')
+ipaddr=$(echo "${response}" | head -n 1 | awk '{print $2}')
+# echo "response=${response}"
+# echo "code=${code}"
+# echo "ipaddr=${ipaddr}"
+parse_response "${code}" "${ipaddr}"

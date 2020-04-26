@@ -10,13 +10,8 @@
 
 ## Notes
 
-### See all disks
-```bash
-geom disk list
-camcontrol devlist
-```
-```bash
-# similar with Linux lsblk command
-gpart list
-```
+### Working with hardware disks
+
+* See all disk in the system: ```geom disk list``` or ```camcontrol devlist``` or ```gpart list```
+* Clean all disk information: ```gpart destroy -F <disk>```
 

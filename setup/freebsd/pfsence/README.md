@@ -11,8 +11,12 @@ and router that also features unified threat management, load balancing, multi W
 ## Notes
 
 * pgSense documentation amd links:
-    * [pfSense Documentation](https://docs.netgate.com/pfsense/en/latest/)
-    * [Yuotube: Full Setup - Installation, SQUID, SquidGuard, LightSquid](https://www.youtube.com/watch?v=W2gy1bLHm5o)
+    - [pfSense](https://pfsense.org)
+    - [pfSense Documentation](https://docs.netgate.com/pfsense/en/latest/)
+    - [pfSense Downloads](https://www.pfsense.org/download/)
+    - [pfSense Documentation](https://docs.netgate.com/pfsense/en/latest/)
+    - [pfSense Archive](http://linorg.usp.br/pfsense/downloads/)
+    - [Yuotube: Full Setup - Installation, SQUID, SquidGuard, LightSquid](https://www.youtube.com/watch?v=W2gy1bLHm5o)
 
 * Web server **NGINX** - PFsense has installed nginx server.
     - Default configuration file is ```/usr/local/etc/nginx/nginx.conf```

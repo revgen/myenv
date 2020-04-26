@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+###############################################################################
+## Helper script for pfSense
+## 
+## Usage: {SCRIPT_NAME} <command> [options]
+## Commands:
+##   dhcp-static-map       - show DHCP static mappings table
+##
+###############################################################################
+pfsense_config=/conf/config.xml
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+    exit 255
+}
+
+show_dhcp_static_map() {
+    echo "host,ip,uniq-name,mac"
+    python3 -m xmljson "${pfsense_config}" | jq -r '.dhcpd.lan.staticmap | .[] | .hostname+","+.ipaddr+","+.cid+","+.mac' | sort
+}
+
+case "${1:-"--help"}"
+    dhcp-static-map) show_dhcp_static_map ;;
+    help|--help) show_help ;;
+    *) echo "Error: unknown command '${1}'"; exit 1;;
+esac
+

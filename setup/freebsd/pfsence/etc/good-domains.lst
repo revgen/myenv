@@ -1,0 +1,34 @@
+##############################################################################
+#               Domains which can be free from proxy
+##############################################################################
+
+# Microsoft
+microsoft.com
+windows.com
+windowsupdate.com
+office.com
+office365.com
+live.com
+skype.com
+skypeassets.com
+
+# Google
+google.com
+googleapis.com
+gstatic.com
+googleusercontent.com
+
+# Amazon
+amazon.com
+amazonaws.com
+media-amazon.com
+ssl-images-amazon.com
+
+# Apple
+apple.com
+icloud.com
+
+# Netflix
+netflix.com
+nflxvideo.net
+

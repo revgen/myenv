@@ -27,15 +27,17 @@ echo "alias mc='/usr/local/bin/mc -u'" >> ~/.bashrc
 
 ## Tools from repository
 ```bash
-pkg install bash wget jq
+pkg install bash wget jq yq git
 pkg install mc screen htop ncdu vim-console
+pkg install libxslt libxml2
 
-pkg install git
 pkg install python37
 pkg install py37-pip
 ln -s $(ls /usr/local/bin/python3.* | head -n 1) /usr/local/bin/python3
 [ ! -f "/usr/local/bin/pip3" ] && ln -s $(ls /usr/local/bin/pip-3.* | head -n 1) /usr/local/bin/pip3
 [ ! -f "/usr/local/bin/pip" ] && ln -s /usr/local/bin/pip3 /usr/local/bin/pip
+
+pip3 install xq xmljson
 ```
 
 ## Custom scripts and tools
@@ -58,6 +60,7 @@ wget https://raw.githubusercontent.com/revgen/myenv/master/home/bin/xml-to-json
 
 wget https://raw.githubusercontent.com/revgen/myenv/master/setup/freebsd/pfsence/usr/local/bin/notify-send
 wget https://raw.githubusercontent.com/revgen/myenv/master/setup/freebsd/pfsence/usr/local/bin/view-squid-log
+wget https://raw.githubusercontent.com/revgen/myenv/master/setup/freebsd/pfsence/usr/local/bin/pfhelper
 
 # Change script attributes
 chmod +x ./*
@@ -65,5 +68,12 @@ chmod +x ./*
 # Move all scripts to the local/bin
 mv -v ./* /usr/local/bin
 ```
+
+
+## Links
+
+* Check access from the Internet
+    - https://www.ipfingerprints.com/portscan.php
+    - http://ports.my-addr.com/check-all-open-ports-online.php
 
 

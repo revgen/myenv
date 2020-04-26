@@ -40,7 +40,6 @@ alias osver='sw_vers -productVersion'
 alias srm='rm -rvP'
 alias sdelete='rm -rvP'
 alias brew-cleanup='brew cleanup; rm -f -r /Library/Caches/Homebrew/*'
-alias mp3tag='kid3'
 
 export JAVA_HOME=$(/usr/libexec/java_home)
 export NODE_PATH=/usr/local/lib/node_modules

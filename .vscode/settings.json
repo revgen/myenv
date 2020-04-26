@@ -66,5 +66,6 @@
         "**/.factorypath": true,
         "**/.git": true,
         "**/.DS_Store": true
-    }
+    },
+    "explorer.confirmDragAndDrop": false
 }

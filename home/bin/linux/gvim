@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ -n "$(which gnome-terminal)" ]; then
+    terminal="gnome-terminal --hide-menubar --geometry=120x50 -- "
+else
+    if [ -n "$(which xfce4-terminal)" ]; then
+        terminal="xfce4-terminal --hide-menubar --geometry=120x50 -- "
+    else
+        terminal="xterm -geometry 100x35"
+    fi
+fi
+if [ "${DEBUG}" == "true" ]; then
+    echo "Execute command ${terminal} vim \"${1}\" \"${2}\" \"${3}\" "\
+        "\"${4}\" \"${5}\" \"${6}\" \"${7}\" \"${8}\" \"${9}\""
+fi
+arg1="${1:-"~/Documents"}"
+${terminal} vim "${arg1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${7}" "${8}" "${9}"
+

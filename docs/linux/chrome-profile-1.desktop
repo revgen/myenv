@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Chrome - Second
+GenericName=Chrome - Second
+Exec=google-chrome --profile-directory="Profile 1"
+Icon=/usr/share/icons/hicolor/256x256/apps/google-chrome.png
+Terminal=false
+Type=Application
+Categories=Internet;
+Keywords=chrome;

@@ -37,6 +37,7 @@ alias fromhex='xxd -p -r'
 alias line_number='awk '\''{printf("% 6d %s\n", NR, $0)}'\'
 alias mpg123='mpg123 -Cv'
 alias mplayer='mplayer -af volnorm'
+alias mp3tag='kid3'
 
 alias xml-to-json='python3 -m xmljson'
 

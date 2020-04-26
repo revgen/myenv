@@ -1,0 +1,7 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Terminal=false
+Type=Application
+Name=GVim
+Exec=~/.local/bin/gvim
+Icon=~/.gnome/icons/gvim.png

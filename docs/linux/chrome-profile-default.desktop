@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Chrome - Main
+GenericName=Chrome - Main
+Exec=google-chrome --profile-directory=Default
+Icon=/usr/share/icons/hicolor/256x256/apps/google-chrome.png
+Terminal=false
+Type=Application
+Categories=Internet;
+Keywords=chrome;

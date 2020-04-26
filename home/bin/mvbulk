@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #=======================================================================
 ## Bulk rename files and directories inside the current directory
 #

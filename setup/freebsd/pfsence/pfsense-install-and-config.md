@@ -57,13 +57,13 @@
 
     
 ## DNS
-1. System -> General
+1. ```System``` -> ```General```
     - Hostname: gateway
     - Domain: local.lan
     - DNS Servers: 208.67.222.222, 208.67.220.220
     - Override DNS: NO
     - Timezone: America/New_York
-2. Services -> DNS Resolver
+2. ```Services``` -> ```DNS Resolver```
     - Enable DNS resolver: Yes
     - Enable DNSSEC Support: No
     - Enable Forwarding Mode: Yes
@@ -84,7 +84,8 @@
 
 
 ## Notifications
-1 System -> Advanced -> Notification
+
+1. ```System``` -> ```Advanced``` -> ```Notification```
     - E-Mail server: smtp.gmail.com
     - E-Mail port: 465
     - Enable SMTP over SSL/TLS: Yes
@@ -97,12 +98,12 @@
 
 
 ## Dashboard
-2.2. System -> General
+1. ```System``` -> ```General```
     - Hostname in Menu: Fully Domain Name
     - Dashboard columns: 3
     - Login page color: Dark gray
     - Login hostname: check (show hostname on login page)
-2.3. System -> Dashboard
+2. ```System``` -> ```Dashboard```
     - Add: Traffic Graph
     - Add: Service Statuses
     - Add: Firewall logs

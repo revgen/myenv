@@ -25,6 +25,7 @@ Invoke-WebRequest -Uri https://aka.ms/wsl-ubuntu-1804 -OutFile Ubuntu.appx -UseB
 ```
 * [Unpack and install the distro](https://docs.microsoft.com/en-us/windows/wsl/install-on-server#extract-and-install-a-linux-distro)
 
+*Note:* good example how to setup WSL is [here](https://dracos.co.uk/wrote/wsl/).
 
 
 ## Powershell

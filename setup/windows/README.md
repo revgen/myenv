@@ -6,6 +6,7 @@
 * [Snaketail](http://snakenest.com/snaketail/) - tail utility for monitoring growing text log files.
 * [7zip](https://www.7-zip.org/) - free and open-source file archiver.
 * [Google Chrome](https://www.google.com/chrome/) - browser better then Internet Explorer :)
+* [Far Manager](https://www.farmanager.com/download.php?l=en)
 
 
 ## Linux Subsystem

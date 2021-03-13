@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#=======================================================================
+## Show all local ip addresses
+#=======================================================================
+case "${1}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+if which ifconfig 2>&1 >/dev/null; then
+    ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | sort | xargs | sed -e 's/ /, /g'
+else
+    ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+fi
+
+

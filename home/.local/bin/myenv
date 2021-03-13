@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+VERSION=1.0
+#=============================================================================
+## Usage: {SCRIPT_NAME} <command> [parameters]
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2017-03-17
+#  version  :{VERSION}
+#
+## Commands:
+##   apps         - show all tools and scripts from my environment
+##   home         - show myenv home directory
+##   help <app>   - show help screen for the specific myenv's tool or script
+##   help         - show this help screen
+#=============================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g' \
+    | sed 's/{VERSION}/'"${VERSION}"'/g'
+    exit 1
+}
+
+ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
+case "${ostype}" in
+    macos) script=$(python -c "import os,sys; print os.path.realpath(sys.argv[1]);" "$0") ;;
+    *)      script=$(readlink -f "$0") ;;
+esac
+
+# cd ${script%/*}/../..
+cmd=$(echo "${1:-"version"}" | sed 's/^[-]*//g')
+case "${cmd}" in
+    version) echo "myenv v${VERSION} (${ostype})" ;;
+    home) echo "MYENVHOME=${MYENVHOME}" ;;
+    help|h) show_help ;;
+    *) echo "Error: unknown command '${1}'"; exit 1;;
+esac

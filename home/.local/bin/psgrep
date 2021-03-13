@@ -1,0 +1,11 @@
+#!/bin/sh
+#=======================================================================
+## Find at the processes list
+## Usage: {SCRIPT_NAME} <proccess name>
+#=======================================================================
+case "${1:---help}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    *) ps -ef | head -n 1; ps -ef | grep -v grep | grep "$1";;
+esac

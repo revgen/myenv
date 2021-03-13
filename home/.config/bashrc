@@ -1,0 +1,98 @@
+#==============================================================================
+# 
+#==============================================================================
+# If not running interactively, don't do anything
+[ -z "$PS1" ] && return
+
+export PATH=${HOME}/.local/bin:${PATH}
+export MYENVHOME="${HOME}/.local/var/src/myenv"
+export OSTYPE=${OSTYPE:-"$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')"}
+export EDITOR=$(which nvim || which vim || which vi)
+
+
+# --[ Terminal settings ]------------------------------------------------------
+if [[ $TERM == *color ]]; then
+    color_prompt=yes
+    export PS1="\033[0;32m\u@\h\033[0m:\033[1;34m\W\033[0m\$ "
+else
+    export PS1="\u@\h:\W\$ "
+fi
+stty stop '';                                   # Fix Ctrl+S inside the vim
+export GPG_TTY='tty';                           # need for gnupg.vim plugin
+
+export HISTCONTROL=ignoreboth;      # Don't add similar command in the history
+shopt -s histappend;                # Store command into the history immediately
+PROMPT_COMMAND='history -a'
+export HISTSIZE=9999;               # Store more commands in the history
+
+# Prevent tar and other programs from giving special meaning to ._* archive members
+export COPYFILE_DISABLE=1
+
+# --[ Aliases ]----------------------------------------------------------------
+alias ll='ls -ahl'
+alias l='ll'
+alias ltree='ls -R|grep ":$"|sed -e "s/:$//" -e "s/[^-][^\/]*\//--/g" -e "s/^/   /" -e "s/-/|/"'
+alias ..='cd ..'
+alias ...='cd ../..'
+which nvim >/dev/null && alias vim='nvim'
+alias c='clear'
+alias :q='exit'
+alias lynx='lynx -accept_all_cookies'
+alias lower='tr "[:upper:]" "[:lower:]"'
+alias upper='tr "[:lower:]" "[:upper:]"'
+alias newline_to_comma="awk '{printf\"%s%s\",c,$0;c=\", \"}'"
+alias line_number='awk '\''{printf("% 6d %s\n", NR, $0)}'\'
+alias tree='tree -N'
+alias edit=${EDITOR}
+alias v='edit'
+alias j='jobs -l'
+alias tig='tig --all'
+alias hex='xxd'
+alias tohex='xxd -p'
+alias fromhex='xxd -p -r'
+
+# ------[ Custom tools ]-------------------------------------------------------
+ls-recursively() { find ${1:-"${PWD}"} -type f -print0 | xargs -0 ls -al; }
+
+mkcd() {
+    case "${1:---help}" in
+        help|--help)
+            echo "Create directory and go into"
+            echo "Usage: mkcd <directory name>" ;;
+        *)
+            if [ ! -d "$1" ]; then mkdir -p "$@" && cd $_ ;
+            else cd $1; fi
+            ;;
+    esac
+}
+cpx() {
+    [ -z "$(which pv)" ] && echo "Error: pv util not found" && return 1
+    if [ "${1:-"--help"}" == "--help" ] || [ -z "${2}" ]; then
+        echo "Usage: cpx source_file target_file"
+	return 1
+    fi
+    pv "${1}" > "${2}"
+}
+mkcd-now() { mkcd $(date +"%Y%m%d-%H%M%S"); }
+mkcd-today() { mkcd $(date +"%Y%m%d"); }
+echo_log() { echo $(date +"%Y-%m-%dT%H:%M:%S ") $@; }
+alias echo-log=echo_log
+
+# --[ Additional bashrc files ]------------------------------------------------
+[ -r "${MYENVHOME}/home/.config/bashrc_extra" ] && . "${MYENVHOME}/home/.config/bashrc_extra"
+[ -r "${MYENVHOME}/home/.config/bashrc_${OSTYPE}" ] && . "${MYENVHOME}/home/.config/bashrc_${OSTYPE}"
+[ -r "${MYENVHOME}/home/.config/bashrc_extra_${OSTYPE}" ] && . "${MYENVHOME}/home/.config/bashrc_extra_${OSTYPE}"
+
+# ------[ Customer welcome screen ]--------------------------------------------
+if [ -f "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}" ]; then
+    "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}"
+else if [ -f "${MYENVHOME}/home/.config/user-welcome" ]; then
+    "${MYENVHOME}/home/.config/user-welcome"
+fi; fi
+
+# --[ Log ] -------------------------------------------------------------------
+if [ -n "$DISPLAY" ]; then
+    logger -t "${USER}"  "bash: init X-session"
+elif [ -n "$SSH_TTY" ]; then
+    logger -t "${USER}"  "bash: init ssh session [$SSH_CLIENT,$SSH_CONNECTION]"
+fi

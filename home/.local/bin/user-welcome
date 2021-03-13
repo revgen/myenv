@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+sysinfo="$(dirname "${0}")/bin/sysinfo"
+[ -e "${sysinfo}" ] && "${sysinfo}" banner

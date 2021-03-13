@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+#=======================================================================
+## Show system information
+## Usage: {SCRIPT_NAME} [--full]
+#=======================================================================
+ostype=$(uname -s)
+os_info() {
+    if [ "${ostype}" == "Darwin" ]; then
+        sw_vers | grep Product | cut -d":" -f2 | xargs
+        return 0
+    fi
+    if [ -f "/etc/os-release" ]; then
+        name=$(grep "^NAME\|VERSION_ID" /etc/os-release | sort |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs)
+        if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
+            echo "${name} [WSL]"
+        else
+            echo "${name}"
+        fi
+        return 0
+    fi
+    if [ -n "$(which lsb_release)" ]; then
+        lsb_release -d | sed 's/Description:[\t ]*//g'
+        return 0
+    fi
+    if [ -f /etc/debian_version ]; then
+        echo "Debian $(cat /etc/debian_version)"
+        return 0
+    fi
+    uname -sr
+}
+platform() {
+    uname -m | sed 's/x86_/x/g' | sed 's/amd/x/g'
+}
+cpu_info() {
+    if [ "${ostype}" == "Darwin" ]; then
+        top -l 1 -s 0 | awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+    else
+        top -n  1 | awk ' /Cpu/ || /Mem/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+    fi
+}
+disk_info() {
+    if [ "${ostype}" == "Darwin" ]; then
+        df -h | grep "/dev/disk" | grep -v "/private" | grep -v "nobrowse" \
+        | grep -v "auto_home" | awk '{print ""$4" of "$2" available (capacity="$5") "$9}'
+    else
+        df -h | grep "/$\|/mnt/" | awk '{print ""$4" of "$2" available (capacity="$5") "$6}'
+    fi
+}
+active_users() {
+    if [ -f "/etc/os-release" ]; then
+        if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
+            wslvar USERNAME
+            return
+        fi
+    fi
+    w -h | awk '{print $1}' | sort -r | uniq -c | awk '{printf"%s%s (%d)",c,$2,$1;c=", "}'
+}
+local_ip() {
+    (if which ifconfig 2>&1 >/dev/null; then
+        ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'
+    else
+        ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+    fi) | sort | xargs | sed 's/ /,/g'
+}
+public_ip() {
+    if which wget >/dev/null; then wget -q -O - icanhazip.com;
+    else curl -s icanhazip.com; fi
+}
+internet_status() {
+    internet=$(curl -sIL -m 3 "https://google.com" | grep "HTTP[^ ]* 200")
+    if [ -n "${internet}" ]; then echo "CONNECTED";
+    else echo "ERROR"; fi
+}
+
+show_uptime() {
+    uptime | cut -d"l" -f1 | sed 's/[, ]*$//g' | sed 's/^ //g' | sed 's/ [ ]*/ /g'
+}
+
+show_slim_info() {
+    echo "----[ System information ]----"
+    echo "Hostname  : $(hostname)"
+    echo "Users     : $(active_users)"
+    echo "OS        : $(os_info) ($(platform))"
+    echo "Uptime    : $(show_uptime)"
+    echo "------------------------------"
+    cpu_info
+    echo "------------------------------"
+    disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
+    echo "------------------------------"
+    echo "Local IP  : $(local_ip)"
+    echo "Public IP : $(public_ip)"
+    echo "Internet  : $(internet_status)"
+    echo "------------------------------"
+    echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
+    echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
+}
+
+show_banner() {
+    if which figlet > /dev/null; then
+        echo -en "\e[34m\e[1m"
+        hostname | figlet
+        echo -en "\e[0m"
+    else
+        echo -e "\e[97m\e[1m  Hostname:\e[0m\e[34m $(hostname)\e[0m"
+    fi
+    tty_info=
+    if [ "${SSH_TTY}" ]; then tty_info="ssh: $(echo "${SSH_CLIENT}" | cut -d" " -f1)"; fi
+    if [ "${STY}" ]; then tty_info="$(echo "${tty_info} screen: ${STY}" | sed 's/^[ ]*//g')"; fi
+    if [ -n "${tty_info}" ]; then tty_info="(${tty_info})"; fi
+    echo -e "\e[97m\e[1m      User:\e[0m\e[36m $USER\e[0m \e[97m\e[0m${tty_info}\e[0m"
+    echo -e "\e[97m\e[1m    System:\e[0m\e[32m $(os_info) ($(platform))\e[0m"
+    echo -e "\e[97m\e[1m     Users:\e[0m\e[96m $(active_users)\e[0m"
+    echo -e "\e[97m\e[1m Addresses:\e[0m\e[93m $(local_ip)\e[0m"
+    echo -e "\e[97m\e[1m    Uptime:\e[0m\e[35m $(show_uptime)\e[0m"
+}
+
+show_ip_addr() {
+    if [ -z "$(which ifconfig)" ]; then
+        ip addr show
+    else
+        ifconfig
+    fi
+}
+
+arg1=${1:-"--simple"}
+case "${arg1}" in
+    help|--help|h|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    simple|--simple|-S) show_slim_info ;;
+    banner|--banner|-B) show_banner ;;
+    full|--full|-F) execute_inxi -mF ;;
+    *) execute_inxi $@ ;;
+esac
+

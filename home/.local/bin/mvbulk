@@ -1,0 +1,87 @@
+#!/bin/bash
+#=======================================================================
+## Bulk rename files and directories inside the current directory
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2016-12-05
+#  version  :1.0
+#
+## Usage: {SCRIPT_NAME} <source mask> <target mask> [options]
+## Options:
+##    --directory        - rename directories (default: files only)
+#=======================================================================
+# TODO: add encoding converter like: --from cp1251 --to utf-8 (default)
+# TODO: add prefix/postfix support
+# TODO: add regex support
+# TODO: add cyrillic to latin transliteration
+
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+NO_COLOR='\033[0m'
+RED='\033[31m'
+GREEN='\033[32m'
+PURPLE='\033[35m'
+
+bulk_rename() {
+    src=$(python -c "import os,sys; print os.path.abspath(sys.argv[1]);" "$1";)
+    from=$2
+    to=$3
+    ro=$4
+    type=${5:-"f"}
+    printf "=%.0s" {1..78}; echo ""
+    echo "Bulk path rename in ${src}"
+    if [ ${ro} -eq 1 ]; then
+        echo "Emulate rename: \"${from}\" -> \"${to}\""
+    else
+        echo "Rename: \"${from}\" -> \"${to}\""
+    fi
+    echo ""
+    find "${1}" -type ${type} ! -path . -maxdepth 1 -mindepth 1 | while read f; do
+        new_f=$(echo "$f" | sed 's/'"${from}"'/'"${to}"'/g')
+        if [ "${f}" == "${new_f}" ]; then
+            echo "[${type}] \"${f##*/}\" == \"${new_f##*/}\" (no changes)"
+        else
+            if [ $ro -eq 1 ]; then
+                echo "${PURPLE}[${type}] \"${f##*/}\" -> \"${new_f##*/}\" (checkmode)${NO_COLOR}"
+            else
+                mv -f "$f" "$new_f"
+                errcode=$?
+                if [ $errcode -eq 0 ]; then
+                    echo "${GREEN}[${type}] \"${f##*/}\" -> \"${new_f##*/}\" - success${NO_COLOR}"
+                else
+                    echo "${RED}[${type}] \"${f##*/}\" -> \"${new_f##*/}\" - failed${NO_COLOR} [error=$errcode]"
+                fi
+            fi
+        fi
+    done
+}
+
+from=${1:---help}
+to=${2}
+checkmode=0
+type=f
+if [ "${from}" == "--help" ] || [ "${from}" == "help" ]; then
+    show_help
+fi
+for arg in $@; do
+    case "$arg" in
+        --directory) type=d;;
+    esac
+done
+wd=.
+if bulk_rename "${wd}" "${from}" "${to}" 1 ${type} && [ ${checkmode} -eq 0 ]; then
+    echo ""
+    read -n 1 -p "Continue renaming (y/N)? " opt
+    if [ -n "${opt}" ]; then echo ""; fi
+    if [ "$opt" != "Y" ] && [ "$opt" != "y" ]; then
+        echo "Stop"
+        exit 0;
+    fi
+    bulk_rename "${wd}" "${from}" "${to}" 0 ${type}
+fi
+

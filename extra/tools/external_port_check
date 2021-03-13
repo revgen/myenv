@@ -1,0 +1,35 @@
+#!/bin/sh
+# ############################################################################
+## Check oppened port to the Internet for your external IP address
+## Usage: {SCRIPT_NAME} <port>
+## Exit codes:
+##   0   - port is closed
+##   127 - port is open
+##   N   - execution script error
+##
+## Dependence: curl
+#  Author: Evgen Rusakov (https://github.com/revgen)
+# ############################################################################
+
+check_external_port() {
+    port=${1}
+    resp=$(curl -sL 'https://www.whatsmyip.org/data/port-scanner.php' \
+        -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+        -H 'Referer: https://www.whatsmyip.org/port-scanner/' \
+        --data-raw 'port='${port}'&timeout=default' \
+        --compressed)
+    ip=$(curl -sL http://checkip.amazonaws.com)
+    if [ "${resp}" == "1" ]; then
+        echo "[WARNING] Port ${port} is open on ${ip}"
+	exit 127
+    else
+        echo "[OK] Port ${port} is closed on ${ip}"
+    fi
+}
+
+port=${1:-"80"}
+case "${port}" in
+    help|--help) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 1;;
+    *) check_external_port "${port}";;
+esac
+

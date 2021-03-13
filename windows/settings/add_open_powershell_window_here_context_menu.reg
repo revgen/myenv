@@ -1,0 +1,37 @@
+Windows Registry Editor Version 5.00
+
+; Add "Open PowerShell here" to the context menu 
+; Origital script source: http://www.tenforums.com/tutorials/60175-open-powershell-window-here-context-menu-add-windows-10-a.html
+
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\powershell]
+@="Open &PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\Background\shell\powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\Powershell]
+@="Open &PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\Directory\shell\powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+
+[HKEY_CURRENT_USER\Software\Classes\Drive\shell\powershell]
+@="Open &PowerShell here"
+"Icon"="powershell.exe"
+
+
+[HKEY_CURRENT_USER\Software\Classes\Drive\shell\powershell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"
+
+
+[HKEY_CURRENT_USER\Software\Classes\LibraryFolder\Background\shell\powerShell]
+@="Open &PowerShell here"
+"Icon"="powershell.exe"
+
+[HKEY_CURRENT_USER\Software\Classes\LibraryFolder\Background\shell\powerShell\command]
+@="powershell.exe -noexit -command Set-Location -literalPath '%V'"

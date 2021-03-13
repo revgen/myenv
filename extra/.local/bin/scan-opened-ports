@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+ipaddress=${1:-"--help"}
+start_port=${2:-"1"}
+end_port=${3:-"65535"}
+echo "Check opened ports from ${start_port} to ${end_port}"
+if [ "${ipaddress}" == "--help" ] || [ "${ipaddress}" == "-h" ]; then
+    echo "Usage: $(basename "${0}") <host ip address> [start port] [end port]"
+    exit 1
+fi
+which nmap >/dev/null || echo "Error: nmap not found" && exit 1
+echo "Checking ${ipaddress} host..."
+nmap -Pn -A -p1-65535 -vvv ${ipaddress} | tee gw-scan-result-$(date +"%F-%T").txt

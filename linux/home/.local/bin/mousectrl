@@ -1,0 +1,51 @@
+#!/bin/bash
+#=======================================================================
+## Control mouse from the command line
+##
+## Usage: {SCRIPT_NAME} <command>
+##
+## Commands:
+##   click-left             - click with left mouse button
+##   click-right            - click with right mouse button
+##   up / up-faster         - move mouse cursor up (normal / faster)
+##   down / down-faster     - move mouse cursor down (normal / faster)
+##   left / left-faster     - move mouse cursor left (normal / faster)
+##   right / right-faster   - move mouse cursor right (normal / faster)
+##   scroll-up              - scroll mouse wheel up
+##   scrool-down            - scroll mouse wheel down
+##   find-cursor            - move mouse cursor to the left-top corner
+##   help                   - show this screen
+#
+#=======================================================================
+offset=3
+offset2=20
+
+case "${1:-"help"}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    up)             xdotool mousemove_relative -- 0 -${offset} ;;
+    down)           xdotool mousemove_relative -- 0  ${offset} ;;
+    left)           xdotool mousemove_relative -- -${offset} 0 ;;
+    right)          xdotool mousemove_relative --  ${offset} 0 ;;
+    up-faster)      xdotool mousemove_relative -- 0 -${offset2} ;;
+    down-faster)    xdotool mousemove_relative -- 0  ${offset2} ;;
+    left-faster)    xdotool mousemove_relative -- -${offset2} 0 ;;
+    right-faster)   xdotool mousemove_relative --  ${offset2} 0 ;;
+    click-left)     xdotool click 1 ;;
+    click-right)    xdotool click 3 ;;
+    scroll-up)      xdotool click 4 ;;
+    scroll-down)    xdotool click 5 ;;
+    find-cursor)
+        for i in {0..8}; do
+            xdotool mousemove -- 300 300
+            xdotool mousemove_relative -- 10 10
+            xdotool mousemove_relative -- -20 0
+            xdotool mousemove_relative -- 20 -20
+            xdotool mousemove_relative -- -10 0
+        done;;
+    *)
+        echo "Error: unknown command '${1}'."
+        exit 1;;
+esac
+

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#=======================================================================
+## Check connection with the specific url
+## Usage: {SCRIPT_NAME} <url>
+#=======================================================================
+TMP=/tmp
+HTTP_TIMEOUT=${HTTP_TIMEOUT:-"10"}      # timeout in seconds
+
+case "${1:-"help"}" in
+    help|--help)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+
+check_status() {
+    output=${TMP}/curl-check-status-${RANDOM}
+    if [ "${DEBUG}" == "true" ]; then
+        echo "Checking $1 (output = ${output})..."
+    fi
+    rm -f "${output:-"/dev/null"}"
+    curl --max-time ${HTTP_TIMEOUT} -sI "${1}" > "${output}" 
+    errcode=$?
+    if [ ${errcode} -eq 0 ]; then
+        status=$((grep "^HTTP" "${output}" | awk '{print $2}') || echo "NUL")
+    else
+        status="ERR"
+    fi
+    echo "[${status}] ${1} (errcode=${errcode})"
+}
+
+url=${1}
+if [ -z "$(echo "${url}" | grep "http")" ]; then
+    url="http://${url}"
+fi
+
+check_status "$(echo "${url}" | sed 's/https:/http:/g')"
+check_status "$(echo "${url}" | sed 's/http:/https:/g')"
+

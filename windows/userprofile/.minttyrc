@@ -1,0 +1,8 @@
+ThemeFile=dracula
+FontHeight=11
+Columns=120
+Rows=35
+Term=xterm-256color
+Charset=UTF-8
+BoldAsColour=no
+BellType=0

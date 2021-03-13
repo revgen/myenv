@@ -1,0 +1,67 @@
+#!/bin/sh
+# ############################################################################
+## {SCRIPT_NAME} - script is using to update IP address on the serices: DynDNS, No-IP, DyNU, SafeDNS.
+##
+## Usage: {SCRIPT_NAME} [config file (default:/etc/dyndns-updater.conf)]
+##
+## System environment:
+##   DYNDNS_USER - account user name
+##   DYNDNS_PASS - account password
+##   DYNDNS_HOST - dyndns domain name
+##   DYNDNS_API  - dynu (default), no-ip, safedns
+##   EXTERNAL_IP - your external ip adddress (defaul: get it from http://icanhazip.com)
+##
+## Configuration files:
+##   /etc/dyndns-updater.conf
+##   ~/.dyndns-updater.conf
+##
+## Note:
+##   Some services allow you to use md5 hash from your password instead of a real password
+#
+#  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
+# ############################################################################
+SCRIPT_NAME=$(basename "${0}")
+CURL_TIMEOUT_SEC=10
+case "${1}" in
+    help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
+esac
+
+if [ -n "${1}" ]; then
+    echo "Load config ${1}"
+    . "${1}"
+else
+    [ -f /etc/dyndns-updater.conf ] && echo "Load config /etc/dyndns-updater.conf" && . /etc/dyndns-updater.conf
+    [ -f ~/.dyndns-updater.conf ] && echo "Load config ~/.dyndns-updateri.conf" && . ~/.dyndns-updater.conf
+fi
+
+EXTERNAL_IP=$(curl -s http://icanhazip.com)
+DYNDNS_USER=${DYNDNS_USER}
+DYNDNS_PASS=${DYNDNS_PASS}
+DYNDNS_HOST=${DYNDNS_HOST}
+case "${DYNDNS_API}" in
+    no-ip|noip) DYNDNS_URL="https://dynupdate.no-ip.com/nic/update" ;;
+    safedns|safedns) DYNDNS_URL="https://www.safedns.com/nic/update" ;;
+    *) DYNDNS_URL="https://api.dynu.com/nic/update" ;;
+esac
+DYNDNS_URL="${DYNDNS_URL}?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}&username=${DYNDNS_USER}"
+
+echo "Call ${DYNDNS_URL}..."
+# echo "Credentials: ${DYNDNS_USER}:${DYNDNS_PASS}"
+resp="$(curl --max-time ${CURL_TIMEOUT_SEC} --connect-timeout ${CURL_TIMEOUT_SEC} -Ls "${DYNDNS_URL}&password=${DYNDNS_PASS}")"
+errcode=$?
+case $resp in
+    "good") msg="SUCCESS: ${DYNDNS_URL} - (good) DNS hostname successfully updated." ;;
+    "nochg") msg="SUCCESS: ${DYNDNS_URL} - (nochg) no update performed." ;;
+    "nohost") msg="SUCCESS: ${DYNDNS_URL} - (nohost) Hostname supplied does not exist under specified account. Revise config file." ;;
+    "badauth") errcode=1; msg="ERROR: ${DYNDNS_URL} - (badauth) Invalid username password combination." ;;
+    "badagent") errcode=1; msg="ERROR: ${DYNDNS_URL} - (badagent) Client disabled - No-IP is no longer allowing requests from this update script." ;;
+    '!donator') errcode=1; msg="ERROR: ${DYNDNS_URL} - (donator) An update request was sent including a feature that is not available." ;;
+    "abuse") errcode=1; msg="(abuse) [$HOST] Username is blocked due to abuse." ;;
+    "911") errcode=1; msg="ERROR: ${DYNDNS_URL} - (911) A fatal error on our side such as a database outage. Retry the update in no sooner than 30 minutes." ;;
+    "") errcode=1; msg="ERROR: ${DYNDNS_URL} - (empty) No response received from No-IP. This may be due to rate limiting or a server-side problem." ;;
+    *) errcode=1; msg="ERROR: ${DYNDNS_URL} - (error: ${resp}) Could not understand the response from No-IP. The DNS update server may be down." ;;
+esac
+[ ${errcode} -ne 0 ] && msg="${msg}. $(cat ${LOG_FILE})"
+echo "${msg}"
+logger -t "dyndns.update" "${msg}"
+exit ${errcode}

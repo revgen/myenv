@@ -1,0 +1,15 @@
+#!/bin/sh
+#=============================================================================
+## Display directory usage statistics
+## Usage: {SCRIPT_NAME} <path> <depth>
+#=============================================================================
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+case "$(echo ${1:-""} | sed 's/^[-]*//g')" in
+    help|h) show_help ;;
+esac
+
+du -xhd ${2:-"1"} "${1:-"."}" | sort -rhk1
+

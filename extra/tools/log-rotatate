@@ -1,0 +1,44 @@
+#!/bin/sh
+#=============================================================================
+## Rotate log file: make an archive and clean the source log.
+##
+## Usage: {SCRIPT_NAME} [log file name (default: system.log)] [--silent]
+##
+## System environment variables:
+##   LOG_BACKUP  - target directory to store a result archived file
+##                 (default: the same directory with the source file)
+#  
+#  Evgen Rusakov (https://github.com/revgen) 2018 MIT License
+#=============================================================================
+to_log() { logger -st log.rotation "${@}"; }
+set -o pipefail
+SCRIPT_NAME=$(basename "${0}")
+silent=false
+case "${1}" in
+    --silent|-s) silent=true; shift;;
+    help|--help|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" \
+        | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
+esac
+dt=$(date +"%d-%m-%d_%H%M%S")
+src=${1:-"/var/log/system.log"}
+dest_dir=${LOG_BACKUP:-"$(basedir "${src}")"}
+dest="${dest_dir}/$(echo "$(basename "${src}")" | sed 's/\.log$//g').${dt}.log"
+echo "Rotate '${src}' file -> '${dest}'..."
+if [ "${silent}" != "true" ]; then
+    read -n 1 -p "Do you want to continue (y/N)? " opt; echo ""
+    if [ "${opt}" != "y" ]; then echo "Skip"; exit 1; fi
+fi
+if [ ! -f "${src}" ]; then
+    to_log "Error: File '${src}' does not exist. Skip."
+    exit 1
+else
+    cp -v "${src}" "${dest}" 2>&1 | to_log || exit 1
+    rm -fv "${src}" 2>&1 | to_log || exit 1
+    gzip "${dest}" && touch "${src}" | to_log || exit 1
+    if [ -e "/etc/init.d/log" ]; then
+        echo "Restart log service..."
+        /etc/init.d/log restart
+    fi
+    to_log "Log archive: $(du -sh "${dest}.gz")"
+fi

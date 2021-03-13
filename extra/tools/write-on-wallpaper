@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+export PATH="${HOME}/.local/bin:${PATH}"
+
+#debug() { [ "${DEBUG}" == "true" ] && >&2 echo "$@"; }
+debug() { echo "$@"; }
+
+write_text_to_image() {
+  # see all fnts: convert -list font
+  src_image=${1}
+  res_image=${2}  
+  gravity=${3:-"NorthWest"}
+  font_size=${4:-"24"}
+  fg_color=${5:-"#dedede"}
+  pos_x=${6:-"100"}
+  pos_y=${7:-"100"}
+  debug "Write to the image using a template: ${src_image}"
+  
+  # TODO: resolution -> x, y
+  tmp_src="$(mktemp).jpg"
+  tmp_res="$(mktemp).jpg"
+  cp "${src_image}" "${tmp_src}"
+  while read text; do
+    debug "line: ${text}"
+    convert "${tmp_src}" \
+      -font DejaVu-Sans-Mono \
+      -pointsize ${font_size} \
+      -fill "${fg_color}" \
+      -gravity ${gravity} \
+      -annotate +${pos_x}+${pos_y} "${text}" \
+      "${tmp_res}"
+    pos_y=$(( pos_y + font_size + font_size / 30 ))
+    mv "${tmp_res}" "${tmp_src}"
+  done
+  mv "${tmp_src}" "${res_image}"
+  debug "Image ${res_image} updated"
+}
+
+if [ -z "${DESKTOP}" ]; then
+    debug "DESKTOP environment not found, set it to the default value :0.0"
+    export DESKTOP=:0.0
+fi
+
+# ----------------------------------------------------------------------------
+position=${1}
+fg_color=${2}
+font_size=${3}
+image="${HOME}/.config/wallpaper.jpg"
+
+case "${position}" in
+  --help|help)
+    echo "Write text on the wallpaper"
+    echo "using: echo 'Text' | $(basename "${0}") <position> <fg_color> <font_size>"
+    exit 1
+  ;;
+esac
+
+if [ ! -f "${image}" ]; then echo "Error: file ${image} nit found."; exit 1; fi
+
+cd "$(dirname "${0}")"
+debug "Working directory: ${PWD}"
+
+mkdir -p "${HOME}/.cache"
+tmp_image="${HOME}/.cache/wallpaper.jpg"
+
+write_text_to_image "${image}" "${tmp_image}" NorthWest "${font_size}" "${fg_color}"
+
+debug "Set wallpaper ${tmp_image}"
+pcmanfm --set-wallpaper="${tmp_image}"
+

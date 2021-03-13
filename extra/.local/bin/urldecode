@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+# TODO: add help
+import sys
+import urllib
+print(urllib.parse.unquote(sys.stdin.read()))

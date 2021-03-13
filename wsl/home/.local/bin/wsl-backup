@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+###############################################################################
+# Scipt to backup directories from the Windows Subsystem of Linux to the Host
+# Usage: wsl-backup [directory]
+#   directory   - source directory to backup (default: ~/Workspace)
+# System environment:
+#   BACKUP_DIR  - target directory to store backups
+#                 (default {WINDOWS_USER_PROFILE}/Documents/Backup)
+#
+# crontab -e
+# */30 * * * * /bin/bash -l -c ". ~/.bashrc; yes | wsl-backup" 2>&1 > /tmp/cronjob.log
+#
+###############################################################################
+log() { logger -st user.backup "$@" 2>&1 | tee -a "${LOG_FILE}" ; }
+
+SRC="${1:-"${HOME}/Workspace"}"
+DEST_DIR="${BACKUP_DIR:-"$(wslupath -H || exit 1)/Documents/Backup"}"
+NAME=${USER}-$(basename "${SRC}").$(date +"%Y%m%d-%H%M%S").bak.tar.gz
+mkdir -p "${DEST}" 2>/dev/null
+DEST="${DEST_DIR}/${NAME}"
+LOG_FILE=~/.local/log/backup-${NAME}.log; mkdir -p ~/.local/log 2>/dev/null
+
+echo "Backup ${SRC} -> ${DEST}"
+read -p "Continue (y/N)? " opt
+if [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; then echo "Skip"; exit 1; fi
+
+log "start backup '${SRC}' -> '${DEST}'"
+log "log file '${LOG_FILE}'"
+
+echo "Create apt install history list: ${SRC}/.apt.history" | tee -a "${LOG_FILE}"
+grep "install " /var/log/dpkg.log | grep -v " lib" | grep "^$(date +"%Y-%m-")" > "${SRC}/.apt.history"
+
+echo "Create bash install history list: ${SRC}/.bash.history" | tee -a "${LOG_FILE}"
+tail -n 100 ${HOME}/.bash_history | sort -u > "${SRC}/.bash.history"
+
+echo "Backup files from '${SRC}'..." | tee -a "${LOG_FILE}"
+tar zcv \
+    --exclude='build' \
+    --exclude='node_modules' \
+    --exclude="__pycache__" \
+    --exclude="*.log" \
+    --exclude="*.pyc" \
+    --exclude="*.tmp" \
+    -f "${DEST}" "${SRC}" 2>&1 | tee -a "${LOG_FILE}"
+
+if [ $? -eq 0 ]; then
+    log "result file: $(du -sh "${DEST}" | sed 's/\t/ /g')"
+    log "succes backup ${SRC} -> ${DEST}}. Log: ${LOG_FILE}"
+else
+    log "error backup ${SRC}. Log: ${LOG_FILE}"
+    exit 1
+fi
+

@@ -1,0 +1,5 @@
+export WORKSPACE=${HOME}/Workspace
+export PATH=${WORKSPACE}/bin:$PATH
+
+alias vscode='code'
+alias ws='cd ${WORKSPACE} && pwd'

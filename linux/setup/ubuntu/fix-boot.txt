@@ -1,0 +1,15 @@
+Fix Ubuntu boot
+
+https://www.linux.com/training-tutorials/how-rescue-non-booting-grub-2-linux/
+Method 1 (from grub shell):
+# to see all partitions: grub> ls
+# to see content: grub> ls (hd0,gpt1)/
+
+grub> set root=(hd0,1)
+grub> linux /boot/vmlinuz.img root=/dev/sda1
+grub> initrd /boot/initrd.img
+grub> boot
+
+Ubuntu Boot-Repair gui tool: https://help.ubuntu.com/community/Boot-Repair
+
+

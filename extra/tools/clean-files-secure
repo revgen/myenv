@@ -1,0 +1,61 @@
+#!/bin/sh
+echo "Secure delete all files and directories."
+
+delete_file_secure() {
+    src="${1}"
+    nn="$(dirname "${src}")/$(uuidgen)"
+    #echo "Process ${src} -> ${nn}...";
+    mv -v "${src}" "${nn}" || exit 1
+    shred -vfzn 2 "${nn}"
+    rm -vf "${nn}" || exit 1
+}
+
+delete_dir_secure() {
+    src="${1}"
+    nn="$(dirname "${src}")/$(uuidgen)"
+    #echo "Process ${src} -> ${nn}..."
+    mv -v "${src}" "${nn}" || exit 1
+    rmdir -v "${nn}" || exit 1
+}
+
+delete_dir_secure_recursive() {
+    src=${1}
+    cd "${src}" || exit 1
+    echo "====================================================="
+    echo "Processing all files in ${PWD}..."
+    find . -mindepth 1 -type f | sort -r | while read f; do delete_file_secure "${f}" || exit 1; done
+
+    echo "====================================================="
+    echo "Processing all directories in ${PWD}..."
+    find . -mindepth 1 -type d | sort -r | while read f; do delete_dir_secure "${f}" || exit 1; done
+    cd ..
+    delete_dir_secure "${src}" || exit 1
+}
+
+case "${1}" in
+    help|--help|-h)
+	echo "Steps:"
+	echo "  1. All paths will be renamed with the generated uuid."
+	echo "  2. After that files will be processed witht he shred tool 2 times and filled with zeros."
+	echo "  3. Files will be removed"
+	echo "Usage: $(basename "${0}") [path]"
+	exit 1;;
+esac
+
+if ! which shred >/dev/null; then echo "Error: shred tools is required for this script." && exit 1; fi 
+src="${1:-"${PWD}"}"
+read -p "Do you really want to delete '${src}' (y/N)? " opt
+if [ "${opt}" != "y" ]; then echo "Skip"; exit 1; fi
+
+echo ""
+if [ ! -e "${src}" ]; then echo "Error: Path '${src}' not found." && exit 1; fi;
+
+echo "WARNING: All files/directories in the path '${src}' will be deleted."
+read -p "Are you sure (yes/No)? " opt
+if [ "${opt}" != "yes" ]; then echo "Skip"; exit 1; fi
+
+if [ -f "${src}" ]; then delete_file_secure "${src}" || exit 1;
+else delete_dir_secure_recursive "${src}" || exit 1; fi
+
+echo "Done clean ${PWD}"
+

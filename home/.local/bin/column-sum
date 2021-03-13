@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#=======================================================================
+## Calculate sum of all numbers in a column.
+## Usage: {SCRIPT_NAME} <file name>
+##        or
+##        <cmd> | {SCRIPT_NAME}
+#
+#  Solution from: https://stackoverflow.com/a/3096575
+#=======================================================================
+if [ "${1:-"--help"}" == "--help" ]; then
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+fi
+
+if [ -z "${1}" ]; then
+    paste -sd+ "${1}" | bc
+else
+    paste -sd+ - | bc
+fi

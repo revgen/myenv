@@ -1,14 +1,26 @@
 #==============================================================================
-# 
+# Custom user bashrc file settings
 #==============================================================================
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
-export PATH=${HOME}/.local/bin:${PATH}
-export MYENVHOME="${HOME}/.local/var/src/myenv"
-export OSTYPE=${OSTYPE:-"$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')"}
-export EDITOR=$(which nvim || which vim || which vi)
+#if [ -z "$HOME" ]; then
+#    OLDPWD=${PWD}; cd ~ ; export HOME=${PWD}; cd ${OLDPWD}
+#fi
 
+export MYENVHOME=${MYENVHOME:-"${HOME}/.local/src/myenv"}
+export PATH="${HOME}/.local/bin:${WORKSPACE}/bin:${HOME}/bin:$PATH"
+export EDITOR=$(which nvim || which vim || which vi)
+export USERBIN=${HOME}/.local/bin
+export WORKSPACE=${HOME}/Workspace
+export OSTYPE=${OSTYPE:-"$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')"}
+if [ "${OSTYPE}" == "linux" ] && grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
+    OSTYPE=wsl
+fi
+
+export PYTHONWARNINGS="ignore"
+
+[ ! -d "${USERBIN}" ] && mkdir -p "${USERBIN}" >/dev/null
 
 # --[ Terminal settings ]------------------------------------------------------
 if [[ $TERM == *color ]]; then
@@ -17,9 +29,12 @@ if [[ $TERM == *color ]]; then
 else
     export PS1="\u@\h:\W\$ "
 fi
+
+# ------[ Tool's settings ]----------------------------------------------------
 stty stop '';                                   # Fix Ctrl+S inside the vim
 export GPG_TTY='tty';                           # need for gnupg.vim plugin
 
+# ------[ Console History ]----------------------------------------------------
 export HISTCONTROL=ignoreboth;      # Don't add similar command in the history
 shopt -s histappend;                # Store command into the history immediately
 PROMPT_COMMAND='history -a'
@@ -50,6 +65,7 @@ alias tig='tig --all'
 alias hex='xxd'
 alias tohex='xxd -p'
 alias fromhex='xxd -p -r'
+alias ws='cd ${WORKSPACE}; pwd'
 
 # ------[ Custom tools ]-------------------------------------------------------
 ls-recursively() { find ${1:-"${PWD}"} -type f -print0 | xargs -0 ls -al; }
@@ -83,12 +99,18 @@ alias echo-log=echo_log
 [ -r "${MYENVHOME}/home/.config/bashrc_${OSTYPE}" ] && . "${MYENVHOME}/home/.config/bashrc_${OSTYPE}"
 [ -r "${MYENVHOME}/home/.config/bashrc_extra_${OSTYPE}" ] && . "${MYENVHOME}/home/.config/bashrc_extra_${OSTYPE}"
 
-# ------[ Customer welcome screen ]--------------------------------------------
-if [ -f "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}" ]; then
-    "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}"
-else if [ -f "${MYENVHOME}/home/.config/user-welcome" ]; then
-    "${MYENVHOME}/home/.config/user-welcome"
-fi; fi
+if [ -z "${TERM_PROGRAM}" ]; then       # do not show additional information in not regular terminals
+    # ------[ Customer welcome screen ]--------------------------------------------
+    if [ -f "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}" ]; then
+        "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}"
+    else if [ -f "${MYENVHOME}/home/.config/user-welcome" ]; then
+        "${MYENVHOME}/home/.config/user-welcome"
+    fi; fi
+
+    if [ ! -f "${HOME}/.selected_editor" ] && [ -n "$(ls /usr/bin/select-editor)" ]; then
+        /usr/bin/select-editor
+    fi
+fi
 
 # --[ Log ] -------------------------------------------------------------------
 if [ -n "$DISPLAY" ]; then

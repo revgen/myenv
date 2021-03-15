@@ -2,6 +2,7 @@
 #=============================================================================
 ## Install myenv to the home environment
 #=============================================================================
+[ "${DEBUG}" == "true" ] && set -x
 set -eo pipefail
 set -o nounset
 shopt -s dotglob
@@ -13,6 +14,9 @@ prompt() { read -p "${1} " opt; [ "${opt}" != "${2:-"y"}" ] && echo "Skipped" &&
 cpx() { mkdir -p "$(dirname "${2}")" 2>/dev/null; rsync -a -v "${1}" "${2}" || exit 1; }
 
 ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
+if [ "${ostype}" == "linux" ] && grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
+    ostype=wsl
+fi
 repo_url=https://github.com/revgen/myenv/archive/master.tar.gz
 cd "$(dirname "$(echo "${0}" | sed 's/^-bash$/~\/.local/g')")"
 export HOME=${HOME}
@@ -54,6 +58,8 @@ download_myenv_distr() {
     step "Download ${repo_url} -> ${target}"
     rm -rf "${target}" 2>/dev/null
     if which wget >/dev/null; then
+        # Fix problem with the wget tool o WSL: could not open HSTS store
+        touch "${HOME}/.wget-hsts"; chmod 644 "${HOME}/.wget-hsts"
         wget -O ${target} https://github.com/revgen/myenv/archive/master.tar.gz || exit 1
     else
         curl -L https://github.com/revgen/myenv/archive/master.tar.gz > ${target} || exit 1
@@ -85,7 +91,9 @@ copy_to_local_home() {
     step "Copy extra files into the MYENVHOME directory: ${MYENVHOME}"
     prompt "Do you want to install extra scripts and tools (y/N)?" && \
     (
-        [ -d "${MYENVSRC}/${ostype}/extra/" ] && cpx "${MYENVSRC}/${ostype}/extra/" "${MYENVHOME}/home/"
+        if [ -d "${MYENVSRC}/${ostype}/extra/" ]; then
+            cpx "${MYENVSRC}/${ostype}/extra/" "${MYENVHOME}/home/"
+        fi
     )
     echo "Clean temp directory: ${MYENVSRC}"
     rm -rf "${MYENVSRC}"

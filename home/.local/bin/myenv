@@ -21,6 +21,9 @@ show_help() {
 }
 
 ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
+if [ "${ostype}" == "linux" ] && grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
+    ostype=wsl
+fi
 case "${ostype}" in
     macos) script=$(python -c "import os,sys; print os.path.realpath(sys.argv[1]);" "$0") ;;
     *)      script=$(readlink -f "$0") ;;

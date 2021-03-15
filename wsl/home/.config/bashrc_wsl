@@ -1,0 +1,69 @@
+###############################################################################
+# Custom user bashrc file settings specific for Windows System for Linux.
+###############################################################################
+alias lt='ls -AElh'
+alias ports='netstat -tulpan'
+alias osinfo='lsb_release -a'
+alias osver="lsb_release -a 2>/dev/null | grep Release | awk '{print $2}'"
+alias psc='ps aux --sort=-pcpu | head'
+alias psm='ps aux --sort=-pmem | head'
+alias sdelete='shred -vfz'
+alias mvim='gvim'
+alias gnome-vim='gvim'
+alias xopen='xdg-open'
+alias home-wsl='wslpath "$(wslvar USERPROFILE)"'
+
+# Note: Bash on Windows does not currently apply umask properly.
+if [[ "$(umask)" = "0000" ]]; then
+    umask 0022
+fi
+
+# Fix (temporary): Cannot make directory '/run/screen': Permission denied
+export SCREENDIR=$HOME/.config/screen
+[ -d $SCREENDIR ] || mkdir -p -m 700 $SCREENDIR
+
+# Fix problem with the wget tool: could not open HSTS store
+touch "${HOME}/.wget-hsts"; chmod 644 "${HOME}/.wget-hsts"
+
+# Initialize DISPLAY environemnt variable
+# I'm using X410 App as an X Windows System on Windows
+[ -z $DISPLAY ] && export DISPLAY=127.0.0.1:0.0
+
+toclip() {
+    #remove last 'newline' char and copy to clipboard
+    awk '{q=p;p=$0}NR>1{print q}END{ORS = ""; print p}'| xclip -selection clipboard
+}
+
+fromclip() {
+    xclip -selection clipboard -o
+}
+
+start_linux_service() {
+    ps -e| grep $1 >/dev/null || sudo service $1 status || sudo service $1 start
+    #
+    # add this line into the sudo file: visudo
+    # <<USER>> ALL=(root) NOPASSWD: /usr/sbin/service
+    #
+    # check all services: service --status-all
+}
+
+startup() {
+    wsl_version=$(uname -r | grep 'microsoft-standard' && echo "WSL v2" || echo "WSL v1")
+    os_version=$(wslsys --build | sed 's/Build: [ ]*//g')
+    os_release_time=$(date -d "@$(echo $(("$(wslsys --sys-installdate | cut -d':' -f2 | sed 's/ //g')")) )" +"%Y-%m-%d")
+    os_uptime=$(wslsys --uptime | sed 's/Uptime: [ ]*//g')
+    echo -e "\033[0;32mYou are using Windows Subsystem for Linux (${wsl_version})\033[0m"
+    if [ -z "${TERM_PROGRAM}" ]; then
+        echo -e "     Windows: \033[0;34m10.${os_version} (installed: ${os_release_time})\033[0m"
+        echo -e "      Uptime: \033[0;90m${os_uptime}\033[0m"
+        echo -e "User Profile: \033[0;36m$(home-wsl)\033[0m"
+        echo -e "Distribution: \033[0;33m${WSL_DISTRO_NAME}\033[0m"
+        start_linux_service rsyslog
+        start_linux_service cron
+    fi
+    # start_service ssh
+    cd ${HOME}
+}
+
+startup
+

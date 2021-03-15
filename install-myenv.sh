@@ -131,9 +131,9 @@ setup_myenv_in_user_home() {
     step "Setup myenv into your home: ${HOME}"
     echo "Symlink all files from the ${MYENVHOME}/home, except .config/*."
     cd ${MYENVHOME}/home
-    find . -type f | grep -v ".config/" | sed 's/^\.\///g' | while read f; do
+    find . -type f -o -type l | grep -v ".config/" | sed 's/^\.\///g' | while read f; do
         target=${HOME}/${f}
-        echo "${target} -> ${MYENVHOME}/home/${f}"
+        # echo "${target} -> ${MYENVHOME}/home/${f}"
         mkdir -p "$(dirname "${target}")" 2>/dev/null
         ln -vsf "${MYENVHOME}/home/${f}" "${target}"
     done

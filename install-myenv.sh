@@ -91,6 +91,9 @@ copy_to_local_home() {
     step "Copy extra files into the MYENVHOME directory: ${MYENVHOME}"
     prompt "Do you want to install extra scripts and tools (y/N)?" && \
     (
+        if [ -d "${MYENVSRC}/extra/" ]; then
+            cpx "${MYENVSRC}/extra/" "${MYENVHOME}/home/"
+        fi
         if [ -d "${MYENVSRC}/${ostype}/extra/" ]; then
             cpx "${MYENVSRC}/${ostype}/extra/" "${MYENVHOME}/home/"
         fi

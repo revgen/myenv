@@ -68,7 +68,7 @@ alias fromhex='xxd -p -r'
 alias ws='cd ${WORKSPACE}; pwd'
 
 alias gifview='mpv --vo=tct --really-quiet --loop'
-alias vd='LC_ALL="${LC_ALL:-"en_US.UTF-8"} vd'
+alias vd='LC_ALL="${LC_ALL:-"en_US.UTF-8"}" vd'
 alias csvview='vd'
 
 # ------[ Custom tools ]-------------------------------------------------------

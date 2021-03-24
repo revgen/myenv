@@ -1,7 +1,11 @@
-#!/bin/sh
-app="Xee³.app"
-[ "${DEBUG}" == "true" ] && echo "Close all running app: ${app}..."
-kill $(ps -e | grep "${app}" | awk '{print $1}' | xargs) 2>/dev/null
-[ "${DEBUG}" == "true" ] && echo "Start ${app} with args: ${1}"
-open -a "/Applications/${app}" --args "${1}"
-
+#!/usr/bin/env bash
+echo "Openning ${1} file ...."
+if [ -n "${DISPLAY}" ]; then
+    app="Xee³.app"
+    [ "${DEBUG}" == "true" ] && echo "Close all running app: ${app}..."
+    kill $(ps -e | grep "${app}" | awk '{print $1}' | xargs) 2>/dev/null
+    [ "${DEBUG}" == "true" ] && echo "Start ${app} with args: ${1}"
+    open -a "/Applications/${app}" --args "${1}"
+else
+    mpv --vo=tct --really-quiet --loop "${1}"
+fi

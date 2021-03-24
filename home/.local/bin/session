@@ -34,11 +34,16 @@ shelltitle " screen"
 shell -$SHELL
 hardstatus string "%{= kb}[$USER@%H:%n] %{= kw}%-w%{= bw}%n*%t%{-}%+w %-= %{= kb}[%D %Y-%m-%d %c]"
 hardstatus alwayslastline
-# F11/F12 - open prev/next window
-bindkey -k F2 next
-bindkey -k F1 prev
+# Disable C-A S, which is freeze the screen (use C-A Q to unfreeze)
+bind s
+# use "showkey" command to get a bindkey code
+# Previous/Next Tab
+bindkey "[1;5D" prev  # ctrl-left
+bindkey "[1;5C" next  # ctrl-right
 # Lock screen by Ctrl+L
 bindkey "^L" lockscreen
+# Force GNU screen to load bash profile
+shell -$SHELL
 select 0
 '
 }

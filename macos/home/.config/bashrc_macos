@@ -41,9 +41,11 @@ alias sdelete='rm -rvP'
 alias brew-cleanup='brew cleanup; rm -f -r /Library/Caches/Homebrew/*'
 alias xopen='/usr/bin/open'
 alias ncdu-root='sudo ncdu / --exclude /Volumes --exclude /System/Volumes --exclude /dev --exclude /private'
-alias qview='open -a qview.app'
+alias preview='open -a Preview.app'
 alias filerestore='testdisk'
 alias nproc='sysctl -n hw.ncpu'
+alias mplayer='mpv'
+alias kid3='/usr/bin/open -a kid3.app'
 
 export TERM=xterm-256color
 # supress zsh verbose message in macOS Catalina

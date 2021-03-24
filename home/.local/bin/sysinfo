@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #=======================================================================
 ## Show system information
-## Usage: {SCRIPT_NAME} [--full]
+## Usage: {SCRIPT_NAME} [full/simple/banner]
 #=======================================================================
 ostype=$(uname -s)
 os_info() {
@@ -97,21 +97,21 @@ show_slim_info() {
 
 show_banner() {
     if which figlet > /dev/null; then
-        echo -en "\e[34m\e[1m"
+        echo -en "\033[34m\033[1m"
         hostname | figlet
-        echo -en "\e[0m"
+        echo -en "\033[0m"
     else
-        echo -e "\e[97m\e[1m  Hostname:\e[0m\e[34m $(hostname)\e[0m"
+        echo -e "\033[97m\033[1m  Hostname:\033[0m\033[34m $(hostname)\033[0m"
     fi
     tty_info=
     if [ "${SSH_TTY}" ]; then tty_info="ssh: $(echo "${SSH_CLIENT}" | cut -d" " -f1)"; fi
     if [ "${STY}" ]; then tty_info="$(echo "${tty_info} screen: ${STY}" | sed 's/^[ ]*//g')"; fi
     if [ -n "${tty_info}" ]; then tty_info="(${tty_info})"; fi
-    echo -e "\e[97m\e[1m      User:\e[0m\e[36m $USER\e[0m \e[97m\e[0m${tty_info}\e[0m"
-    echo -e "\e[97m\e[1m    System:\e[0m\e[32m $(os_info) ($(platform))\e[0m"
-    echo -e "\e[97m\e[1m     Users:\e[0m\e[96m $(active_users)\e[0m"
-    echo -e "\e[97m\e[1m Addresses:\e[0m\e[93m $(local_ip)\e[0m"
-    echo -e "\e[97m\e[1m    Uptime:\e[0m\e[35m $(show_uptime)\e[0m"
+    echo -e "\033[97m\033[1m      User:\033[0m\033[36m $USER\033[0m \033[97m\033[0m${tty_info}\033[0m"
+    echo -e "\033[97m\033[1m    System:\033[0m\033[32m $(os_info) ($(platform))\033[0m"
+    echo -e "\033[97m\033[1m     Users:\033[0m\033[96m $(active_users)\033[0m"
+    echo -e "\033[97m\033[1m Addresses:\033[0m\033[93m $(local_ip)\033[0m"
+    echo -e "\033[97m\033[1m    Uptime:\033[0m\033[35m $(show_uptime)\033[0m"
 }
 
 show_ip_addr() {

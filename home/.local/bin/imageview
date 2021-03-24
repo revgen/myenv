@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# TODO:
+file=${1}
+echo "Open ${file} file"
+if [ -z "${DISPLAY}" ]; then
+    mpv --vo=tct --really-quiet --loop "${1}"
+fi
+

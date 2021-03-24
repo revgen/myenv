@@ -66,8 +66,8 @@ alias hex='xxd'
 alias tohex='xxd -p'
 alias fromhex='xxd -p -r'
 alias ws='cd ${WORKSPACE}; pwd'
+alias mp3tag='kid3'
 
-alias gifview='mpv --vo=tct --really-quiet --loop'
 alias vd='LC_ALL="${LC_ALL:-"en_US.UTF-8"}" vd'
 alias csvview='vd'
 
@@ -86,12 +86,17 @@ mkcd() {
     esac
 }
 cpx() {
-    [ -z "$(which pv)" ] && echo "Error: pv util not found" && return 1
     if [ "${1:-"--help"}" == "--help" ] || [ -z "${2}" ]; then
+        echo "Script to copy files with progress. Using pv tool or rsync."
         echo "Usage: cpx source_file target_file"
 	return 1
     fi
-    pv "${1}" > "${2}"
+    if which pv >/dev/null; then
+        pv "${1}" > "${2}"
+    else
+        # -WavP --human-readable
+        rsync -avhW --progress "${1}" "${2}"
+    fi
 }
 mkcd-now() { mkcd $(date +"%Y%m%d-%H%M%S"); }
 mkcd-today() { mkcd $(date +"%Y%m%d"); }
@@ -111,7 +116,7 @@ if [ -z "${TERM_PROGRAM}" ]; then       # do not show additional information in 
         "${MYENVHOME}/home/.config/user-welcome"
     fi; fi
 
-    if [ ! -f "${HOME}/.selected_editor" ] && [ -n "$(ls /usr/bin/select-editor)" ]; then
+    if [ ! -f "${HOME}/.selected_editor" ] && [ -n "$(ls /usr/bin/select-editor 2>/dev/null)" ]; then
         /usr/bin/select-editor
     fi
 fi

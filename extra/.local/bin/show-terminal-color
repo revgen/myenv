@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+echo "-----------------------------------------------------------------------"
+echo "All background colors"
+for i in {0..255}; do printf '\e[48;5;%dm%3d ' $i $i; (((i+3) % 18)) || printf '\e[0m\n'; done
+printf '\e[0m\n'
+echo "-----------------------------------------------------------------------"
+echo "All foreground colors"
+for i in {0..255}; do printf '\e[38;5;%dm%3d ' $i $i; (((i+3) % 18)) || printf '\e[0m\n'; done
+printf '\e[0m\n'
+echo "-----------------------------------------------------------------------"
+
+SYMBOL=█
+# 32 / 64 / 128
+DIVIDER=32
+row=0
+echo "If the colors blend smoothly, ..."
+for num in {0..255}; do
+    idx=$(echo "${num}+1" | bc)
+    if [ ${num} -eq 0 ]; then printf "[%03d]" ${idx}; fi
+    r1=$(echo "255-${num}*255/255" | bc)
+    g1=$(echo "${num}*510/255" | bc)
+    [ ${g1} -gt 255 ] && g1=$(echo "510-${g1}" | bc)
+    b1=$(echo "${num}*255/255" | bc)
+    r2=$(echo "255 - ${r1}" | bc)
+    g2=$(echo "255 - ${g1}" | bc)
+    b2=$(echo "255 - ${b1}" | bc)
+
+    printf "\x1b[38;2;${r1};${g1};${b1}m"
+    #printf "\x1b[48;2;${r1};${g1};${b1}m"
+    #printf "\x1b[38;2;${r2};${g2};${b2}m"
+    printf "${SYMBOL}\x1b[0m"
+    # to get modulo in bc: mod(a, b) => "scale=0; a - ( a / b * b)"
+    checker=$(echo "scale = 0; (${idx}) - ((${idx}) / ${DIVIDER} * ${DIVIDER})" | bc )
+    if [ ${num} -ne ${row} ] && [ ${checker} -eq 0 ]; then
+        printf "[%03d]\n" ${idx}
+        row=$(echo "${row}+1" | bc)
+        if [ ${num} -ne 255 ]; then printf "[%03d]" ${idx}; fi
+    fi
+done
+echo "...you have True Color support."
+echo ""

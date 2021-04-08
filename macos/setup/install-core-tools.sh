@@ -18,6 +18,9 @@ wget -O ~/.local/bin/imgcat https://www.iterm2.com/utilities/imgcat
 chmod +x ~/.local/bin/imgcat
 
 
+brew install inetutils
+
+
 #!/bin/bash
 title() {
     echo "======================================================================"

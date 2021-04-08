@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #=======================================================================
 ## Show your external ip address
 #=======================================================================
@@ -7,7 +7,7 @@ case "${1}" in
         sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
         exit 255;
 esac
-wget -q -O - icanhazip.com
+wget -q -O - http://icanhazip.com
 #wget -q -O - checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//'
 #wget http://shtuff.it/myip/short
 

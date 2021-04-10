@@ -1,0 +1,38 @@
+#!/bin/sh
+#------------------------------------------------------
+## {SCRIPT_NAME} - send email with msmtp tool.
+##
+## Usage: echo "body message" | {SCRIPT_NAME} [subject]
+##
+## System environment variables:
+##   SUBJECT    - subject for the email
+##   SMTP_FROM  - sender email address
+##   SMTP_TO    - recepient email address
+##
+## Setup:
+## * Install 'msmtp' into the system
+## * Copy updated file 'msmtprc' into the /etc/msmtprc
+## * Copy the script {SCRIPT_NAME} into your PATH, example /usr/bin/
+##
+## You can specify environment variables in the configuration file:
+##   /etc/${SCRIPT_NAME}.conf
+##   ~/.${SCRIPT_NAME}.conf
+#  Evgen Rusakov (https://github.com/revgen) 2017 MIT License
+#------------------------------------------------------
+SCRIPT_NAME=$(basename "${0}")
+case "${1}" in
+    help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
+esac
+[ -f /etc/${SCRIPT_NAME}.conf ] && echo "Load config /etc/${SCRIPT_NAME}.conf" && . /etc/${SCRIPT_NAME}.conf
+[ -f ~/.${SCRIPT_NAME}.conf ] && echo "Load config ~/.${SCRIPT_NAME}.conf" && . ~/.${SCRIPT_NAME}.conf
+HOSTNAME=${HOSTNAME:-"$(hostname 2>/dev/null)"}
+SUBJECT=${1:-"[${HOSTNAME}] Notification"}
+BODY=$(cat)
+
+echo "Sending email '${SUBJECT}' to '${SMTP_TO}'..."
+printf "From: ${SMTP_FROM}
+To: ${SMTP_TO}
+Subject: ${SUBJECT}
+
+${BODY}
+" | msmtp "${SMTP_TO}" && echo "Success sent email to ${SMTP_TO}."

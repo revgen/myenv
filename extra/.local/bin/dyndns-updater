@@ -22,8 +22,8 @@ SCRIPT_NAME=$(basename "${0}")
 case "${1}" in
     help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
 esac
-[ -f /etc/dyndns-updater ] && echo "Load config /etc/dyndns-updater" && . /etc/dyndns-updater
-[ -f ~/.dyndns-updater ] && echo "Load config ~/.dyndns-updater" && . ~/.dyndns-updater
+[ -f /etc/dyndns-updater.conf ] && echo "Load config /etc/dyndns-updater.conf" && . /etc/dyndns-updater.conf
+[ -f ~/.dyndns-updater.conf ] && echo "Load config ~/.dyndns-updateri.conf" && . ~/.dyndns-updater.conf
 
 EXTERNAL_IP=$(curl -s http://icanhazip.com)
 DYNDNS_USER=${DYNDNS_USER}
@@ -36,7 +36,7 @@ esac
 
 echo "Call ${DYNDNS_URL}..."
 # echo "Credentials: ${DYNDNS_USER}:${DYNDNS_PASS}"
-resp="$(curl -Ls -u "${DYNDNS_USER}":"${DYNDNS_PASS}" "${DYNDNS_URL}")"
+resp="$(curl --max-time 10 -Ls -u "${DYNDNS_USER}":"${DYNDNS_PASS}" "${DYNDNS_URL}")"
 errcode=$?
 case $resp in
     "good") msg="SUCCESS: ${DYNDNS_URL} - (good) DNS hostname successfully updated." ;;

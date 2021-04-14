@@ -1,6 +1,6 @@
 #!/bin/sh
 # ############################################################################
-## {SCRIPT_NAME} - script is using to update IP address on the serices: DynDNS, No-IP, DyNU, and etc.
+## {SCRIPT_NAME} - script is using to update IP address on the serices: DynDNS, No-IP, DyNU, SafeDNS.
 ##
 ## Usage: {SCRIPT_NAME} [config file (default:/etc/dyndns-update.conf)]
 ##
@@ -8,7 +8,7 @@
 ##   DYNDNS_USER - account user name
 ##   DYNDNS_PASS - account password
 ##   DYNDNS_HOST - dyndns domain name
-##   DYNDNS_API  - dynu (default), no-ip
+##   DYNDNS_API  - dynu (default), no-ip, safedns
 ##   EXTERNAL_IP - your external ip adddress (defaul: get it from http://icanhazip.com)
 ##
 ## Configuration files:
@@ -37,6 +37,7 @@ DYNDNS_PASS=${DYNDNS_PASS}
 DYNDNS_HOST=${DYNDNS_HOST}
 case "${DYNDNS_API}" in
     no-ip|noip) DYNDNS_URL="https://dynupdate.no-ip.com/nic/update?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}" ;;
+    safedns|safedns) DYNDNS_URL="https://www.safedns.com/nic/update?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}" ;;
     *) DYNDNS_URL="https://api.dynu.com/nic/update?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}" ;;
 esac
 

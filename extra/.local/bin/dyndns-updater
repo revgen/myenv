@@ -2,7 +2,7 @@
 # ############################################################################
 ## {SCRIPT_NAME} - script is using to update IP address on the serices: DynDNS, No-IP, DyNU, and etc.
 ##
-## Usage: {SCRIPT_NAME}
+## Usage: {SCRIPT_NAME} [config file (default:/etc/dyndns-update.conf)]
 ##
 ## System environment:
 ##   DYNDNS_USER - account user name
@@ -12,8 +12,8 @@
 ##   EXTERNAL_IP - your external ip adddress (defaul: get it from http://icanhazip.com)
 ##
 ## Configuration files:
-##   /etc/dyndns-update
-##   ~/.dyndns-update
+##   /etc/dyndns-update.conf
+##   ~/.dyndns-update.conf
 ##
 #  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
 # ############################################################################
@@ -22,8 +22,14 @@ SCRIPT_NAME=$(basename "${0}")
 case "${1}" in
     help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
 esac
-[ -f /etc/dyndns-updater.conf ] && echo "Load config /etc/dyndns-updater.conf" && . /etc/dyndns-updater.conf
-[ -f ~/.dyndns-updater.conf ] && echo "Load config ~/.dyndns-updateri.conf" && . ~/.dyndns-updater.conf
+
+if [ -n "${1}" ]; then
+    echo "Load config ${1}"
+    . "${1}"
+else
+    [ -f /etc/dyndns-updater.conf ] && echo "Load config /etc/dyndns-updater.conf" && . /etc/dyndns-updater.conf
+    [ -f ~/.dyndns-updater.conf ] && echo "Load config ~/.dyndns-updateri.conf" && . ~/.dyndns-updater.conf
+fi
 
 EXTERNAL_IP=$(curl -s http://icanhazip.com)
 DYNDNS_USER=${DYNDNS_USER}

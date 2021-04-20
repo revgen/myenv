@@ -7,7 +7,7 @@ set -o pipefail
 AWS_EC2_ID=${2:-"${AWS_EC2_ID:-"env:AWS_EC2_ID"}"}
 
 show_help() {
-  echo "Usage: $(basename "${0}") <start/stop/status/details> [aws-ec2-id]"
+  echo "Usage: $(basename "${0}") <start/stop/status/details/shell> [aws-ec2-id]"
   echo "You can specify ec2 id with a system environmant vaiable AWS_EC2_ID."
   exit 1
 }
@@ -30,6 +30,14 @@ case "${1:-"help"}" in
     echo "Get status for the ec2 instance: ${AWS_EC2_ID}..."
     show_ec2_details \
     | jq -r '.Reservations[].Instances[] | (.KeyName + " - " + .State.Name + " (" + .PublicIpAddress + ")")' || exit 1
+    ;;
+  shell|cli)
+    assert_ec2_id
+    AWS_EC2_USER=${AWS_EC2_USER:-"centos"}
+    ip=$(show_ec2_details | jq -r '.Reservations[].Instances[].PublicIpAddress' | head -n 1)
+    echo "Connect to the ec2 instance: ${AWS_EC2_USER}@${ip}"
+    if [ -z "${AWS_EC2_KEY}" ]; then ssh ${AWS_EC2_USER}@${ip};
+    else echo "Using key file: ${AWS_EC2_KEY}"; ssh -i "${AWS_EC2_KEY}" ${AWS_EC2_USER}@${ip}; fi
     ;;
   details)
     assert_ec2_id

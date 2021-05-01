@@ -1,0 +1,238 @@
+#!/bin/bash
+#=============================================================================
+## Run database server localy inside a docker container
+#
+#  author   :Evgen Rusakov
+#  license  :Apache License version 2
+#  source   :https://github.com/revgen/dockdb
+#  date     :2016-11-14
+#  version  :1.0
+##
+## Usage: {SCRIPT_NAME} <db type> <command>
+##
+## DB Types:
+##    postgresql  - docker image with a postgresql database
+##    mysql       - docker image with mysql database
+##    mongo       - docker image with mongo database
+##    mssql       - docker image with MS SQL database
+##    oracle      - docker image with Oracle 12 databse with APEX
+##
+## Commands:
+##    start       - start a new container with a specific database
+##    stop        - stop a specific container
+##    status      - show current status for the container with a specific database
+##    remove      - remove a container and an image with a specific database
+##    console     - connect to the database inside the docker using a console
+##    shell       - open a system shell inside the docker container
+##    logs        - show logs for the specific container
+##    version     - show the version of the specific database
+##    help        - show this help screen
+##
+#=============================================================================
+db_data_dir=${DATA_DIR:-"$HOME/.docker/shared/data"}
+username=${USERNAME:-"root"}
+password=${PASSWORD:-"open"}
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+start() {
+    type=${1}
+    container=${2}
+    port=${3}
+    data_dir=${4}
+    echo "data_dir = ${data_dir}" 
+    data_dir_settings=
+    environment_settings=
+    case "${type}" in
+        postgresql)
+            [ -n "${data_dir}" ] && data_dir_settings="${data_dir}:/var/lib/postgresql/data "
+            db_port=5432
+            image=postgres:9-alpine
+            environment_settings="-e POSTGRES_DB=${username} -e POSTGRES_USER=${username} -e POSTGRES_PASSWORD=${password}"
+            echo "Connect to the postgres inside docker container:"
+            echo "psql -h127.0.0.1 -U${username}"
+            ;;
+        mysql)
+            [ -n "${data_dir}" ] && data_dir_settings="${data_dir}:/var/lib/mysql "
+            db_port=3306
+            image=mysql:5.7
+            environment_settings="-e MYSQL_ROOT_PASSWORD=${password} "
+            echo "Command for connect to the mysql inside the docker container:"
+            echo "mysql -h localhost --protocol=tcp -uroot -p"
+            #comment: http://stackoverflow.com/questions/33001750/connect-to-mysql-in-a-docker-container-from-the-host?answertab=votes#tab-top
+            ;;
+        mongo)
+            [ -n "${data_dir}" ] && data_dir_settings="${data_dir}:/data/db " 
+            db_port=27017
+            image=mongo:3.0
+            ;;
+        mssql)
+            username=sa
+            password=Sql_Passw0rd
+            [ -n "${data_dir}" ] && data_dir_settings="${data_dir}:/temp "
+            db_port=1433
+            image=microsoft/mssql-server-linux
+            environment_settings=" -e ACCEPT_EULA=Y -e SA_PASSWORD=${password} "
+            ;;
+        oracle)
+            [ -n "${data_dir}" ] && data_dir_settings="${data_dir}:/u01/app/oracle"
+            db_port=1521
+            username=system
+            password=oracle
+            environment_settings=" -p 8080:8080 "
+            image=sath89/oracle-12c
+            echo "Oracle DB connection settings:"
+            echo "  Hostname     :localhost"
+            echo "  Port         :${db_port}"
+            echo "  SID          :xe"
+            echo "  Service name :xe.oracle.docker"
+            echo "  Username     :${username}"
+            echo "  Password     :${password}"
+            echo "APEX console: http://localhost:8080/apex"
+            echo "  Workspace    :INTERNAL"
+            echo "  Username     :ADMIN"
+            echo "  Password     :0Racle$"
+            echo "Enterprise Management console: http://localhost:8080/em"
+            echo " Username      :sys"
+            echo " Password      :${password}"
+            ;;
+    esac
+    [ ! -d "${data_dir}" ] && mkdir -p "$(echo ${data_dir} | cut -d':' -f1)"
+    shared_dir=${HOME}/Downloads:/mnt/Downloads
+
+    docker run --name "${container}" -d \
+        -p ${port:-${db_port}}:${db_port} \
+        ${environment_settings} \
+        -e DB_USER="${username}" -e DB_PASS="${password}" \
+        -v ${data_dir_settings} \
+        -v ${shared_dir} \
+        ${image} \
+    && echo "Success" && \
+    echo "Shared directoies: ${data_dir_settings}, ${shared_dir}." && \
+    echo "" && \
+    echo "================================================================" && \
+    echo "Press Ctrl+C to exit from logs" && \
+    logs "$1" "$2"
+}
+
+console() {
+    type=${1}
+    container=${2}
+    case "${type}" in
+        postgresql)
+            docker exec -it "${container}" sh -c 'PGPASSWORD=${DB_PASS} psql -U${DB_USER}'
+            ;;
+        mysql)
+            docker exec -it "${container}" sh -c 'mysql --protocol=tcp -u${DB_USER} -p${DB_PASS}'
+            ;;
+        mongo) 
+            docker exec -it "${container}" mongo
+            ;;
+        mssql)
+            docker exec -it "${container}" sh -c '/opt/mssql-tools/bin/sqlcmd -S localhost -U "${DB_USER}" -P "${DB_PASS}"'
+            ;;
+        oracle)
+            docker exec -it "${container}" sh -c 'sqlplus ${DB_USER}/${DB_PASS}'
+            ;;
+        *) echo "Error: unknown type '${type}'"
+            show_help
+            ;;
+    esac
+}
+
+version() {
+    type=${1}
+    container=${2}
+    case "${type}" in
+        postgresql)
+            docker exec -it "${container}" sh -c 'echo -n "pg_config --version && psql --version' 
+            ;;
+        mysql)
+            docker exec -it "${container}" sh -c 'mysql --version'
+            ;;
+        mongo) 
+            docker exec -it "${container}" sh -c 'mongod --version && mongo --version'
+            ;;
+        mssql)
+            docker exec -it "${container}" sh -c '/opt/mssql-tools/bin/sqlcmd -S localhost -U "${DB_USER}" -P "${DB_PASS}" -Q "Select @@version;" | grep -v "\-\-\-"'
+            ;;
+        oracle)
+            docker exec -it "${container}" sh -c 'sqlplus -version'
+            ;;
+        *) echo "Error: unknown type '${type}'"
+            show_help
+            ;;
+    esac
+}
+
+remove() {
+    echo "Error: Not implemented."
+    exit 1
+}
+
+status() {
+    type=${1}
+    container=${2}
+    id=$(docker ps --filter name=${container} --format "{{.ID}}")
+    if [ -n "${id}" ]; then
+        image=$(docker ps --filter name=${container} --format "{{.Image}}")
+        id=$(docker ps --filter name=${container} --format "{{.ID}}")
+        ports=$(docker ps --filter name="${container}" --format "{{.Ports}}")
+        status=$(docker ps --filter name="${container}" --format "{{.Status}}")
+        mounts=$(docker inspect --format="{{range .Mounts }}{{.Source}} -> {{.Destination}},{{end}}" "${container}" | tr -s ',' '\n' | grep "${DATA_DIR}")
+        echo "Container: ${container}"
+        echo "    Image: ${image}"
+        echo "       ID: ${id}"
+        echo "   Status: ${status}"
+        echo "    Ports: ${ports}"
+        echo "   Mounts: ${mounts}"
+        return 0
+    else
+        echo "The '${container}' docker container doesn't started."
+        return 1
+    fi
+}
+
+stop() {
+    type=${1}
+    container=${2}
+    echo -n "Stopping docker container... "
+    docker stop "${container}"
+    echo -n "Removing docker container... "
+    docker rm "${container}"
+}
+
+logs() {
+    type=${1}
+    container=${2}
+    docker logs "${container}" -f
+}
+
+shell() {
+    type=${1}
+    container=${2}
+    docker exec -it "${container}" bash
+}
+
+#=============================================================================
+type=${1}
+container=${type}
+cmd=$(echo $2 | sed 's/^[-]*//g')
+case "${cmd}" in
+    start|s)        start ${type} "${container}" "${PORT}" "${db_data_dir}/${container}" ;;
+    console|cli|c)  console ${type} "${container}" ;;
+    status|stat|st) status $type "${container}" ;;
+    stop|S)         stop ${type} "${container}" ;;
+    remove|R)       remove ${type} "${container}" ;;
+    shell|sh|bash)  shell ${type} "${container}" ;;
+    log|logs)       logs ${type} "${container}" ;;
+    version)        version ${type} "${container}" ;;
+    *)
+        [ -n "${cmd}" ] && echo "Error: unknow '${cmd}' command"
+        show_help
+        ;;
+esac
+

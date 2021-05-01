@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+#=============================================================================
+## Helper script to control Calibre-Web docker container.
+## The script is using '{IMAGE}' docker image.
+##
+## Usage: {SCRIPT_NAME} <command>
+## Commands:
+##   create/remove  - create or remove '{NAME}' container
+##   start/stop     - start/stop '{NAME}' container
+##   status         - show current status of the '{NAME}' container
+##   config         - show current/default config for the script
+##   logs           - show logs from the '{NAME}' container
+##   shell          - open shell inside the container
+## 
+## Environment variables:
+##   CALIBRE_HOME        - directory with your Calibre DB
+##                         (default: {script_dir}/library)
+##   CALIBRE_PASSWORD    - password for Calibre gui (default: calibre)
+##   PORT_GUI            - port for Calibre desktop gui (default: 9080)
+##   PORT_WEB            - port for Calibre desktop web (default: 9081)
+##
+## Config files:
+##   /etc/{NAME}.conf
+##   ~/.config/{NAME}.conf
+#
+#  Author     : Evgen Rusakov
+#  Version    : 1.0.0
+#  Url        : https://github.com/revgen
+#  License    : MIT
+#=============================================================================
+NAME=${CONTAINER_NAME:-"booklib"}
+IMAGE=ghcr.io/linuxserver/calibre
+CONFIG_NAME=${NAME}.conf
+PUID=${PUID:-"${UID}"}
+PGID=${PGID:-"$(id -g)"}
+TZ=$(cat /etc/timezone 2>/dev/null)
+
+#--[ The script specific methods ]---------------------------------------------
+load_config() {
+    CALIBRE_HOME="${CALIBRE_HOME:-"/mnt/books/${NAME}-data"}"
+    CALIBRE_PASSWORD="${CALIBRE_PASSWORD:-"calibre"}"
+    PORT_GUI=${PORT_GUI:-"9080"}
+    PORT_WEB=${PORT_WEB:-"9081"}
+}
+
+show_config() {
+    echo "# -- Default configuration for the ${NAME} docker container --"
+    echo "CALIBRE_HOME=${CALIBRE_HOME}"
+    echo "CALIBRE_PASSWORD=${CALIBRE_PASSWORD}"
+    echo "PORT_GUI=${PORT_GUI}"
+    echo "PORT_WEB=${PORT_WEB}"
+}
+
+create_container() {
+    mkdir -p "${CALIBRE_HOME}"
+    chown -R ${PUID}:${PGID} "${CALIBRE_HOME}"
+    chmod 0775 "${CALIBRE_HOME}"
+
+    echo "Create ${NAME} container."
+    echo "- Calibre home: ${CALIBRE_HOME}"
+    echo "-        Ports: ${PORT_GUI} / ${PORT_WEB}"
+    docker create --name=${NAME} --restart=always \
+        -v "${CALIBRE_HOME}":/config \
+        -e TZ=${TZ} \
+        -e PGID=${PGID} -e PUID=${PUID} \
+        -e PASSWORD=${CALIBRE_PASSWORD} \
+        -p ${PORT_GUI}:8080 \
+        -p ${PORT_WEB}:8081 \
+        ${IMAGE} \
+    && echo "Success"
+}
+
+#--[ Base methods ]------------------------------------------------------------
+show_status() {
+        if docker images "${IMAGE}" --format "{{.Repository}}:{{.Tag}}" | grep -sqv "^$"; then  echo "    Image: ${IMAGE}";
+    else echo "Error: image '${NAME}' not found"; return 1; fi
+    id=$(docker inspect --format="({{.Id}})" ${NAME} 2>/dev/null)
+    if [ -n "${id}" ]; then echo "Container: ${NAME} (${id})";
+    else echo "Error: container ${NAME} not found"; return 1; fi
+    docker inspect --format="   Status: {{.State.Status}} (restart={{.HostConfig.RestartPolicy.Name}})" ${NAME} || return 1
+    printf "%s" "    Ports: "
+    docker port ${NAME} 2>/dev/null | sed 's/0\.0\.0\.0://g' | sed 's/ //g' | xargs | grep -v '^$' \
+    || docker inspect --format="{{.HostConfig.NetworkMode}}-mode" ${NAME}
+    docker inspect --format="   Mounts: {{range .Mounts }}{{.Source}}->{{.Destination}} {{end}}" ${NAME} || return 1
+}
+
+load_config_file() {
+    if [ ! -f "${1}" ]; then return 1; fi
+    echo "Load config ${1}"
+    set -a; . ${1}; set +a
+}
+
+#-----------------------------------------------------------------------------
+cmd=${1:-"--help"}
+shift
+
+load_config_file "/etc/${CONFIG_NAME}" || load_config_file "${HOME}/.config/${CONFIG_NAME}"
+load_config
+
+case "${cmd}" in
+    create|C)       create_container $@ ;;
+    config|default-config) show_config $@ ;;
+    delete|remove)
+        docker stop "${NAME}" 2>/dev/null
+        echo "Removing '${NAME}' container..."
+        docker rm "${NAME}" 2>/dev/null; echo "Done"
+        ;;
+    start|s)
+        echo "Starting '${NAME}' container..."
+        docker start "${NAME}" && echo "Started '${NAME} - successfully"
+        ;;
+    stop|S)
+        echo "Stopping '${NAME}' container ..."
+        docker stop "${NAME}" && echo "Stopped '${NAME}' - successfully"
+        ;;
+    shell|sh) docker exec -it "${NAME}" ${1:-"/bin/sh"} ;;
+    log|logs|l) docker logs "${NAME}" $@ ;;
+    status|info|I) show_status $@ ;;
+    help|--help|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" \
+        | sed 's/{IMAGE}/'"$(echo ${IMAGE} | sed 's/\//\\\//g')"'/g' \
+        | sed 's/{NAME}/'"${NAME}"'/g' \
+        | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+        exit 1 ;;
+    *) echo "Error: Unknow command '${cmd}'."; exit 1 ;;
+esac

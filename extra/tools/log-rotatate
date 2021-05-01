@@ -1,7 +1,9 @@
 #!/bin/sh
 #=============================================================================
 ## Rotate log file: make an archive and clean the source log.
+##
 ## Usage: {SCRIPT_NAME} [log file name (default: system.log)] [--silent]
+##
 ## System environment variables:
 ##   LOG_BACKUP  - target directory to store a result archived file
 ##                 (default: the same directory with the source file)

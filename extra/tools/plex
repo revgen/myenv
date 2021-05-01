@@ -1,0 +1,135 @@
+#!/bin/bash
+#=============================================================================
+## Helper script to start/stop/manage Plex Media Server
+## The script is using '{IMAGE}' docker image.
+##
+## Usage: {SCRIPT_NAME} <command>
+## Commands:
+##   create/remove  - create or remove '{NAME}' container
+##   start/stop     - start/stop '{NAME}' container
+##   status         - show current status of the '{NAME}' container
+##   config         - show current/default config for the script
+##   logs           - show logs from the '{NAME}' container
+##   shell          - open shell inside the container
+##
+## System environment variables:
+##   $ {SCRIPT_NAME} config
+##
+## Config files:
+##   /etc/{NAME}.conf
+##   ~/.config/{NAME}.conf
+#
+#  Author     : Evgen Rusakov
+#  Version    : 1.0.0
+#  Url        : https://github.com/revgen
+#  License    : MIT
+#=============================================================================
+NAME=${CONTAINER_NAME:-"plex"}
+IMAGE=plexinc/pms-docker
+CONFIG_NAME=${NAME}.conf
+PUID=${PUID:-"${UID}"}
+PGID=${PGID:-"$(id -g)"}
+TZ=$(cat /etc/timezone 2>/dev/null)
+
+#--[ The script specific methods ]---------------------------------------------
+load_config() {
+    PLEX_CLAIM_TOKEN=${PLEX_CLAIM_TOKEN:-"claim-xxxxxxxxxxxxxx"}
+    PLEX_MEDIA=${PLEX_MEDIA:-"/mnt/plex/media"}
+    PLEX_CONFIG=${PLEX_CONFIG:-"/mnt/plex/config"}
+    PLEX_TRANSCODE=${PLEX_TRANSCODE:-"/mnt/plex/transcode"}
+}
+
+show_config() {
+    echo "# -- Default configuration for the ${NAME} docker container --"
+    echo "# https://www.plex.tv/claim/"
+    echo "PLEX_CLAIM_TOKEN=${PLEX_CLAIM_TOKEN}"
+    echo "PLEX_MEDIA=${PLEX_MEDIA}"
+    echo "PLEX_CONFIG=${PLEX_CONFIG}"
+    echo "PLEX_TRANSCODE=${PLEX_TRANSCODE}"
+}
+
+create_container() {
+    mkdir -p "${PLEX_MEDIA}" "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
+    chown -R ${PUID}:${PGID} "${PLEX_MEDIA}" "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
+    chmod 0770 "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
+    chmod 0775 "${PLEX_MEDIA}"
+
+    echo "Create ${NAME} container."
+    echo "-     Media: ${PLEX_MEDIA}"
+    echo "-    Config: ${PLEX_CONFIG}"
+    echo "- Transcode: ${PLEX_TRANSCODE}"
+    docker create --name ${NAME} --restart=always \
+        --network=host \
+        -e TZ="${TZ}" \
+        -e PGID=${PGID} -e PUID=${PUID} \
+        -e PLEX_CLAIM="${PLEX_CLAIM_TOKEN}" \
+        -v ${PLEX_CONFIG}:/config \
+        -v ${PLEX_TRANSCODE}:/transcode \
+        -v ${PLEX_MEDIA}:/data \
+        ${IMAGE} \
+    && echo "Success"
+}
+
+#--[ Base methods ]------------------------------------------------------------
+show_status() {
+    if docker images "${IMAGE}" --format "{{.Repository}}:{{.Tag}}" | grep -sqv "^$"; then  echo "    Image: ${IMAGE}";
+    else echo "Error: image '${NAME}' not found"; return 1; fi
+    id=$(docker inspect --format="({{.Id}})" ${NAME} 2>/dev/null)
+    if [ -n "${id}" ]; then echo "Container: ${NAME} (${id})";
+    else echo "Error: container ${NAME} not found"; return 1; fi
+    docker inspect --format="   Status: {{.State.Status}} (restart={{.HostConfig.RestartPolicy.Name}})" ${NAME} || return 1
+    printf "%s" "    Ports: "
+    docker port ${NAME} 2>/dev/null | sed 's/0\.0\.0\.0://g' | sed 's/ //g' | xargs | grep -v '^$' \
+    || docker inspect --format="{{.HostConfig.NetworkMode}}-mode" ${NAME}
+    docker inspect --format="   Mounts: {{range .Mounts }}{{.Source}}->{{.Destination}} {{end}}" ${NAME} || return 1
+}
+
+load_config_file() {
+    if [ ! -f "${1}" ]; then return 1; fi
+    echo "Load config ${1}"
+    set -a; . ${1}; set +a
+}
+
+#-----------------------------------------------------------------------------
+cmd=${1:-"--help"}
+shift
+
+load_config_file "/etc/${CONFIG_NAME}" || load_config_file "${HOME}/.config/${CONFIG_NAME}"
+load_config
+
+case "${cmd}" in
+    create|C)       create_container $@ ;;
+    config|default-config) show_config $@ ;;
+    delete|remove)
+        docker stop "${NAME}" 2>/dev/null
+        echo "Removing '${NAME}' container..."
+        docker rm "${NAME}" 2>/dev/null; echo "Done"
+        ;;
+    start|s)
+        echo "Starting '${NAME}' container..."
+        docker start "${NAME}" && echo "Started '${NAME} - successfully"
+        ;;
+    stop|S)
+        echo "Stopping '${NAME}' container ..."
+        docker stop "${NAME}" && echo "Stopped '${NAME}' - successfully"
+        ;;
+    shell|sh)
+        if [ "${1}" == "scanner" ]; then
+            shift
+            # --scan --refresh --section
+            # --list
+            docker exec -it ${NAME} "/usr/lib/plexmediaserver/Plex Media Scanner" $@
+        else
+            docker exec -it "${NAME}" ${1:-"/bin/sh"}
+        fi
+        ;;
+    log|logs|l) docker logs "${NAME}" $@ ;;
+    status|info|I) show_status $@ ;;
+    help|--help|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" \
+        | sed 's/{IMAGE}/'"$(echo ${IMAGE} | sed 's/\//\\\//g')"'/g' \
+        | sed 's/{NAME}/'"${NAME}"'/g' \
+        | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+        exit 1 ;;
+    *) echo "Error: Unknow command '${cmd}'."; exit 1 ;;
+esac

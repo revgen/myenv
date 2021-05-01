@@ -15,16 +15,23 @@
 ## * Copy the script {SCRIPT_NAME} into your PATH, example /usr/bin/
 ##
 ## You can specify environment variables in the configuration file:
-##   /etc/${SCRIPT_NAME}.conf
-##   ~/.${SCRIPT_NAME}.conf
+##   /etc/sendmailslim.conf
+##   ~/.config/sendmailslim.conf
+#
 #  Evgen Rusakov (https://github.com/revgen) 2017 MIT License
 #------------------------------------------------------
 SCRIPT_NAME=$(basename "${0}")
+[ -f /etc/sendmailslim.conf ] && echo "Load config /etc/sendmailslim.conf" && . /etc/sendmailslim.conf
+[ -f ~/.config/sendmailslim.conf ] && echo "Load config ~/.config/sendmailslim.conf" && . ~/.config/sendmailslim.conf
+
 case "${1}" in
+    config)
+        echo "export SMTP_FROM=${SMTP_FROM}"
+        echo "export SMTP_TO=${SMTP_TO}"
+        exit 0
+        ;;
     help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
 esac
-[ -f /etc/${SCRIPT_NAME}.conf ] && echo "Load config /etc/${SCRIPT_NAME}.conf" && . /etc/${SCRIPT_NAME}.conf
-[ -f ~/.${SCRIPT_NAME}.conf ] && echo "Load config ~/.${SCRIPT_NAME}.conf" && . ~/.${SCRIPT_NAME}.conf
 HOSTNAME=${HOSTNAME:-"$(hostname 2>/dev/null)"}
 SUBJECT=${1:-"[${HOSTNAME}] Notification"}
 BODY=$(cat)

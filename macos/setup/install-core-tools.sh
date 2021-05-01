@@ -18,6 +18,11 @@ wget -O ~/.local/bin/imgcat https://www.iterm2.com/utilities/imgcat
 chmod +x ~/.local/bin/imgcat
 
 
+pip3 install requests
+pip3 install python-dotenv
+
+
+
 brew install inetutils
 
 

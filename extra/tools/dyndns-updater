@@ -12,8 +12,8 @@
 ##   EXTERNAL_IP - your external ip adddress (defaul: get it from http://icanhazip.com)
 ##
 ## Configuration files:
-##   /etc/dyndns-update.conf
-##   ~/.dyndns-update.conf
+##   /etc/dyndns-updater.conf
+##   ~/.dyndns-updater.conf
 ##
 #  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
 # ############################################################################

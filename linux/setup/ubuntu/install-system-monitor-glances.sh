@@ -21,8 +21,9 @@ sudo systemctl enable glances.service && \
 echo "Start the service" && \
 sudo systemctl start glances.service
 
+ver=$(/usr/local/bin/glances --version | grep "v[0-9]" | head -n 1 | cut -d" " -f2 | cut -d"." -f1 | sed 's/v//g')
 echo "---------------------"
 echo "Default glaces address http://localhost:61208"
-echo "To check api status: wget -O- http://localhost:61208/api/2/all"
+echo "To check api status: wget -O- http://localhost:61208/api/${ver}/config"
 echo ""
 echo "--[End: $(basename "${0}")  ]-----------------"

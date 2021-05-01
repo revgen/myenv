@@ -37,7 +37,7 @@ SUBJECT=${1:-"[${HOSTNAME}] Notification"}
 BODY=$(cat)
 
 echo "Sending email '${SUBJECT}' to '${SMTP_TO}'..."
-printf "From: ${SMTP_FROM}
+echo "From: ${SMTP_FROM}
 To: ${SMTP_TO}
 Subject: ${SUBJECT}
 

@@ -1,0 +1,48 @@
+#!/bin/sh
+# ############################################################################
+## Decode JWT value and get payload or header from it
+##
+## Usage: echo "JWT value" | {SCRIPT_NAME} [section: header/payload/signature]
+## Options:
+##   section    - which section of the JWT need to be decoded:
+##                header, payload, signature (default: payload)
+##
+## Example:
+## echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIzfQ.2h4E7ASIfPoR8YBJzazkMcLb0Q9Qo_58FrZnPPlpYuU" | jwt-decode payload
+##
+## Dependence: base64, tr, cut
+#  Author: Evgen Rusakov (https://github.com/revgen)
+# ############################################################################
+
+
+#-----------------------------------------------------------------------------
+# Normalize base64 string  ( padding with "=" and decode it
+base64_decode() {
+    data_base64=$(cat)
+    local m=$(( ${#data_base64} % 4))
+    # padding with '=' if not divided by 4
+    if [ $m -eq 2 ]; then data_base64="${data_base64}==";
+    elif [ $m -eq 3 ]; then data_base64="${data_base64}="; fi
+    echo "${data_base64}" | tr '_-' '/+' | base64 --decode
+}
+
+#-----------------------------------------------------------------------------
+# Get N part of the JWT: parse_jwt_section <1/2/3>
+parse_jwt_section() {
+    cut -d. -f${1:-"2"} | base64_decode
+}
+
+arg1="$(echo "${1:-"payload"}" | sed 's/^[-]*//g')"
+section=2
+case "${arg1}" in
+    help|h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+	exit 1;;
+    1|header|H) section=1;;
+    2|payload|P|secret|secrets) section=2;;
+    3|signature|S) section=3;;
+    *) echo "Error: unknown argument '${1}'"; exit 1;;
+esac
+
+parse_jwt_section ${section}
+

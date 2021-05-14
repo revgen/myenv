@@ -44,11 +44,11 @@ case "${DYNDNS_API}" in
     safedns|safedns) DYNDNS_URL="https://www.safedns.com/nic/update" ;;
     *) DYNDNS_URL="https://api.dynu.com/nic/update" ;;
 esac
-DYNDNS_URL="${DYNDNS_URL}?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}&username=${DYNDNS_USER}&password=${DYNDNS_PASS}"
+DYNDNS_URL="${DYNDNS_URL}?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}&username=${DYNDNS_USER}"
 
 echo "Call ${DYNDNS_URL}..."
 # echo "Credentials: ${DYNDNS_USER}:${DYNDNS_PASS}"
-resp="$(curl --max-time ${CURL_TIMEOUT_SEC} --connect-timeout ${CURL_TIMEOUT_SEC} -Ls "${DYNDNS_URL}")"
+resp="$(curl --max-time ${CURL_TIMEOUT_SEC} --connect-timeout ${CURL_TIMEOUT_SEC} -Ls "${DYNDNS_URL}&password=${DYNDNS_PASS}")"
 errcode=$?
 case $resp in
     "good") msg="SUCCESS: ${DYNDNS_URL} - (good) DNS hostname successfully updated." ;;

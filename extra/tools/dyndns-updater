@@ -20,7 +20,6 @@
 #
 #  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
 # ############################################################################
-set -eo pipefail
 SCRIPT_NAME=$(basename "${0}")
 CURL_TIMEOUT_SEC=10
 case "${1}" in

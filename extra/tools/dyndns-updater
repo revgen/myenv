@@ -2,7 +2,7 @@
 # ############################################################################
 ## {SCRIPT_NAME} - script is using to update IP address on the serices: DynDNS, No-IP, DyNU, SafeDNS.
 ##
-## Usage: {SCRIPT_NAME} [config file (default:/etc/dyndns-update.conf)]
+## Usage: {SCRIPT_NAME} [config file (default:/etc/dyndns-updater.conf)]
 ##
 ## System environment:
 ##   DYNDNS_USER - account user name
@@ -15,6 +15,9 @@
 ##   /etc/dyndns-updater.conf
 ##   ~/.dyndns-updater.conf
 ##
+## Note:
+##   Some services allow you to use md5 hash from your password instead of a real password
+#
 #  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
 # ############################################################################
 set -eo pipefail
@@ -37,14 +40,15 @@ DYNDNS_USER=${DYNDNS_USER}
 DYNDNS_PASS=${DYNDNS_PASS}
 DYNDNS_HOST=${DYNDNS_HOST}
 case "${DYNDNS_API}" in
-    no-ip|noip) DYNDNS_URL="https://dynupdate.no-ip.com/nic/update?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}" ;;
-    safedns|safedns) DYNDNS_URL="https://www.safedns.com/nic/update?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}" ;;
-    *) DYNDNS_URL="https://api.dynu.com/nic/update?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}" ;;
+    no-ip|noip) DYNDNS_URL="https://dynupdate.no-ip.com/nic/update" ;;
+    safedns|safedns) DYNDNS_URL="https://www.safedns.com/nic/update" ;;
+    *) DYNDNS_URL="https://api.dynu.com/nic/update" ;;
 esac
+DYNDNS_URL="${DYNDNS_URL}?hostname=${DYNDNS_HOST}&myip=${EXTERNAL_IP}&username=${DYNDNS_USER}&password=${DYNDNS_PASS}"
 
 echo "Call ${DYNDNS_URL}..."
 # echo "Credentials: ${DYNDNS_USER}:${DYNDNS_PASS}"
-resp="$(curl --max-time ${CURL_TIMEOUT_SEC} --connect-timeout ${CURL_TIMEOUT_SEC} -Ls -u "${DYNDNS_USER}":"${DYNDNS_PASS}" "${DYNDNS_URL}")"
+resp="$(curl --max-time ${CURL_TIMEOUT_SEC} --connect-timeout ${CURL_TIMEOUT_SEC} -Ls "${DYNDNS_URL}")"
 errcode=$?
 case $resp in
     "good") msg="SUCCESS: ${DYNDNS_URL} - (good) DNS hostname successfully updated." ;;

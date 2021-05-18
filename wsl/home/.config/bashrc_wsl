@@ -13,6 +13,8 @@ alias gnome-vim='gvim'
 alias xopen='xdg-open'
 alias home-wsl='wslpath "$(wslvar USERPROFILE)"'
 
+which wsl >/dev/null || alias wsl='wsl.exe'
+
 # Note: Bash on Windows does not currently apply umask properly.
 if [[ "$(umask)" = "0000" ]]; then
     umask 0022
@@ -48,7 +50,7 @@ start_linux_service() {
 }
 
 startup() {
-    wsl_version=$(uname -r | grep 'microsoft-standard' && echo "WSL v2" || echo "WSL v1")
+    wsl_version=$(uname -r | grep -q 'microsoft-standard' && echo "WSL v2" || echo "WSL v1")
     os_version=$(wslsys --build | sed 's/Build: [ ]*//g')
     os_release_time=$(date -d "@$(echo $(("$(wslsys --sys-installdate | cut -d':' -f2 | sed 's/ //g')")) )" +"%Y-%m-%d")
     os_uptime=$(wslsys --uptime | sed 's/Uptime: [ ]*//g')

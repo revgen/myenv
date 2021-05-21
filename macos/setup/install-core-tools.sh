@@ -3,6 +3,10 @@
 echo "Core toools"
 brew install moreutil
 
+echo "Additional useful tools"
+#brew install glow           # see MarkDown files in terminal
+brew install bat           # a 'cat' tool with syntax highlight
+
 
 echo "Instal core X Window System tools"
 brew install xquartz

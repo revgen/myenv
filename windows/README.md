@@ -7,6 +7,7 @@
 * [7zip](https://www.7-zip.org/) - free and open-source file archiver.
 * [Google Chrome](https://www.google.com/chrome/) - browser better then Internet Explorer :)
 * [Far Manager](https://www.farmanager.com/download.php?l=en)
+* [Telnet](#enable-telnet-client-in-the-windows-feature)
 
 
 ## Linux Subsystem
@@ -29,8 +30,16 @@ Invoke-WebRequest -Uri https://aka.ms/wsl-ubuntu-1804 -OutFile Ubuntu.appx -UseB
 *Note:* good example how to setup WSL is [here](https://dracos.co.uk/wrote/wsl/).
 
 
-## Powershell
+## Command line interface
 
+### Get Windows version
+
+```powershell
+Get-ComputerInfo | select WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer
+# or
+[System.Environment]::OSVersion.Version
+```
+  
 ### Allow running scripts in PowerShell (Fix: Running scripts is disabled on this system)
 ```powershell
 PS > Set-ExecutionPolicy RemoteSigned 
@@ -56,6 +65,11 @@ Download a file from the console:
 Invoke-WebRequest http://blog.stackexchange.com/ -UseBasicParsing -OutFile out.html
 ``````
 
+### Enable telnet client in the Windows Feature 
+```powershell
+Install-WindowsFeature -name Telnet-Client
+```
+
 ## Symbol links
 ```
 cmd /c 'mklink /D c:\fruit c:\apples\bananas\oranges'
@@ -65,3 +79,9 @@ cmd /c 'mklink /D c:\fruit c:\apples\bananas\oranges'
 * [Windows keyboard Shortcuts](./notes/windows-shortcuts.md)
 * Open startup folder in Windows 10: Open "Run" dialog (Win+R) -> Execute "shell:startup"
 * Docker sometimes doesn't work on the Windows inside the Virtual Machine - [see](https://github.com/docker/for-win/issues/574#issuecomment-442661635)
+
+## Links
+* https://www.get-itsolutions.com/enable-telnet-client-windows-7-2-methods/
+* https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---update-to-wsl-2
+* https://www.reddit.com/r/bashonubuntuonwindows/comments/e8qf7n/functional_differences_between_wsl_1_and_wsl_2/
+* 

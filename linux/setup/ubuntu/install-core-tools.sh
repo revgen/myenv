@@ -1,8 +1,11 @@
 #!/bin/sh
 test -e /usr/sbin/sshd || sudo apt-get install openssh-server
-sudo apt -y install screen mc htop git vim p7zip-full jq curl wget elinks lynx dialog tree ncdu figlet
+sudo apt -y purge vim vim-common vim-runtime 
+sudo apt -y install screen mc htop git curl wget elinks lynx 
+sudo apt -y install neovim p7zip-full jq tree ncdu figlet dialog
 sudo apt -y install imagemagick id3v2
 sudo apt -y install net-tools
+sudo apt -y install dnsutils
 # sudo apt -y install msmtp
 
 # --[ exfat ] -----------------------------------------------------------------

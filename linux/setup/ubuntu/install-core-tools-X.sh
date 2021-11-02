@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt install -y xdotool wmctrl xclip
-sudo apt install -y mpv ffmpeg webp imagemagick youtube-dl kid3 pinta
+sudo apt install -y mpv ffmpeg mpv webp imagemagick youtube-dl kid3 pinta
 sudo apt install remmina gparted
 # sudo apt-get install -y mtpaint
 # sudo apt-get install -y mypaint   - good for painter
@@ -10,12 +10,12 @@ sudo apt install remmina gparted
 # sudo apt-get install -y encfs
 
 
-sudo apt install gedit
-sudo apt install keepassxc
-sudo apt install simple-scan
+sudo apt install -y gedit
+sudo apt install -y keepassxc
+sudo apt install -y simple-scan
 sudo apt install -y lightdm lightdm-gtk-greeter-settings
-sudo apt install blueman
-sudo apt install libreoffice-calc libreoffice-writer
+# sudo apt install -y blueman
+sudo apt install -y libreoffice-calc libreoffice-writer
 
 if [ -n "$(grep "^NAME" /etc/os-release | grep -i "buntu")" ]; then
     # ubuntu specific tools

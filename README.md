@@ -16,12 +16,12 @@ Installation script support OS X and Linux system.
 
 When you need an environment only you can download 
 [install-myenv.sh](https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh) script and execute it.
-
-Terminal command using **wget**:
+Install with wget:
 ```bash
-# using wget
 bash -c "$(wget -qO- https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh)"
-# using curl
+```
+Install with curl:
+```bash
 bash -c "$(curl -L https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh)"
 ```
 

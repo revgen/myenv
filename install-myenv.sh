@@ -131,7 +131,6 @@ update_bashrc() {
 echo "Add MYENVHOME to the user home system environment"
         echo '
 # --[ Load MYENV configuration ]--------------------------
-export OSNAME="'"${OSNAME}"'"
 export MYENVHOME="'"${MYENVHOME}"'"
 if [ -r "${MYENVHOME}/home/.config/bashrc" ]; then
     . "${MYENVHOME}/home/.config/bashrc"

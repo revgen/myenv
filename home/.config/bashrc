@@ -116,6 +116,7 @@ alias echo-log=echo_log
 [ -r "${MYENVHOME}/home/.config/bashrc_extra" ] && . "${MYENVHOME}/home/.config/bashrc_extra"
 [ -r "${MYENVHOME}/home/.config/bashrc_${OSNAME}" ] && . "${MYENVHOME}/home/.config/bashrc_${OSNAME}"
 [ -r "${MYENVHOME}/home/.config/bashrc_extra_${OSNAME}" ] && . "${MYENVHOME}/home/.config/bashrc_extra_${OSNAME}"
+[ -r "${HOME}/.bashrc_${USER}" ] && . "${HOME}/.bashrc_${USER}"
 
 if [ -z "${TERM_PROGRAM}" ]; then       # do not show additional information in not regular terminals
     # ------[ Customer welcome screen ]--------------------------------------------

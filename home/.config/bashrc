@@ -4,6 +4,11 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
+if echo "${SHELL}" | grep -q "/bash$"; then
+  echo "Configuration file ${0} can be loaded in bash environment only. Skip."
+  return
+fi
+
 case "$OSTYPE" in
   linux*)
     if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
@@ -16,12 +21,12 @@ case "$OSTYPE" in
   cygwin*)  export OSNAME=windows ;;
   *)        export OSNAME=unknown ;;
 esac
-export OSTYPE="'"${OSTYPE}"'"
-export MYENVHOME=${MYENVHOME:-"${HOME}/.local/src/myenv"}
+export OSTYPE="${OSTYPE}"
+export MYENVHOME="${MYENVHOME:-"${HOME}/.local/src/myenv"}"
 export PATH="${HOME}/.local/bin:${WORKSPACE}/bin:${HOME}/bin:$PATH"
 export EDITOR=$(which nvim || which vim || which vi)
-export USERBIN=${HOME}/.local/bin
-export WORKSPACE=${HOME}/Workspace
+export USERBIN="${HOME}/.local/bin"
+export WORKSPACE="${HOME}/Workspace"
 
 
 export PYTHONWARNINGS="ignore"

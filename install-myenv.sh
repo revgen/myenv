@@ -157,7 +157,7 @@ setup_myenv_in_user_home() {
         ln -vsf "${MYENVHOME}/home/${f}" "${target}"
     done
     step "Make all scripts executable in the ${BIN}"
-    chmod u+x "${BIN}/*"
+    find "${BIN}" -type l -or -type f -exec chmod u+x "{}" \;
     cd - >/dev/null
 }
 

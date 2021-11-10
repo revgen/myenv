@@ -13,10 +13,19 @@ export PATH="${HOME}/.local/bin:${WORKSPACE}/bin:${HOME}/bin:$PATH"
 export EDITOR=$(which nvim || which vim || which vi)
 export USERBIN=${HOME}/.local/bin
 export WORKSPACE=${HOME}/Workspace
-export OSTYPE=${OSTYPE:-"$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')"}
-if [ "${OSTYPE}" == "linux" ] && grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
-    OSTYPE=wsl
-fi
+
+case "$OSTYPE" in
+  linux*)
+    if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
+    else export OSNAME=linux; fi
+    ;;
+  solaris*) export OSNAME=solaris ;;
+  darwin*)  export OSNAME=macos ;; 
+  bsd*)     export OSNAME=bsd ;;
+  msys*)    export OSNAME=windows ;;
+  cygwin*)  export OSNAME=windows ;;
+  *)        export OSNAME=unknown ;;
+esac
 
 export PYTHONWARNINGS="ignore"
 
@@ -105,13 +114,13 @@ alias echo-log=echo_log
 
 # --[ Additional bashrc files ]------------------------------------------------
 [ -r "${MYENVHOME}/home/.config/bashrc_extra" ] && . "${MYENVHOME}/home/.config/bashrc_extra"
-[ -r "${MYENVHOME}/home/.config/bashrc_${OSTYPE}" ] && . "${MYENVHOME}/home/.config/bashrc_${OSTYPE}"
-[ -r "${MYENVHOME}/home/.config/bashrc_extra_${OSTYPE}" ] && . "${MYENVHOME}/home/.config/bashrc_extra_${OSTYPE}"
+[ -r "${MYENVHOME}/home/.config/bashrc_${OSNAME}" ] && . "${MYENVHOME}/home/.config/bashrc_${OSNAME}"
+[ -r "${MYENVHOME}/home/.config/bashrc_extra_${OSNAME}" ] && . "${MYENVHOME}/home/.config/bashrc_extra_${OSNAME}"
 
 if [ -z "${TERM_PROGRAM}" ]; then       # do not show additional information in not regular terminals
     # ------[ Customer welcome screen ]--------------------------------------------
-    if [ -f "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}" ]; then
-        "${MYENVHOME}/home/.config/user-welcome-${OSTYPE}"
+    if [ -f "${MYENVHOME}/home/.config/user-welcome-${OSNAME}" ]; then
+        "${MYENVHOME}/home/.config/user-welcome-${OSNAME}"
     else if [ -f "${MYENVHOME}/home/.config/user-welcome" ]; then
         "${MYENVHOME}/home/.config/user-welcome"
     fi; fi

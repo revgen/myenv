@@ -13,7 +13,7 @@ alert() { echo -e "\033[1;31m$@\033[0m"; }
 prompt() { read -p "${1} " opt; [ "${opt}" != "${2:-"y"}" ] && echo "Skipped" && return 1; echo ""; }
 cpx() { mkdir -p "$(dirname "${2}")" 2>/dev/null; rsync -a -v "${1}" "${2}" || exit 1; }
 
-case "$OSTYPE" in
+case "${OSTYPE}" in
   linux*)
     if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
     else export OSNAME=linux; fi

@@ -4,11 +4,6 @@
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
-if echo "${SHELL}" | grep -q "/bash$"; then
-  echo "Configuration file ${0} can be loaded in bash environment only. Skip."
-  return
-fi
-
 case "$OSTYPE" in
   linux*)
     if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;

@@ -156,6 +156,8 @@ setup_myenv_in_user_home() {
         mkdir -p "$(dirname "${target}")" 2>/dev/null
         ln -vsf "${MYENVHOME}/home/${f}" "${target}"
     done
+    step "Make all scripts executable in the ${BIN}"
+    chmod u+x "${BIN}/*"
     cd - >/dev/null
 }
 

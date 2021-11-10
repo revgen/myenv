@@ -13,10 +13,19 @@ alert() { echo -e "\033[1;31m$@\033[0m"; }
 prompt() { read -p "${1} " opt; [ "${opt}" != "${2:-"y"}" ] && echo "Skipped" && return 1; echo ""; }
 cpx() { mkdir -p "$(dirname "${2}")" 2>/dev/null; rsync -a -v "${1}" "${2}" || exit 1; }
 
-ostype=$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/g')
-if [ "${ostype}" == "linux" ] && grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
-    ostype=wsl
-fi
+case "$OSTYPE" in
+  linux*)
+    if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
+    else export OSNAME=linux; fi
+    ;;
+  solaris*) export OSNAME=solaris ;;
+  darwin*)  export OSNAME=macos ;; 
+  bsd*)     export OSNAME=bsd ;;
+  msys*)    export OSNAME=windows ;;
+  cygwin*)  export OSNAME=windows ;;
+  *)        export OSNAME=unknown ;;
+esac
+
 repo_url=https://github.com/revgen/myenv/archive/master.tar.gz
 cd "$(dirname "$(echo "${0}" | sed 's/^-bash$/~\/.local/g')")"
 export HOME=${HOME}
@@ -29,7 +38,7 @@ prompt_to_install() {
     clear
     echo "The script is helping you to install myenv into your system"
     hr2
-    echo -e "\033[0;32mSYSTEM   :\033[0;33m ${ostype}\033[0m"
+    echo -e "\033[0;32mSYSTEM   :\033[0;33m ${OSNAME}\033[0m"
     echo -e "\033[0;32mHOME     :\033[0;33m ${HOME}\033[0m"
     echo -e "\033[0;32mBIN      :\033[0;33m ${BIN}\033[0m"
     echo -e "\033[0;32mMYENVHOME:\033[0;33m ${MYENVHOME}\033[0m"
@@ -83,8 +92,8 @@ copy_to_local_home() {
         rm -rf "${MYENVHOME}"
     fi
     [ -d "${MYENVSRC}/home/" ] && cpx "${MYENVSRC}/home/" "${MYENVHOME}/home/"
-    [ -d "${MYENVSRC}/${ostype}/home/" ] && cpx "${MYENVSRC}/${ostype}/home/" "${MYENVHOME}/home/"
-    [ -d "${MYENVSRC}/${ostype}/setup/" ] && cpx "${MYENVSRC}/${ostype}/setup/" "${MYENVHOME}/setup/"
+    [ -d "${MYENVSRC}/${OSNAME}/home/" ] && cpx "${MYENVSRC}/${OSNAME}/home/" "${MYENVHOME}/home/"
+    [ -d "${MYENVSRC}/${OSNAME}/setup/" ] && cpx "${MYENVSRC}/${OSNAME}/setup/" "${MYENVHOME}/setup/"
     cp -vf "${MYENVSRC}/install-myenv.sh" "${MYENVHOME}/"
     chmod +x "${MYENVHOME}/install-myenv.sh"
 
@@ -94,8 +103,8 @@ copy_to_local_home() {
         if [ -d "${MYENVSRC}/extra/" ]; then
             cpx "${MYENVSRC}/extra/" "${MYENVHOME}/home/"
         fi
-        if [ -d "${MYENVSRC}/${ostype}/extra/" ]; then
-            cpx "${MYENVSRC}/${ostype}/extra/" "${MYENVHOME}/home/"
+        if [ -d "${MYENVSRC}/${OSNAME}/extra/" ]; then
+            cpx "${MYENVSRC}/${OSNAME}/extra/" "${MYENVHOME}/home/"
         fi
     )
     echo "Clean temp directory: ${MYENVSRC}"
@@ -107,7 +116,7 @@ update_bashrc() {
     bashrc=${HOME}/.bashrc
     bashprofile=${HOME}/.bash_profile
     step "Update ${bashrc} file"
-    if [ "${ostype}" == "macos" ] && [ ! -e "${bashprofile}" ]; then
+    if [ "${OSNAME}" == "macos" ] && [ ! -e "${bashprofile}" ]; then
         echo "Create ${bashprofile} first"
         echo '[ -r "${HOME}/.bashrc" ] && . "${HOME}/.bashrc"' > "${bashprofile}"
         ls -ahl "${bashprofile}"
@@ -122,7 +131,7 @@ update_bashrc() {
 echo "Add MYENVHOME to the user home system environment"
         echo '
 # --[ Load MYENV configuration ]--------------------------
-export OSTYPE=${ostype}
+export OSNAME="'"${OSNAME}"'"
 export MYENVHOME="'"${MYENVHOME}"'"
 if [ -r "${MYENVHOME}/home/.config/bashrc" ]; then
     . "${MYENVHOME}/home/.config/bashrc"

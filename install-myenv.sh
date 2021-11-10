@@ -38,7 +38,7 @@ prompt_to_install() {
     clear
     echo "The script is helping you to install myenv into your system"
     hr2
-    echo -e "\033[0;32mSYSTEM   :\033[0;33m ${OSNAME}\033[0m"
+    echo -e "\033[0;32mSYSTEM   :\033[0;33m ${OSNAME} (${OSTYPE})\033[0m"
     echo -e "\033[0;32mHOME     :\033[0;33m ${HOME}\033[0m"
     echo -e "\033[0;32mBIN      :\033[0;33m ${BIN}\033[0m"
     echo -e "\033[0;32mMYENVHOME:\033[0;33m ${MYENVHOME}\033[0m"

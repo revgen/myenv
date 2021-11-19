@@ -7,4 +7,4 @@ export PYTHONDONTWRITEBYTECODE=1
 # aliases and settings for docker
 alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
 alias docktop='ctop'
-alias docker-clean-unused='echo "Prune imegase"; docker images prune -a; echo "Prune containers"; docker container prune -f;'
+alias docker-clean-unused='echo "Prune imegase"; docker image prune; echo "Prune containers"; docker container prune -f;'

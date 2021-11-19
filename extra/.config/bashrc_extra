@@ -4,7 +4,9 @@ alias shlint='shellcheck'
 # and isn’t something we need to worry about while developing our code
 export PYTHONDONTWRITEBYTECODE=1
 
-# aliases and settings for docker
-alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
+if ! which ctop 2>&1 >/dev/null; then
+  # aliases and settings for docker
+  alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
+fi
 alias docktop='ctop'
 alias docker-clean-unused='echo "Prune imegase..."; docker image prune -f; echo "Prune containers..."; docker container prune -f; echo "Done"'

@@ -1,12 +1,14 @@
-alias shlint='shellcheck'
-
-# disabling Python bytecode (.pyc) files: generating the bytecode is extremely fast,
-# and isn’t something we need to worry about while developing our code
-export PYTHONDONTWRITEBYTECODE=1
-
 if ! which ctop 2>&1 >/dev/null; then
   # aliases and settings for docker
   alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
 fi
+
+alias figlet-showfonts='showfigfonts'
+alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
 alias docktop='ctop'
+alias shlint='shellcheck'
 alias docker-clean-unused='echo "Prune imegase..."; docker image prune -f; echo "Prune containers..."; docker container prune -f; echo "Done"'
+
+# disabling Python bytecode (.pyc) files: generating the bytecode is extremely fast,
+# and isn’t something we need to worry about while developing our code
+export PYTHONDONTWRITEBYTECODE=1

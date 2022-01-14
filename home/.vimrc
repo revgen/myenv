@@ -2,6 +2,7 @@ set nocompatible                " Disable vi compatibility
 set encoding=utf-8 nobomb       " 
 set termencoding=utf-8          " 
 set fileencoding=utf-8          " 
+set mouse=""                    " 
 set t_Co=16                     " use 16 colors instead of 256
 "color dracula
 
@@ -24,18 +25,20 @@ set esckeys                     " Allow cursor keys in insert mode.
 
 "------------------------------------------------------------------------------
 " Editing
-set expandtab                   " Expand tabs to spaces
-"set autoindent smartindent     " auto/smart indent
+set autoindent                  " auto indent
 set copyindent                  " copy previous indentation on auto indent
 set softtabstop=4               " Tab key results in # spaces
 set tabstop=4                   " Tab is # spaces
 set shiftwidth=4                " The # of spaces for indenting.
+set expandtab                   " Expand tabs to spaces
 set smarttab                    " At start of line, <Tab> inserts shift width
                                 "   spaces, <Bs> deletes shift width spaces.
-set textwidth=79                " 
+set textwidth=119               " 
 set nowrap                      " do not automatically wrap on load
 set formatoptions-=t            " do not automatically wrap text when typing
 set colorcolumn=+1              " Show large lines
+set cursorline                  " 
+"set cursorcolumn               " 
 
 set scrolloff=10                " always see 10 lines when scroll
 set pastetoggle=<leader>p       " paste mode: avoid auto indent, treat chars
@@ -63,7 +66,9 @@ set ignorecase smartcase        " make searches case-insensitive, unless they
 set listchars=eol:?,tab:>-,trail:_,nbsp:_
 highlight NonText guifg=#00ff00
 highlight SpecialKey guifg=#00ff00
-
+" show spaces at the end of the lines
+highlight ExtraWhitespace ctermbg=green ctermfg=blue
+match ExtraWhitespace /\s\+$/
 
 "------------------------------------------------------------------------------
 " Interface

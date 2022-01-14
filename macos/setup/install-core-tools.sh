@@ -7,6 +7,9 @@ echo "Additional useful tools"
 #brew install glow           # see MarkDown files in terminal
 brew install bat           # a 'cat' tool with syntax highlight
 
+brew install neofetch trash-cli
+brew install translate-shell
+
 
 echo "Instal core X Window System tools"
 brew install xquartz

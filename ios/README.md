@@ -34,7 +34,7 @@
 1. [Speedtest](https://itunes.apple.com/us/app/speedtest-by-ookla/id300704847)
 1. [SportTracker](https://itunes.apple.com/us/app/sports-tracker-for-all-sports/id426684873)
 1.  SSH: Terminus - https://itunes.apple.com/us/app/termius-ssh-client/id549039908
-1.  Editor - http://brettterpstra.com/ios-text-editors/ * Codeanywere - http://brettterpstra.com/ios-text-editors/#codeanywhere
+1.  Editor - http://brettterpstra.com/ios-text-editors/* Codeanywere - http://brettterpstra.com/ios-text-editors/#codeanywhere
 1.  Textastic
 1.  NYTimes ???
 1. Washington Post ???

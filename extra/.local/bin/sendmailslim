@@ -12,7 +12,7 @@
 ## Setup:
 ## * Install 'msmtp' into the system
 ## * Copy updated file 'msmtprc' into the /etc/msmtprc
-## * Copy the script {SCRIPT_NAME} into your PATH, example /usr/bin/
+## * Copy the script {SCRIPT_NAME} into your PATH, example /usr/local/bin/
 ##
 ## You can specify environment variables in the configuration file:
 ##   /etc/sendmailslim.conf
@@ -21,25 +21,47 @@
 #  Evgen Rusakov (https://github.com/revgen) 2017 MIT License
 #------------------------------------------------------
 SCRIPT_NAME=$(basename "${0}")
-[ -f /etc/sendmailslim.conf ] && echo "Load config /etc/sendmailslim.conf" && . /etc/sendmailslim.conf
-[ -f ~/.config/sendmailslim.conf ] && echo "Load config ~/.config/sendmailslim.conf" && . ~/.config/sendmailslim.conf
+if [ -f /etc/${SCRIPT_NAME}.conf ]; then
+    logger -s "Load config /etc/${SCRIPT_NAME}.conf"
+    . /etc/${SCRIPT_NAME}.conf
+fi
+if [ -f ~/.config/${SCRIPT_NAME}.conf ]; then
+    logger -s "Load config ~/.config/${SCRIPT_NAME}.conf"
+    . ~/.config/${SCRIPT_NAME}.conf
+fi
 
 case "${1}" in
-    config)
-        echo "export SMTP_FROM=${SMTP_FROM}"
-        echo "export SMTP_TO=${SMTP_TO}"
-        exit 0
-        ;;
+    msmtprc-aws-ses)
+        echo "# Example /etc/msmtprc configuration file for AWS SES
+defaults
+auth            on
+tls             on
+tls_starttls    on
+#tls_certcheck  off
+tls_trust_file  /etc/ssl/certs/ca-certificates.crt
+logfile
+syslog      LOG_MAIL
+# AWS SES
+account     default
+host        email-smtp.us-east-1.amazonaws.com
+port        587
+from        john.doe@example.com
+user        AXXXXXXXXXXXXXXXXXXJ
+password    BXDEQndwkueueWaTfgPGYu12jduesjuwmsWF2
+"   
+        exit 0;;
     help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
 esac
 HOSTNAME=${HOSTNAME:-"$(hostname 2>/dev/null)"}
+SMTP_FROM=${SMTP_FROM:-"john.doe@example.com"}
+SMTP_TO=${SMTP_TO:-"jane.doe@example.com"}
 SUBJECT=${1:-"[${HOSTNAME}] Notification"}
 BODY=$(cat)
 
-echo "Sending email '${SUBJECT}' to '${SMTP_TO}'..."
+logger -s "Sending email '${SUBJECT}' to '${SMTP_TO}'..."
 echo "From: ${SMTP_FROM}
 To: ${SMTP_TO}
 Subject: ${SUBJECT}
 
 ${BODY}
-" | msmtp "${SMTP_TO}" && echo "Success sent email to ${SMTP_TO}."
+" | msmtp "${SMTP_TO}" && logger -s "Success sent email to ${SMTP_TO}."

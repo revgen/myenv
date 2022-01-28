@@ -34,7 +34,8 @@ TZ=$(cat /etc/timezone 2>/dev/null)
 #--[ The script specific methods ]---------------------------------------------
 load_config() {
     PLEX_CLAIM_TOKEN=${PLEX_CLAIM_TOKEN:-"claim-xxxxxxxxxxxxxx"}
-    PLEX_MEDIA=${PLEX_MEDIA:-"/mnt/plex/media"}
+    PLEX_STORAGE=${PLEX_STORAGE:-"/mnt/plex/storage"}
+    PLEX_DOWNLOADS=${PLEX_DOWNLOADS:-"/mnt/plex/downloads"}
     PLEX_CONFIG=${PLEX_CONFIG:-"/mnt/plex/config"}
     PLEX_TRANSCODE=${PLEX_TRANSCODE:-"/mnt/plex/transcode"}
 }
@@ -43,19 +44,21 @@ show_config() {
     echo "# -- Default configuration for the ${NAME} docker container --"
     echo "# https://www.plex.tv/claim/"
     echo "PLEX_CLAIM_TOKEN=${PLEX_CLAIM_TOKEN}"
-    echo "PLEX_MEDIA=${PLEX_MEDIA}"
+    echo "PLEX_STORAGE=${PLEX_STORAGE}"
+    echo "PLEX_DOWNLOADS=${PLEX_DOWNLOADS}"
     echo "PLEX_CONFIG=${PLEX_CONFIG}"
     echo "PLEX_TRANSCODE=${PLEX_TRANSCODE}"
 }
 
 create_container() {
-    mkdir -p "${PLEX_MEDIA}" "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
-    chown -R ${PUID}:${PGID} "${PLEX_MEDIA}" "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
-    chmod 0770 "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
-    chmod 0775 "${PLEX_MEDIA}"
+    mkdir -p "${PLEX_STORAGE}" "${PLEX_DOWNLOADS}" "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
+    #chown -R ${PUID}:${PGID} "${PLEX_STORAGE}" "${PLEX_DOWNLOADS}" "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
+    #chmod 0770 "${PLEX_CONFIG}" "${PLEX_TRANSCODE}"
+    #chmod 0775 "${PLEX_STORAGE}" "${PLEX_DOWNLOADS}"
 
     echo "Create ${NAME} container."
-    echo "-     Media: ${PLEX_MEDIA}"
+    echo "-   Storage: ${PLEX_STORAGE}"
+    echo "-  Downloas: ${PLEX_DOWNLOADS}"
     echo "-    Config: ${PLEX_CONFIG}"
     echo "- Transcode: ${PLEX_TRANSCODE}"
     docker create --name ${NAME} --restart=always \
@@ -65,7 +68,8 @@ create_container() {
         -e PLEX_CLAIM="${PLEX_CLAIM_TOKEN}" \
         -v ${PLEX_CONFIG}:/config \
         -v ${PLEX_TRANSCODE}:/transcode \
-        -v ${PLEX_MEDIA}:/data \
+        -v ${PLEX_STORAGE}:/storage \
+        -v ${PLEX_DOWNLOADS}:/downloads \
         ${IMAGE} \
     && echo "Success"
 }
@@ -133,3 +137,4 @@ case "${cmd}" in
         exit 1 ;;
     *) echo "Error: Unknow command '${cmd}'."; exit 1 ;;
 esac
+

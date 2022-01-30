@@ -61,8 +61,18 @@ create_container() {
     echo "-  Downloas: ${PLEX_DOWNLOADS}"
     echo "-    Config: ${PLEX_CONFIG}"
     echo "- Transcode: ${PLEX_TRANSCODE}"
+    # port: 1900 (access to the Plex DLNA Server)
+    # port: 8324 (controlling Plex for Roku via Plex Companion)
+    # port: 3005 (locally controlling Plex Home Theater via Plex Companion)
+    # port: 32410, 32412, 32413, 32414 (current GDM network discovery)
+    # port: 32469 (access to the Plex DLNA Server)
     docker create --name ${NAME} --restart=always \
-        --network=host \
+        -p 32400:32400/tcp \
+        -p 1900:1900/udp \
+        -p 8324:8324/tcp \
+        -p 3005:3005/tcp \
+        -p 32410:32410/udp -p 32412:32412/udp -p 32413:32413/udp -p 32414:32414/udp \
+        -p 32469:32469/tcp \
         -e TZ="${TZ}" \
         -e PGID=${PGID} -e PUID=${PUID} \
         -e PLEX_CLAIM="${PLEX_CLAIM_TOKEN}" \

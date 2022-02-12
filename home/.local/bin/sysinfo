@@ -5,7 +5,7 @@
 ## Dependencies:
 ##   inxi - this tool need for to show full system information (--full)
 # ############################################################################
-set -e
+#set -e
 set -o pipefail
 #-----------------------------------------------------------------------------
 

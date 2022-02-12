@@ -1,135 +1,182 @@
 #!/usr/bin/env bash
-#=======================================================================
+# ############################################################################
 ## Show system information
-## Usage: {SCRIPT_NAME} [full/simple/banner]
-#=======================================================================
-ostype=$(uname -s)
+## Usage: {SCRIPT_NAME} [--border] [--full] [--banner]
+## Dependencies:
+##   inxi - this tool need for to show full system information (--full)
+# ############################################################################
+set -e
+set -o pipefail
+#-----------------------------------------------------------------------------
+
+if [ "$(uname -s)" == "Darwin" ]; then ostype="macos";
+else
+  if cat /proc/sys/kernel/osrelease 2>/dev/null | grep -q "Microsoft\|WSL"; then ostype="wsl";
+  else ostype="linux"; fi
+fi
+#-----------------------------------------------------------------------------
+
+localnet() {
+  (if which ifconfig >/dev/null; then
+    ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | xargs | sed 's/ /,/g'
+  else
+    ip addr show | grep "inet " | grep -v "127.0.0.1" | cut -d"/" -f1 | sed 's/[ ]*inet[ ]*//g'
+  fi
+  wireless
+  ) | xargs
+}
+wireless() {
+  (if [ "${ostype}" == "macos" ]; then
+    /System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport -I | awk -F: '/ SSID/{gsub(/^[ \t]+/, "", $2); print $2}'
+  else
+    echo "N/A"
+  fi) | grep -v "^$" | sed 's/^/[WiFi: /g' | sed 's/$/]/g'
+}
+internet() {
+	(curl -sL http://checkip.amazonaws.com || echo "ERROR") | xargs
+}
+active_users() {
+  w -h | awk '{print $1}' | sort -r | uniq -c | awk '{printf"%s%s (%d)",c,$2,$1;c=", "}'; echo ""
+}
 os_info() {
-    if [ "${ostype}" == "Darwin" ]; then
-        sw_vers | grep Product | cut -d":" -f2 | xargs
-        return 0
+    if [ "${ostype}" == "macos" ]; then
+      sw_vers | grep Product | cut -d":" -f2 | xargs; return 0;
     fi
     if [ -f "/etc/os-release" ]; then
         name=$(grep "^NAME\|VERSION_ID" /etc/os-release | sort |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs)
-        if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
-            echo "${name} [WSL]"
-        else
-            echo "${name}"
-        fi
+        if [ $"{ostype}" == "wsl" ]; then echo "${name} [WSL]";
+        else echo "${name}"; fi
         return 0
     fi
-    if [ -n "$(which lsb_release)" ]; then
-        lsb_release -d | sed 's/Description:[\t ]*//g'
-        return 0
-    fi
-    if [ -f /etc/debian_version ]; then
-        echo "Debian $(cat /etc/debian_version)"
-        return 0
-    fi
+    if [ -n "$(which lsb_release)" ]; then lsb_release -d | sed 's/Description:[\t ]*//g'; return 0; fi
+    if [ -f /etc/debian_version ]; then echo "Debian $(cat /etc/debian_version)"; return 0; fi
     uname -sr
 }
 platform() {
     uname -m | sed 's/x86_/x/g' | sed 's/amd/x/g'
 }
-cpu_info() {
-    if [ "${ostype}" == "Darwin" ]; then
-        top -l 1 -s 0 | awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
-    else
-        top -n  1 | awk ' /Cpu/ || /Mem/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
-    fi
+processor() {
+  (if [ "${ostype}" == "macos" ]; then sysctl -n machdep.cpu.brand_string;
+  else (cat /proc/cpuinfo | grep Hardware | cut -d":" -f2 | sed 's/^ //g'; uname -m) | xargs; fi
+  echo "($(nproc))") | xargs
 }
-disk_info() {
-    if [ "${ostype}" == "Darwin" ]; then
-        df -h | grep "/dev/disk" | grep -v "/private" | grep -v "nobrowse" \
-        | grep -v "auto_home" | awk '{print ""$4" of "$2" available (capacity="$5") "$9}'
-    else
-        df -h | grep "/$\|/mnt/" | awk '{print ""$4" of "$2" available (capacity="$5") "$6}'
-    fi
+load_average() {
+  uptime | cut -d"," -f3-5 | cut -d":" -f2 | sed 's/^[ ]*//g'
 }
-active_users() {
-    if [ -f "/etc/os-release" ]; then
-        if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
-            wslvar USERNAME
-            return
-        fi
-    fi
-    w -h | awk '{print $1}' | sort -r | uniq -c | awk '{printf"%s%s (%d)",c,$2,$1;c=", "}'
+memory() {
+  if [ "${ostype}" == "macos" ]; then sysctl vm.swapusage | awk '{print $10"/"$4}';
+  else cat /proc/meminfo  | grep "MemTotal\|MemFree" | sort | cut -d":" -f2 | sed 's/ //g' | xargs | sed 's/ /\//g'; fi
 }
-local_ip() {
-    (if which ifconfig 2>&1 >/dev/null; then
-        ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'
-    else
-        ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
-    fi) | sort | xargs | sed 's/ /,/g'
+started() {
+  if [ "${ostype}" == "macos" ]; then
+    python3 -c 'import datetime,time; print(datetime.datetime.fromtimestamp(time.time() - time.clock_gettime(time.CLOCK_MONOTONIC)).strftime("%Y-%m-%d %H:%M:%S"))'
+  else uptime -s; fi
 }
-public_ip() {
-    if which wget >/dev/null; then wget -q -O - icanhazip.com;
-    else curl -s icanhazip.com; fi
+localtime() {
+  date +"%a %d %b %Y %H:%M"
 }
-internet_status() {
-    internet=$(curl -sIL -m 3 "https://google.com" | grep "HTTP[^ ]* 200")
-    if [ -n "${internet}" ]; then echo "CONNECTED";
-    else echo "ERROR"; fi
+utctime() {
+  date -u +"%a %d %b %Y %H:%M"
+}
+connections() {
+  arp -av | sort || echo "Error: arp failed"
+}
+#-----------------------------------------------------------------------------
+
+show_help() {
+  sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+  exit 1
+}
+debug() { if [ "${DEBUG}" == "true" ]; then >&2 echo "$@"; fi; }
+
+# write_line length begin_str end_str middle_str
+write_line() { printf "${2} %-${1}s ${3}\n" "${4}"; }
+
+write_borders() {
+  tmpfile="$(mktemp)"
+  debug "Temp file: ${tmpfile}"
+  cat 2>/dev/null |  while read; do
+    echo "${REPLY}"
+    debug "${REPLY}"
+  done > "${tmpfile}"
+
+  len=$(cat "${tmpfile}" | awk '{ print length }' | sort -rn | head -1)
+  write_line "${len}" "╭─" "─╮" "─" | sed "s/ /─/g"
+  cat "${tmpfile}" | while read; do
+    write_line "${len}" "│" "│" "${REPLY}"
+  done
+  write_line "${len}" "╰─" "─╯" "─" | sed "s/ /─/g"
+  rm -f "${tmpfile}"
 }
 
-show_uptime() {
-    uptime | cut -d"l" -f1 | sed 's/[, ]*$//g' | sed 's/^ //g' | sed 's/ [ ]*/ /g'
-}
-
-show_slim_info() {
-    echo "----[ System information ]----"
-    echo "Hostname  : $(hostname)"
-    echo "Users     : $(active_users)"
-    echo "OS        : $(os_info) ($(platform))"
-    echo "Uptime    : $(show_uptime)"
-    echo "------------------------------"
-    cpu_info
-    echo "------------------------------"
-    disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
-    echo "------------------------------"
-    echo "Local IP  : $(local_ip)"
-    echo "Public IP : $(public_ip)"
-    echo "Internet  : $(internet_status)"
-    echo "------------------------------"
-    echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
-    echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
-}
-
+#-----------------------------------------------------------------------------
 show_banner() {
-    if which figlet > /dev/null; then
-        echo -en "\033[34m\033[1m"
-        hostname | figlet
-        echo -en "\033[0m"
+    if [ -n "${FIGLET_APP}" ]; then
+        echo -en "${COLOR_NAVY}"
+        hostname | "${FIGLET_APP}"
+        echo -en "${COLOR_RESET}"
     else
-        echo -e "\033[97m\033[1m  Hostname:\033[0m\033[34m $(hostname)\033[0m"
+        echo -e "${COLOR_WHITE}Hostname:${COLOR_RESET}${COLOR_NAVY} $(hostname)${COLOR_RESET}"
     fi
     tty_info=
     if [ "${SSH_TTY}" ]; then tty_info="ssh: $(echo "${SSH_CLIENT}" | cut -d" " -f1)"; fi
     if [ "${STY}" ]; then tty_info="$(echo "${tty_info} screen: ${STY}" | sed 's/^[ ]*//g')"; fi
-    if [ -n "${tty_info}" ]; then tty_info="(${tty_info})"; fi
-    echo -e "\033[97m\033[1m      User:\033[0m\033[36m $USER\033[0m \033[97m\033[0m${tty_info}\033[0m"
-    echo -e "\033[97m\033[1m    System:\033[0m\033[32m $(os_info) ($(platform))\033[0m"
-    echo -e "\033[97m\033[1m     Users:\033[0m\033[96m $(active_users)\033[0m"
-    echo -e "\033[97m\033[1m Addresses:\033[0m\033[93m $(local_ip)\033[0m"
-    echo -e "\033[97m\033[1m    Uptime:\033[0m\033[35m $(show_uptime)\033[0m"
+
+    echo -ne  "${COLOR_WHITE}   Users:${COLOR_RESET}${COLOR_BLUE} $(active_users)${COLOR_RESET}"
+    if [ -z "${tty_info}" ]; then echo "";
+    else echo -e " ${COLOR_RED}[${tty_info}]${COLOR_RESET}"; fi
+    echo -ne "${COLOR_WHITE}  System:${COLOR_RESET}${COLOR_GREEN} $(os_info) ($(platform))${COLOR_RESET} "
+    echo -e  "[${COLOR_WHITE}started:${COLOR_RESET}${COLOR_VIOLET} $(started)${COLOR_RESET}]"
+    echo -e "${COLOR_WHITE} Address:${COLOR_RESET}${COLOR_YELLOW} $(localnet)${COLOR_RESET}"
 }
 
-show_ip_addr() {
-    if [ -z "$(which ifconfig)" ]; then
-        ip addr show
-    else
-        ifconfig
+show_sys_info() {
+  printf "hostname : "; hostname
+  printf "users    : "; active_users
+  echo   "system   : $(os_info) ($(platform))"
+  printf "processor: "; processor
+  printf "load avg.: "; load_average
+  printf "memory   : "; memory
+  printf "localnet : "; localnet
+  printf "internet : "; internet
+  printf "started  : "; started
+  printf "localtime: "; localtime
+  printf "utc time : "; utctime
+  if [ "${SHOW_CONNECTION}" == "true" ]; then echo "connections:"; connections; fi
+}
+#-----------------------------------------------------------------------------
+
+main() {
+  for i in "$@"; do
+    case "${i}" in
+      --border)     BORDER=true ;;
+      --banner)     BANNER=true ;;
+      --full|--all) FULL_INFO=true ;;
+      --connection) SHOW_CONNECTION=true ;;
+      --help|help)  show_help ;;
+    esac
+  done
+
+  if [ "${BORDER}" == "true" ]; then
+    if [ "${FULL_INFO}" ]; then inxi -mF | write_borders;
+    else if [ "${BANNER}" == "true" ]; then show_banner | write_borders;
+         else show_sys_info | write_borders; fi
     fi
+  else
+    FIGLET_APP=$(which figlet 2> /dev/null)
+    COLOR_RESET='\033[0m'
+    COLOR_WHITE='\033[97m\033[1m'
+    COLOR_BLUE='\033[96m'
+    COLOR_NAVY='\033[34m'
+    COLOR_GREEN='\033[32m'
+    COLOR_VIOLET='\033[35m'
+    COLOR_YELLOW='\033[93m'
+    COLOR_RED='\033[91m'
+    if [ "${FULL_INFO}" ]; then inxi -mF;
+    else if [ "${BANNER}" == "true" ]; then show_banner;
+         else show_sys_info; fi
+    fi
+  fi
 }
 
-arg1=${1:-"--simple"}
-case "${arg1}" in
-    help|--help|h|-h)
-        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
-        exit 255;;
-    simple|--simple|-S) show_slim_info ;;
-    banner|--banner|-B) show_banner ;;
-    full|--full|-F) execute_inxi -mF ;;
-    *) execute_inxi $@ ;;
-esac
-
+main $@

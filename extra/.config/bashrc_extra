@@ -6,6 +6,7 @@ fi
 alias figlet-showfonts='showfigfonts'
 alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
 alias docktop='ctop'
+alias shellcheck='shellcheck -o all'
 alias shlint='shellcheck'
 alias docker-clean-unused='echo "Prune imegase..."; docker image prune -f; echo "Prune containers..."; docker container prune -f; echo "Done"'
 

@@ -14,10 +14,12 @@
 ## 
 ## Environment variables:
 ##   CALIBRE_HOME        - directory with your Calibre DB
-##                         (default: {script_dir}/library)
-##   CALIBRE_PASSWORD    - password for Calibre gui (default: calibre)
-##   PORT_GUI            - port for Calibre desktop gui (default: 9080)
-##   PORT_WEB            - port for Calibre desktop web (default: 9081)
+##                         (default: {script_dir}/library).
+##   UPLOADS             - directory wich will be mapped to the /uploads directory.
+##                         You cn use it to transfer books into the container.
+##   CALIBRE_PASSWORD    - password for Calibre gui (default password: calibre).
+##   PORT_GUI            - port for Calibre desktop gui (default: 9081).
+##   PORT_WEB            - port for Calibre desktop web (default: 9080).
 ##
 ## Config files:
 ##   /etc/{NAME}.conf
@@ -39,14 +41,16 @@ TZ=$(cat /etc/timezone 2>/dev/null)
 load_config() {
     CALIBRE_HOME="${CALIBRE_HOME:-"/mnt/books/${NAME}-data"}"
     CALIBRE_PASSWORD="${CALIBRE_PASSWORD:-"calibre"}"
-    PORT_GUI=${PORT_GUI:-"9080"}
-    PORT_WEB=${PORT_WEB:-"9081"}
+    UPLOADS="${UPLOADS:-"/mnt/books/${NAME}-uploads"}"
+    PORT_GUI=${PORT_GUI:-"9081"}
+    PORT_WEB=${PORT_WEB:-"9080"}
 }
 
 show_config() {
     echo "# -- Default configuration for the ${NAME} docker container --"
     echo "CALIBRE_HOME=${CALIBRE_HOME}"
     echo "CALIBRE_PASSWORD=${CALIBRE_PASSWORD}"
+    echo "UPLOADS=${UPLOADS}"
     echo "PORT_GUI=${PORT_GUI}"
     echo "PORT_WEB=${PORT_WEB}"
 }
@@ -55,19 +59,22 @@ create_container() {
     mkdir -p "${CALIBRE_HOME}"
     chown -R ${PUID}:${PGID} "${CALIBRE_HOME}"
     chmod 0775 "${CALIBRE_HOME}"
+    mkdir -p "${UPLOADS}"
 
     echo "Create ${NAME} container."
     echo "- Calibre home: ${CALIBRE_HOME}"
     echo "-        Ports: ${PORT_GUI} / ${PORT_WEB}"
     docker create --name=${NAME} --restart=always \
         -v "${CALIBRE_HOME}":/config \
+        -v "${UPLOADS}":/uploads \
         -e TZ=${TZ} \
         -e PGID=${PGID} -e PUID=${PUID} \
         -e PASSWORD=${CALIBRE_PASSWORD} \
         -p ${PORT_GUI}:8080 \
         -p ${PORT_WEB}:8081 \
         ${IMAGE} \
-    && echo "Success"
+    && echo "Success" \
+    && echo "Now you can continiue setup using a Web UI: http://localhost:${PORT_GUI} (user: abc)"
 }
 
 #--[ Base methods ]------------------------------------------------------------

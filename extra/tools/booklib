@@ -70,8 +70,8 @@ create_container() {
         -e TZ=${TZ} \
         -e PGID=${PGID} -e PUID=${PUID} \
         -e PASSWORD=${CALIBRE_PASSWORD} \
-        -p ${PORT_GUI}:8080 \
-        -p ${PORT_WEB}:8081 \
+        -p ${PORT_GUI}:8081 \
+        -p ${PORT_WEB}:8080 \
         ${IMAGE} \
     && echo "Success" \
     && echo "Now you can continiue setup using a Web UI: http://localhost:${PORT_GUI} (user: abc)"

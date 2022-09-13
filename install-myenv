@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# ##############################################################################
+## The script is using to install {ENV_NAME} environment
+##
+## It will done:
+## * pull the latest {REPO_NAME} source code form the git repository
+## * use ~/.local/src/{REPO_NAME} as a main directory for this environment
+## * execute "{ENV_NAME} install" command
+##
+## Repository: {REPO_URL_HTTP}
+##
+# ##############################################################################
+if [ -z "${BASH_VERSION:-}" ]; then echo "Error: Bash is required." >&2; exit 1; fi
+
+# --[ Project specific constants ]--------------------------------------------
+TITLE="The script will install My Custom environment"
+ENV_NAME=myenv
+REPO_NAME=myenv
+REPO_URL_SSH="git@github.com:revgen/myenv.git"
+REPO_URL_HTTP="https://github.com/revgen/myenv"
+REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
+ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
+USE_HTTP="${USE_HTTP:-"true"}"
+
+# --[ Variables and functions ]-----------------------------------------------
+set -Eeuo pipefail
+trap cleanup SIGINT SIGTERM ERR EXIT
+OLD_PWD="$(pwd)"
+
+# Settings for collor output
+if [ -t 1 ] && [ -n "$(tput colors)" ] && [ -z "${NO_COLOR-}" ]; then
+    NOFORMAT='\033[0m' INFO='\033[0;32m' ERROR='\033[0;31m';
+else NOFORMAT='' INFO=''  ERROR=''; fi
+# ------------------------------------------------------------------------------
+usage() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${ENV_HOME}"'/g' \
+    | sed 's/{ENV_NAME}/'"${ENV_NAME}"'/g' | sed 's/{REPO_NAME}/'"${REPO_NAME}"'/g' \
+    | sed 's/{REPO_URL_SSH}/'"${REPO_URL_SSH}"'/g' | sed 's/{REPO_URL_HTTP}/'"${REPO_URL_HTTP}"'/g' \
+    | sed 's/{ENV_HOME}/'"${ENV_HOME}"'/g' | sed 's/{REPO_BRANCH}/'"${REPO_BRANCH}"'/g'
+    exit 1
+}
+cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
+info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
+error() { echo >&2 -e "${ERROR}$*${NOFORMAT}"; }
+prompt_ny() { read -r -p "${1} " opt; [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; }
+
+# ------------------------------------------------------------------------------
+case "${1:-"install"}" in
+    help|--help|-h) usage ;;
+    install) ;;
+    *) error "Command '${1}' not found"; exit 1;;
+esac
+
+if [ "${USE_HTTP:-"false"}" == "true" ]; then repo_url=${REPO_URL_HTTP};
+else repo_url=${REPO_URL_SSH}; fi
+
+info "${TITLE}."
+info "* Name      : ${ENV_NAME}"
+info "* Repository: ${repo_url}:${REPO_BRANCH}"
+info "* Target    : ${ENV_HOME}"
+read -r -p "Do you want to continiue (y/N)? " opt
+if [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; then info "Skip"; exit 1; fi
+
+mkdir -p "${ENV_HOME}" > /dev/null
+if [ ! -d "${ENV_HOME}/.git" ]; then info "Git clone ${repo_url}"; git clone "${repo_url}" "${ENV_HOME}" || exit 1; fi
+
+cd "${ENV_HOME}" || exit 1
+info "Switch to the $(pwd) directory"
+if git status -s | grep -qv "^$"; then
+    error "You have changes in the repository '${PWD}'"
+    git status -s | head -n 10
+    if prompt_ny "Are you sure you are ready to overwride all changes (y/N)?"; then info "Skip"; exit 1; fi
+fi
+git checkout "${REPO_BRANCH}" || exit 1
+git remote prune origin || exit 1
+git fetch || exit 1
+git reset --hard "origin/${REPO_BRANCH}" || exit 1
+info "Update '${ENV_NAME}' environment complete in the '${ENV_HOME}' directory"
+
+install_script="${PWD}/${ENV_NAME}/bin/${ENV_NAME}"
+info "Execute ${install_script}..."
+if [ -f "${install_script}" ]; then
+    bash "${install_script}" install-local || exit 1
+    info "Environment '${ENV_NAME}' installation complete."
+    info "Now you need to restart current terminal session. You can close and reopen terminal again."
+else
+    error "The script ${install_script} not found. Skip local setup."
+    exit 1
+fi

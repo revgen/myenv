@@ -1,0 +1,29 @@
+#!/bin/sh
+# shellcheck shell=dash disable=SC2312
+# ############################################################################
+## Generator of metaphor in cli (http://metaphorpsum.com/)
+##
+## Usage: {SCRIPT_NAME} <paragraphs - defult 3> <sentences - default 7>
+##
+## Other services:
+## * https://www.lipsum.com/
+## * http://metaphorpsum.com/
+##
+# ############################################################################
+debug() { if [ "${DEBUG:-""}" = "true" ]; then >&2 echo "$@"; fi; }
+show_help() { sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 1; }
+
+# shellcheck disable=SC2249
+case "${1}" in
+    help|--help|-h) show_help ;;
+esac
+
+paragraphs="${1:-"3"}"
+sentences="${1:-"7"}"
+url="http://metaphorpsum.com/paragraphs/${paragraphs}/${sentences}"
+debug "Request: ${url}"
+# shellcheck disable=SC2230
+if which curl >/dev/null; then curl -sL "${url}";
+else wget -q -O - "${url}"; fi
+echo ""
+debug "Done"

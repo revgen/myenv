@@ -1,0 +1,83 @@
+#!/bin/sh
+# shellcheck shell=sh disable=SC3014 source=/dev/null
+# ############################################################################
+## Utility script to use a Telegram Bot
+##
+## Usage: {SCRIPT_NAME} [--alert] [--warning] [--debug] [message]
+##
+## System environments:
+##   TELEGRAM_TOKEN     - your telegram bot token
+##   TELEGRAM_CHAT_ID   - a specific telegram channel id
+##
+#  Version: 1.11.14
+# ############################################################################
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+debug() { [ "${DEBUG}" = "true" ] && >&2 echo "$*"; }
+appname="$(basename "${0}")"
+HOSTNAME="${HOSTNAME:-"telebot"}"
+
+send_message() {
+    for cfg in "/etc/${HOSTNAME}.conf" "/etc/${appname}.conf" "${HOME}/.config/${appname}.conf"; do
+        if [ -r "${cfg}" ]; then
+            debug "Load config: /${HOME}/.config/${appname}.conf"
+            . "/${HOME}/.config/${appname}.conf"
+        fi
+    done
+
+    api_token=${TELEGRAM_TOKEN:-""}
+    chat_id=${TELEGRAM_CHAT_ID:-""}
+
+    printf "Sending message to telebot"
+    debug ""
+    flag="${1}"
+    message="${2:-""}"
+    if [ -z "${message}" ]; then
+        debug "Read message from the stdin:"
+        message=$(cat -)
+    fi
+    url="https://api.telegram.org/bot${api_token}/sendMessage"
+    debug "Sending message..."
+    debug "--[ Message ]------------------------------------------------"
+    debug "Source message: ${message}"
+    message="$(echo "${flag} ${message}" | tr '\n' '|' | sed 's/|/\n/g')"
+    debug "${message}" 
+    debug "------------------------------------------------------------"
+    # url="${url}?chat_id=${chat_id}&text=${message}"
+    debug "url=${url}"
+    output="$(mktemp).telebot.json"
+    debug "output: ${output}"
+    if command -v  curl >/dev/null; then
+        curl -sL \
+            --data-urlencode "chat_id=${chat_id}" \
+            --data-urlencode "text=${message}" \
+            "${url}" > "${output}";
+    else  wget -qO - "${url}" > "${output}"; fi
+    errcode=1
+    if grep -q "error_code" "${output}"; then
+        echo " - FAILED"
+        cat "${output}"
+        echo ""
+    else
+        echo " - SUCCESS"
+        errcode=0
+    fi
+    if [ "${DEBUG}" != "true" ]; then rm -f "${output}"; fi
+    return "${errcode}"
+}
+
+flag=✉️
+message=""
+for arg in "$@"; do
+    case "${arg:-""}" in
+        help|--help|-h) show_help; exit 1;;
+        --alert) flag=❗;;
+        --warning) flag=⚠️;;
+        --debug) DEBUG=true;;
+        *) message="${arg}"
+    esac
+done
+
+send_message "${flag}" "${message}"

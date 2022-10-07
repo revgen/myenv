@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+###############################################################################
+# Small script to control AWS EC2 instance: stop/start/status
+###############################################################################
+set -o pipefail
+
+AWS_EC2_ID=${2:-"${AWS_EC2_ID:-"env:AWS_EC2_ID"}"}
+
+show_help() {
+  echo "Usage: $(basename "${0}") <start/stop/status/details/shell> [aws-ec2-id]"
+  echo "You can specify ec2 id with a system environmant vaiable AWS_EC2_ID."
+  exit 1
+}
+assert_ec2_id() { [ -z "${AWS_EC2_ID}" ] && show_help; }
+show_ec2_details() { aws ec2  describe-instances --instance-ids "${AWS_EC2_ID}" || exit 1; }
+
+case "${1:-"help"}" in
+  start)
+    assert_ec2_id
+    echo "Starting ec2 instance: ${AWS_EC2_ID}..."
+    aws ec2  start-instances --instance-ids "${AWS_EC2_ID}" || exit 1
+    ;;
+  stop)
+    assert_ec2_id
+    echo "Stopping ec2 instance: ${AWS_EC2_ID}..."
+    aws ec2  stop-instances --instance-ids "${AWS_EC2_ID}" || exit 1
+    ;;
+  status)
+    assert_ec2_id
+    echo "Get status for the ec2 instance: ${AWS_EC2_ID}..."
+    show_ec2_details \
+    | jq -r '.Reservations[].Instances[] | (.KeyName + " - " + .State.Name + " (" + .PublicIpAddress + ")")' || exit 1
+    ;;
+  shell|cli)
+    assert_ec2_id
+    AWS_EC2_USER=${AWS_EC2_USER:-"centos"}
+    ip=$(show_ec2_details | jq -r '.Reservations[].Instances[].PublicIpAddress' | head -n 1)
+    echo "Connect to the ec2 instance: ${AWS_EC2_USER}@${ip}"
+    if [ -z "${AWS_EC2_KEY}" ]; then ssh ${AWS_EC2_USER}@${ip};
+    else echo "Using key file: ${AWS_EC2_KEY}"; ssh -i "${AWS_EC2_KEY}" ${AWS_EC2_USER}@${ip}; fi
+    ;;
+  details)
+    assert_ec2_id
+    show_ec2_details
+    ;;
+  help|--help) show_help;;
+  *) echo "Error: unknown command '${1}'"; exit 1;;
+esac
+

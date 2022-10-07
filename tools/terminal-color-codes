@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+RESET_COLOR='\033[0m'
+
+colors=("Black" "Red" "Green" "Yellow" "Blue" "Purple" "Cyan" "White")
+fg_modes=("Regular" "Bold" "" "" "Underline")
+# fg_hi_modes=("High Intensity" "High Intensity Bold" "" "" "High Intensity Underline")
+fg_regular_code_start=30
+fg_hi_code_start=90
+# bg_code_start=40
+# bg_hi_code_start=100
+
+print_color() {
+    # text="${1}"
+    mode_idx="${2}"
+    mode_name="${3}"
+    color_idx="${4}"
+    color_name="${5}"
+    color_start_idx="${6}"
+    code="\\033[${mode_idx};$((color_idx+color_start_idx))m"
+    col1="${color_name} (${mode_name})"
+    col2="$(printf "%-38s" "${mode_name}-${color_name} █▆▄▂ ▓ ░")"
+    printf "│ %-18s │ " "${col1}"
+    echo -ne "${code}${col2}${RESET_COLOR}"
+    printf " │ %s │\n" "${code}"
+}
+
+echo "┌────────────────────┬────────────────────────────┬────────────┐"
+printf "│ %-18s │ %-26s │ %-10s │\n" "Name" "Example" "Code"
+echo "├────────────────────┼────────────────────────────┼────────────┤"
+for start_idx in $(echo "${fg_regular_code_start}"; echo "${fg_hi_code_start}"); do
+    for mode_idx in "${!fg_modes[@]}"; do
+        mode_name=${fg_modes[${mode_idx}]}
+        if [[ -z "${mode_name}" ]]; then continue; fi
+        for color_idx in "${!colors[@]}"; do
+            color_name=${colors[${color_idx}]}
+            print_color "TEST" "${mode_idx}" "${mode_name}" "${color_idx}" "${color_name}" "${start_idx}"
+        done
+        echo "│....................│............................│............│"
+    done
+done
+printf "│ %-18s │ %-26s │ %-10s │\n" "Reset colors" "" "${RESET_COLOR}"
+echo "└────────────────────┴────────────────────────────┴────────────┘"
+

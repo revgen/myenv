@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
+    NOFORMAT='\033[0m' INFO='\033[34m\033[1m';
+else NOFORMAT='' INFO=''; fi
+if [ "${MYENVLOGO}" != "disabled" ] && [ "${MYENVLOGO}" != "off" ] && [ "${MYENVLOGO}" != "false" ]; then
+    if command -v "myenv-logo" >/dev/null; then
+        myenv-logo
+    else
+        echo "===================================================================="
+        echo -en "${INFO}"
+        if command -v figlet > /dev/null; then
+            hostname | figlet
+        else
+            echo "Hostname: $(hostname)"
+        fi
+        echo -en "${NOFORMAT}"
+        echo "===================================================================="
+    fi
+fi
+${MYENVNAME:-"myenv"} --version

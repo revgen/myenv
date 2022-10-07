@@ -1,0 +1,116 @@
+#!/bin/sh
+# shellcheck shell=dash
+# #############################################################################
+## GitLab CLI
+## The script is using GitLab API: https://docs.gitlab.com/ee/api/rest/index.html
+##
+## Usage: gitlab <command> <project_id> <path in the repo> [destination] [--exec] [--overwrite]
+##
+## Commands:
+##   get                  - download file for the repository
+##
+## System environment:
+##   GITLAB_TOKEN=xxxxxxx - Gitlab access token (required)
+##   DEBUG=true           - Show verbose output
+##
+## Personal access tokens:
+##   https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
+##
+#  Author : Evgen Rusakov
+## Version: 1.0.1
+# #############################################################################
+DEBUG="${DEBUG:-"false"}"
+CHROOT="${CHROOT:-""}"
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+debug() { [ "${DEBUG}" = "true" ] && >&2 echo "$@"; }
+
+# -----------------------------------------------------------------------------
+case "${1:-"--help"}" in
+    --help|help|-h) show_help; exit 1;;
+    *) cmd="${1}"; shift;;
+esac
+
+if [ -z "${GITLAB_TOKEN}" ]; then
+    echo "Error: variable GITLAB_TOKEN is empty or not found"
+    exit 1
+fi
+
+exec_file_mode="false"
+overwrite="false"
+project_id="${1}"
+branch="${GIT_BRANCH:-"${BRANCH:-"master"}"}"
+shift
+
+# -----------------------------------------------------------------------------
+get_file() {
+    src="$(echo "${1}" | sed 's/\//%2F/g')"
+    shift
+    if echo "${1}" | grep -v -q "^-"; then dest="${1}"; shift; fi
+
+    for _ in $(seq 0 1); do
+        if [ "${1}" = "--exec" ] || [ "${1}" = "--executable" ] ; then
+            exec_file_mode="true"; shift;
+        elif [ "${1}" = "--overwrite" ]; then
+            overwrite="true"; shift;
+        else
+            shift;
+        fi
+    done
+
+    if [ -z "${dest}" ]; then
+        dest="$(echo "${src}" | sed 's/\/raw//g' | cut -d"?" -f1 | sed 's/%2F/\//g')"
+    fi
+    dest="${CHROOT}${dest}"
+    debug "GitLab [PID=${project_id}] GET: ${src} -> ${dest}..."
+    debug "Branch    : ${branch}"
+    debug "Executable: ${exec_file_mode}"
+    debug "Overwrite : ${overwrite}"
+    tmp_file="$(mktemp).tmp"
+    debug "Temp file : ${tmp_file}"
+    need_backup="false"
+
+    if [ -f "${dest}" ] && [ "${overwrite}" != "true" ]; then
+        read -r -p "File '${dest}' exists. Do you want to overwrite it (y/N)? " opt
+        if [ "${opt}" != "y" ]; then
+            echo "Skip"
+            exit 1
+        fi
+    fi
+    if [ -f "${dest}" ] && [ ! -f "${dest}.bak" ] && [ "${need_backup}" = "true" ]; then
+        cp -v "${dest}" "${dest}.bak"
+    fi
+
+    # -----------------------------------------------------------------------------
+    mkdir -p "$(dirname "${dest}")"
+    if [ -f "${dest}" ]; then rm "${dest}"; fi
+
+    url="https://gitlab.com/api/v4/projects/${project_id}/repository/files/${src}/raw?ref=${branch}"
+    debug "Download file: ${url} -> ${dest}"
+    curl --fail -s --header "PRIVATE-TOKEN: ${GITLAB_TOKEN}" -o "${tmp_file}" "${url}"
+    errcode="$?"
+    debug "Curl errcode = ${errcode}"
+    if [ "${errcode}" = "0" ] && [ -f "${tmp_file}" ]; then
+        mv "${tmp_file}" "${dest}" || exit 1
+        if [ "${exec_file_mode}" = "true" ]; then
+            debug "Change mode to executable for '${dest}' file"
+            chmod +x "${dest}" || exit 1
+        fi
+        echo "[OK ] GitLab get file: ${project_id}/${branch}/${src} -> ${dest}"
+    else
+        echo "[ERR] GitLab get file: ${project_id}/${branch}/${src} -> errcode=${errcode}"
+        head -n 1 "${tmp_file}" 2>/dev/null
+        if [ "${errcode}" = "22" ]; then
+            debug "Error: resource not found"
+        fi
+        [ "${DEBUG}" = "true" ] || rm -f "${tmp_file}"
+        exit "${errcode}"
+    fi
+}
+
+case "${cmd}" in
+    get) get_file "$@";;
+    *) echo "Error: unknown command '${cmd}'"; exit 1;;
+esac

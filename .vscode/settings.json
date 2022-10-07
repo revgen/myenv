@@ -1,0 +1,71 @@
+{
+    // https://vscode.readthedocs.io/en/latest/getstarted/settings/
+    "workbench.colorTheme": "Darkula",
+    "workbench.startupEditor": "newUntitledFile",
+    "workbench.editor.closeOnFileDelete": true,
+    "workbench.editor.highlightModifiedTabs": true,
+
+    "explorer.openEditors.visible": 0,
+    "update.channel": "none",
+    "update.enableWindowsBackgroundUpdates": false,
+    "update.showReleaseNotes": false,
+    "telemetry.enableCrashReporter": false,
+    "telemetry.enableTelemetry": false,
+    "breadcrumbs.enabled": true,
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+
+    "editor.fontSize": 13,
+    "editor.rulers": [ 79, 119 ],
+    "editor.lineNumbers": "on",
+    "editor.renderWhitespace": "boundary",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false,
+    "editor.minimap.enabled": false,
+    "editor.suggestSelection": "first",
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.links": false,
+
+    "python.pythonPath": "/usr/local/bin/python3",
+    "python.analysis.logLevel": "Warning",
+    "python.linting.enabled": true,
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pycodestyleArgs": [ "--ignore=E501" ],
+    "python.jediEnabled": false,
+
+    "[markdown]": {
+        "editor.wordWrap": "off"
+    },
+    "[go]":  {
+        "editor.insertSpaces": false
+    },
+    "[yaml]":  {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2
+    },
+
+    "javascript.updateImportsOnFileMove.enabled": "never",
+
+    "java.configuration.checkProjectSettingsExclusions": false,
+    "java.jdt.ls.vmargs": "-noverify -Xmx1G -XX:+UseG1GC -XX:+UseStringDeduplication -javaagent:\"/Users/evgen/.vscode/extensions/gabrielbb.vscode-lombok-0.9.8/server/lombok.jar\"",
+
+    "search.exclude": {
+        "**/*.egg-info": true,
+        "**/__pycache__": true,
+        "**/dist": true,
+        "**/node_modules": true,
+        "**/bower_components": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.egg-info": true,
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true,
+        "**/.git": true,
+        "**/.DS_Store": true
+    },
+    "explorer.confirmDragAndDrop": false
+}

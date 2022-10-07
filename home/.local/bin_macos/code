@@ -1,0 +1,3 @@
+#!/bin/sh
+#VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $*
+"/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code" "${@}"

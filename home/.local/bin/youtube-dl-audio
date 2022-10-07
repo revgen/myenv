@@ -1,0 +1,28 @@
+#!/bin/bash
+#=============================================================
+## Download audio track from Youtube and convert it to mp3
+## Usage: {SCRIPT_NAME} <youtube full url>
+##
+#  author   : Evgen Rusakov
+#  date     : 2018-08-11
+#  license  : MIT
+#=============================================================
+set -eu
+
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"$(basename "$0")"'/g'
+    exit 255
+}
+
+case "${1:-"help"}" in
+    help|--help|h|-h) show_help;;
+esac
+log=$(mktemp)
+echo "Downloading audio track (mp3) from ${1}..."
+#echo "Log file is '${log}'"
+yt-dlp --no-check-certificate --extract-audio --embed-thumbnail --audio-format mp3 "${1}" | tee "${log}" 2> /dev/null
+audio_file=$(grep "\[ffmpeg\] Destination" "${log}" | sed 's/\[ffmpeg\] Destination: //g')
+if [ ! -f "${audio_file}" ]; then exit 1; fi
+echo "Done: $(du -h "${audio_file}" | cut -f1 | sed 's/^[ ]*//g') ${audio_file}"
+rm -f "${log}"
+

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+###############################################################################
+# Check bad domain names from the files
+#
+# Usage: check-bad-domains [file with domains]
+#
+# Defauls domain list paths:
+# * /etc/bad-domains.lst
+# * ~/.bad-domains.lst
+#
+###############################################################################
+wd=$(dirname "${0}")
+domains_file=${1:-"${wd}/bad-domains.lst"}
+if [ ! -f "${domains_file}" ]; then domains_file="${HOME}/.bad-domains.lst"; fi
+if [ ! -f "${domains_file}" ]; then domains_file=/etc/bad-domains.lst; fi
+if [ ! -f "${domains_file}" ]; then
+    domains_file="${HOME}/.bad-domains.lst"
+    echo "internetbadguys.com" > "${domains_file}"
+    echo "doubleclick-xxx.net" > "${domains_file}"
+fi
+export PATH="${wd}:${PATH}"
+
+tmpres=$(mktemp)
+rm -rf "${tmpres}"
+
+cat "${domains_file}" | while read domain;
+do
+    if [ -z "${domain}" ] || [ -n "$(echo "${domain}" | grep "^#")" ]; then continue; fi
+    get-http-status-code "${domain}" | tee -a "${tmpres}"
+done
+
+# OK: if not 4xx, 5xx, ERR
+success_res=$(grep -v "\[4" "${tmpres}" | grep -v "\[5" | grep -v "\[ERR")
+rm -rf "${tmpres}"
+echo ""
+if [ -n "${success_res}" ]; then
+    echo "[ERR]: has passed results"
+    echo "${success_res}"
+    exit 1
+else
+    echo "[OK ]: the proxy works good"
+fi
+

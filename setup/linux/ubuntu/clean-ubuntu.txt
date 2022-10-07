@@ -1,0 +1,41 @@
+## clean-apt-cache.sh
+sudo apt-get -y clean
+sudo apt-get -y autoclean
+sudo apt-get -y autoremove
+sudo rm -rvf /var/lib/apt/lists/*
+sudo rm -f   /var/cache/apt/*.bin
+sudo rm -rvf /var/cache/apt/archives
+
+## clean-docs.sh
+sudo rm -rvf /usr/share/doc/*
+#sudo rm -rvf /usr/share/man /var/cache/man
+sudo rm -rvf /usr/share/groff
+sudo rm -rvf /usr/share/info
+sudo rm -rvf /usr/share/help
+sudo rm -rvf /usr/share/lintian
+sudo rm -rvf /usr/share/linda
+sudo rm -rvf /usr/share/gnome/help/*
+sudo rm -rvf /usr/share/xubuntu-docs
+sudo rm -rvf /usr/share/dict/british-english
+
+## clean-src-log-tmp-files.sh
+echo "Remove source files"
+sudo rm -rvf /usr/src/*
+
+echo "Clean remporary directories"
+sudo rm -rvf /tmp/* /var/tmp/*
+
+echo "Remove logs"
+sudo rm -rvf /var/log/*
+
+## clean-unused-headers-and-modules.sh
+echo "Remove unused modules and headers"
+dpkg -l 'linux-*' | sed '/^ii/!d;/'"$(uname -r | sed "s/\(.*\)-\([^0-9]\+\)/\1/")"'/d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d' | xargs sudo apt -y purge
+
+echo "Remove sources from /usr/src/*"
+sudo rm -rf /usr/src/*
+
+
+## clean-unused-locales.sh
+sudo find /usr/share/locale -mindepth 1 -maxdepth 1 -type d ! -name 'en' ! -name 'ru' -exec rm -vrf {} \;
+

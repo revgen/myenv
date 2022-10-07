@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+# shellcheck disable=all
+# ############################################################################
+## Command line interface to work with api.flumewater.com.
+##
+## Usage: {SCRIPT_NAME} <command> [--from time-from] [--to time-to] [--output [dir name]]
+## Commands:
+##   login          - login to the api and get JWT
+##   config         - show default config values
+##   devices        - show all devices
+##   user           - show user info
+##   usage          - show usage for the selected period of time
+##
+## Options:
+##   --from,          - time in the 'YYYY-MM-DD HH:MM:SS' format (you can use 'today', 'yesterday')
+##   --to             - time in the 'YYYY-MM-DD HH:MM:SS' format
+##   --output         - output directory (default: ~/.local/var/flumewater/<device_id>)
+##                      the result file name format: YYYYMMDD-water-<device_id>-<backet>.json
+##
+## System environment or config values:
+##   FLUMEWATER_CLIENT_ID       - need to connect to the API
+##   FLUMEWATER_CLIENT_SECRET   - need to connect to the API
+##   FLUMEWATER_USERNAME        - need to connect to the API
+##   FLUMEWATER_PASSWORD        - need to connect to the API
+##   FLUMEWATER_BUCKET          - measure usage periods unit (default: HR)
+##                                (MIN, HR, DAY, MON, YR)
+##   FLUMEWATER_JWT_FILE        - cache file to store JWT
+##   FLUMEWATER_DEBUG           - true: verbose output
+##
+## Config files:
+##   /etc/flumewater.conf
+##   ~/.config/flumewater.conf
+##
+## Dependencies: base64, tr, curl, jq
+##
+#  Author: Evgen Rusakov (https://github.com/revgen)
+#
+# ############################################################################
+set -e
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+
+API_URL="https://api.flumewater.com"
+USER_ID=""
+NAME=flumewater
+VERSION=20230409
+# We need to use gdate on the MacOS
+date_app=$(which gdate || which date)
+jq_app=$(which jq || which cat)
+debug() { if [ "${FLUMEWATER_DEBUG}" == "true" ]; then >&2 echo "$@"; fi; }
+info() { >&2 echo "$@"; }
+
+try_load_config_file() { [ -f "${1}" ] && debug "Load config file ${1}" && . "${1}"; }
+
+load_config() {
+    debug "Load configuration"
+    try_load_config_file "/etc/${NAME}.conf"
+    try_load_config_file "${HOME}/.config/${NAME}.conf"
+    try_load_config_file "${HOME}/.${NAME}.conf"
+
+    CLIENT_ID="${FLUMEWATER_CLIENT_ID:-"xxxxxxxxxxxxxxx"}"
+    CLIENT_SECRET="${FLUMEWATER_CLIENT_SECRET:-"xxxxxxxxxxxxxxxxxxxx"}"
+    USERNAME="${FLUMEWATER_USERNAME:-"user@example.com"}"
+    PASSWORD="${FLUMEWATER_PASSWORD:-"secret-password"}"
+    # Bucket values: MIN, HR, DAY, MON, YR
+    BUCKET="${FLUMEWATER_BUCKET:-"HR"}"
+    JWT_FILE="${FLUMEWATER_JWT_FILE:-"${HOME}/.cache/flumewater.key"}"
+    mkdir -p "$(dirname "${JWT_FILE}")"
+    debug "Config: username=${USERNAME}, client=${CLIENT_ID}, key_file=${JWT_FILE}"
+}
+
+# Normalize base64 string  ( padding with "=" and decode it
+base64_decode() {
+    data_base64=$(cat)
+    local m=$(( ${#data_base64} % 4))
+    if [ $m -eq 2 ]; then data_base64="${data_base64}==";
+    elif [ $m -eq 3 ]; then data_base64="${data_base64}="; fi
+    echo "${data_base64}" | tr '_-' '/+' | base64 --decode
+}
+payload_from_jwt() { cut -d. -f2 | base64_decode; }
+get_jwt() { cat "${JWT_FILE}" 2>/dev/null; }
+get_user_id() { jwt=${1}; echo "${jwt}" | payload_from_jwt | jq -r '.user_id'; }
+assert_user() { if [ -z "${1}" ]; then echo "Error: incorrect JWT. Did you make a login?"; exit 1; fi; }
+
+show_config() {
+    echo "# Example config file: ~/.config/flumewater.conf"
+    echo "export FLUMEWATER_CLIENT_ID=${CLIENT_ID}"
+    echo "export FLUMEWATER_CLIENT_SECRET=${CLIENT_SECRET}"
+    echo "export FLUMEWATER_USERNAME=${USERNAME}"
+    echo "export FLUMEWATER_PASSWORD=${PASSWORD}"
+    exho "export FLUMEWATER_DEBUG=false"
+}
+
+login() {
+    if [ -f "${JWT_FILE}" ] || [ "${1}" == "--force" ]; then
+        info "Session file exists: ${JWT_FILE}"
+        jwt="$(get_jwt)"
+        info "Session JWT : ${jwt}"
+    else
+        data="{ \"grant_type\":\"password\",
+        \"client_id\":\"${CLIENT_ID}\", \"client_secret\":\"${CLIENT_SECRET}\",
+        \"username\":\"${USERNAME}\", \"password\":\"${PASSWORD}\"}"
+        
+        tmp_file=$(mktemp)
+        info "Login to the ${API_URL} and get token"
+        curl -s --request POST --url "${API_URL}/oauth/token" \
+            -H 'content-type: application/json' \
+            --data "${data}" | jq '.' > "${tmp_file}" || exit 1
+
+        jwt="$(jq -r '.data[].access_token' "${tmp_file}")"
+        info "Received JWT: ${jwt}"
+    fi
+    if [ -z "${jwt}" ]; then echo "Error login: can't get JWT."; exit 1; fi
+    echo "${jwt}" > "${JWT_FILE}"
+    info "Session     : $(cat "${JWT_FILE}" | payload_from_jwt)"
+    USER_ID=$(get_user_id "${jwt}")
+    info "UserId      : ${USER_ID}"
+    rm -f "${tmp_file}"
+    assert_user "${USER_ID}"
+}
+
+
+get_user() {
+    debug "Get user information"
+    login
+    curl -s --request GET --url "${API_URL}/users/${USER_ID:-"0000"}" \
+        -H "content-type: application/json" \
+        -H "Authorization: Bearer ${jwt}" | ${jq_app}  || exit 1
+}
+
+get_devices() {
+    debug "Get devices for user"
+    login
+    curl -s --request GET --url "${API_URL}/users/${USER_ID:-"0000"}/devices" \
+        -H "content-type: application/json" \
+        -H "Authorization: Bearer ${jwt}" | ${jq_app} || exit 1
+}
+
+get_default_device_id() {
+    debug "Get id for the first meter"
+    device_id="$(get_devices | jq -r '.data[] | select (.type == 2)  | .id' | head -n 1)"
+    debug "Found device_id = ${device_id}"
+    echo "${device_id}"
+}
+
+get_device_info() {
+    debug "Get device information"
+    login
+    device_id=${1:-"$(get_default_device_id)"}
+    debug "UserId=${USER_ID:0:2}***, DeviceId=${device_id:0:6}*****, JWT=${jwt}"
+    curl -s --request GET --url "${API_URL}/users/$${USER_ID:-"0000"}/devices/${device_id}" \
+        -H "content-type: application/json" \
+        -H "Authorization: Bearer ${jwt}" | ${jq_app}|| exit 1
+}
+
+get_device_usage() {
+    debug "Get device usage (bucket=${BUCKET})"
+    login
+    device_id="$(get_default_device_id)"
+    time_from=
+    time_to=
+    output_dir=
+    for arg in "$@"; do
+        case "${1}" in
+            --from) shift; time_from="${1}";;
+            --to) shift; time_to="${1}";;
+            --output)
+                shift
+                output_dir="${1:-"${HOME}/.local/var/flumewater/${device_id:0:4}${device_id:15:4}"}"
+            ;;
+            *) shift;;
+        esac
+    done
+    time_from="${time_from:-"today"}"
+    case "${time_from}" in
+        today)
+            time_from="$(${date_app} +"%Y-%m-%d") 00:00:00"
+            time_to="${2:-"$(${date_app} +"%Y-%m-%d %H:%M:00")"}"
+        ;;
+        yesterday)
+            time_from=$(${date_app} -d @$(( $(${date_app} +"%s") - 86400)) +"%Y-%m-%d 00:00:00")
+        ;;
+        *)
+            time_from=$(${date_app} -d "${time_from}" +"%Y-%m-%d %H:%M:00")
+        ;;
+    esac
+    if [ -z "${time_to}" ]; then
+        time_to="$(${date_app} -d @$(( $(${date_app} -d "${time_from}" +"%s") + 86399)) +"%Y-%m-%d %H:%M:00")"
+    fi
+    
+    debug "DeviceId=${device_id}"
+    debug "Usage (${BUCKET}) for period: ${time_from} - ${time_to}"
+    queries="{ \"queries\": [
+    {
+        \"request_id\": \"${RANDOM}\",
+        \"bucket\": \"${BUCKET}\",
+        \"since_datetime\": \"${time_from}\",
+        \"until_datetime\": \"${time_to}\"
+    }]}"
+    tmp_file=$(mktemp)
+    curl -s --request POST --url "${API_URL}/users/${USER_ID}/devices/${device_id}/query" \
+        -H "content-type: application/json" \
+        -H "authorization: Bearer ${jwt}" \
+        --data "${queries}" | ${jq_app} | tee "${tmp_file}" || exit 1
+
+    if [ -n "${output_dir}" ]; then
+        output_dir="${output_dir}/$(${date_app} -d "${time_from}" +"%Y/%m-%b")"
+        backet="$(echo "${BUCKET}" | tr "[:upper:]" "[:lower:]")"
+        output_file="$(${date_app} -d "${time_from}" +"%Y%m%d")-water-${device_id}-${backet}.json"
+        info "Output file: '${output_dir}/${output_file}'"
+        mkdir -p "${output_dir}"
+        cp -v "${tmp_file}" "${output_dir}/${output_file}"
+    fi
+
+    http_code=$(jq -r '.http_code' "${tmp_file}")
+    if [ "${http_code}" != "200" ]; then
+        debug "Error: http-code=${http_code}"
+        exit 1
+    fi
+    rm -f "${tmp_file}"
+}
+
+cmd="${1:-"help"}"
+case "${cmd}" in
+    login) load_config && login --force;;
+    config) load_config && show_config;;
+    devices) load_config && get_devices;;
+    user) load_config && get_user;;
+    usage) shift; load_config && get_device_usage "${@}";;
+    help|--help|-h) show_help;;
+    *) echo "Error: unknown '${1}' command"; exit 1;;
+esac
+

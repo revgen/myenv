@@ -1,0 +1,67 @@
+version: "3.9"
+services:
+
+  shell:
+    image: "rev9en/sandbox"
+    volumes: [./:/opt/myenv]
+    environment:
+      - REPO_BRANCH=develop
+      - TELEGRAM_TOKEN
+      - TELEGRAM_CHAT_ID
+    working_dir: /opt/myenv
+    command: /bin/bash
+
+  test-ubuntu:
+    image: "rev9en/sandbox"
+    volumes: [./:/opt/myenv]
+    environment:
+      - REPO_BRANCH=develop
+    working_dir: /opt/myenv
+    command:
+      - /bin/sh
+      - -c
+      - |
+        sudo apt install -y iproute2
+        /opt/myenv/install.sh --noninteractive && \
+        bash -i /opt/myenv/tests/run-all-tests.sh
+
+  test:
+    image: "bitnami/git"
+    volumes: [./:/opt/myenv]
+    environment:
+      - REPO_BRANCH=develop
+      - TELEGRAM_TOKEN
+      - TELEGRAM_CHAT_ID
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /opt/myenv/install.sh --noninteractive && \
+        bash -i /opt/myenv/tests/run-all-tests.sh
+
+  test-alpine:
+    image: "alpine"
+    volumes: [./:/opt/myenv]
+    environment:
+      - REPO_BRANCH=develop
+      - TELEGRAM_TOKEN
+      - TELEGRAM_CHAT_ID
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache git bash
+        /opt/myenv/install.sh --noninteractive && \
+        bash -i /opt/myenv/tests/run-all-tests.sh
+
+  lint:
+    image: alpine
+    volumes: [./:/opt/myenv]
+    working_dir: /opt/myenv
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache file bash shellcheck
+        ./tools/shlint ./home/.local/bin/ && \
+        ./tools/shlint ./tools/

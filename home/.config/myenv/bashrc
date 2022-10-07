@@ -1,0 +1,133 @@
+# If not running interactively, don't do anything
+[ -z "${PS1}" ] && return
+
+export OSTYPE="${OSTYPE:-"$(uname -s | tr "[:lower:]" "[:upper:]")"}"
+case "${OSTYPE}" in
+  linux*)
+    if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
+    else export OSNAME=linux; fi
+    ;;
+  darwin*|macos*) export OSNAME=macos ;;
+  msys*|cygwin*) export OSNAME=windows ;;
+  *) export OSNAME=unknown ;;
+esac
+export PATH="${HOME}/.local/bin:/opt/homebrew/bin:${PATH}"
+export USERBIN="${USERBIN:-"${HOME}/.local/bin"}"
+
+# ------[ Terminal settings ]--------------------------------------------------
+if [[ $TERM == *color ]]; then
+  color_prompt=yes
+  export PS1="\033[0;32m\u@\h\033[0m:\033[1;34m\W\033[0m\$ "
+else
+  export PS1="\u@\h:\W\$ "
+fi
+
+# ------[ Tool's settings ]----------------------------------------------------
+if command -v "stty" >/dev/null; then stty stop ''; fi # Fix Ctrl+S inside the vim
+export GPG_TTY=$(tty);                          # gnupg specific
+
+# ------[ Python specific ]----------------------------------------------------
+# disabling Python bytecode (.pyc) files: generating the bytecode is extremely fast,
+# and isn’t something we need to worry about while developing our code
+export PYTHONDONOTWRITEBYTECODE=1
+export PYTHONWARNINGS="ignore"
+
+# ------[ Console History ]----------------------------------------------------
+export HISTCONTROL=ignoreboth;      # Don't add similar command in the history
+shopt -s histappend 2>/dev/null;    # Store command into the history immediately
+if command -v "history" >/dev/null; then PROMPT_COMMAND='history -a'; fi
+export HISTSIZE=9999;               # Store more commands in the history
+
+# Prevent tar and other programs from giving special meaning to ._* archive members
+export COPYFILE_DISABLE=1
+
+#-- AWS settings ----------------------------------------------------
+if command -v aws 2>&1>/dev/null; then
+  if [ -z "${AWS_DEFAULT_PROFILE}" ]; then
+    export AWS_DEFAULT_PROFILE=default
+  fi
+  if [ -z "${AWS_DEFAULT_REGION}" ]; then
+    AWS_DEFAULT_REGION=$(aws configure get region 2>/dev/null)
+    export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-"us-east-1"}
+  fi
+fi
+
+#-- Useful aliases -----------------------------------------------------------
+alias ll='ls -ahl'
+alias l='ll'
+alias ltree='ls -R|grep ":$"|sed -e "s/:$//" -e "s/[^-][^\/]*\//--/g" -e "s/^/   /" -e "s/-/|/"'
+alias tree='tree -N'
+alias c='clear'
+alias :q='exit'
+
+alias shellcheck='shellcheck -o all'
+alias tig='tig --all'
+alias ws='cd ${WORKSPACE} && pwd'
+alias vscode='code'
+
+alias lynx='lynx -accept_all_cookies'
+
+alias vd='LC_ALL="${LC_ALL:-"en_US.UTF-8"}" vd'
+alias csvview='vd'
+
+alias lower='tr "[:upper:]" "[:lower:]"'
+alias upper='tr "[:lower:]" "[:upper:]"'
+
+alias tig='tig --all'
+alias hex='xxd'
+alias tohex='xxd -p'
+alias fromhex='xxd -p -r'
+
+alias nocomments='sed "s/#\!/@#\!/g" | grep  "^[^\s*\(#\|$\)]" | sed "s/@#\!/#\!/g"'
+
+if ! which ctop 2>&1 >/dev/null && ! alias upper 2>/dev/null>/dev/null; then
+  alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
+fi
+alias docktop='ctop'
+alias docker-clean-unused='echo "Prune images..."; docker image prune -f; echo "Prune containers..."; docker container prune -f; echo "Done"'
+
+#-- Useful functions ----------------------------------------------------------
+ls-recursively() { find ${1:-"${PWD}"} -type f -print0 | xargs -0 ls -al; }
+du0() { du -xhd ${2:-"0"} "${1:-"."}" | sort -rhk1; }
+du1() { du0 1; }
+
+#-- Git settions --------------------------------------------------------------
+if [ -f "${HOME}/.git_completion" ]; then . "${HOME}/.git_completion"; fi
+
+#-- OS Specific settings ------------------------------------------------------
+if [ -r "${MYENVHOME}/home/.config/${MYENVNAME}/bashrc_${OSNAME}" ]; then
+    . "${MYENVHOME}/home/.config/${MYENVNAME}/bashrc_${OSNAME}"
+fi
+
+# ------[ Customer welcome screen ]--------------------------------------------
+if ! command -v "${MYENVNAME}" >/dev/null; then
+  echo "ERROR: you have a problem with the ${MYENVNAME} environment."
+  uname -srm
+  echo "MYENVNAME = ${MYENVNAME}"
+  echo "MYENVHOME = ${MYENVHOME}"
+  ls -ahl "${MYENVHOME}"
+else
+  if [ -z "${TERM_PROGRAM}" ]; then       # do not show additional information in not regular terminals
+    if [ -x "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome" ]; then
+      "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome"
+    else
+      "${MYENVNAME}" --version
+    fi
+  else
+    "${MYENVNAME}" --version
+  fi
+fi
+
+#-- Load a user specific configuration ----------------------------------------
+if [ -f "${HOME}/.config/.bashrc_${USER}" ]; then
+  . "${HOME}/.config/.bashrc_${USER}"
+fi
+
+# --[ Log ] -------------------------------------------------------------------
+if [ -n "$DISPLAY" ]; then
+    logger -t "${USER}"  "bash: init X-session"
+elif [ -n "$SSH_TTY" ]; then
+    logger -t "${USER}"  "bash: init ssh session [$SSH_CLIENT, $SSH_CONNECTION]"
+else
+    logger -t "${USER}"  "bash: init terminal session"
+fi

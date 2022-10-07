@@ -1,0 +1,98 @@
+#!/bin/bash
+# shellcheck disable=SC1090
+#=============================================================================
+## Helper script to start/stop/manage Photo LibraryServer
+## The script is using '{IMAGE}' docker image.
+##
+## Usage: {SCRIPT_NAME} <command>
+## Commands:
+##   start     - run photolib static site generator
+##   serve     - start localhttp server inside the photolib-site directory (test)
+##   config    - show current/default config for the script
+##
+## System environment variables:
+##   PHOTOLIB_SRC   - directory with a source of the Photo Library
+##   PHOTOLIB_SITE  - directory with the result static site to watch Photo Library
+##
+## Config files:
+##   /etc/{NAME}.conf
+##   ~/.config/{NAME}.conf
+#
+#  Author     : Evgen Rusakov
+#  Version    : 1.0.0
+#  Url        : https://github.com/revgen
+#  License    : MIT
+#=============================================================================
+NAME=${CONTAINER_NAME:-"photolib"}
+IMAGE=ghcr.io/thumbsup/thumbsup
+PUID=${PUID:-"${UID}"}
+PGID=${PGID:-"$(id -g)"}
+TZ=$(cat /etc/timezone 2>/dev/null)
+HOSTNAME="${HOSTNAME:-"photolib"}"
+
+#--[ The script specific methods ]---------------------------------------------
+
+show_config() {
+    echo "# -- Default configuration for the ${NAME} docker container --"
+    echo "export PHOTOLIB_SRC=${PHOTOLIB_SRC}"
+    echo "export PHOTOLIB_SITE=${PHOTOLIB_SITE}"
+}
+
+run_container() {
+    mkdir -p "${PHOTOLIB_SRC}" "${PHOTOLIB_SITE}"
+    echo "Start ${NAME} container."
+    echo "-  Original: ${PHOTOLIB_SRC}"
+    echo "-      Site: ${PHOTOLIB_SITE}"
+    docker run --name "${NAME}" \
+        -u "${PUID}":"${PGID}" \
+        -e TZ="${TZ}" \
+        -v "${PHOTOLIB_SRC}":/input:ro \
+        -v "${PHOTOLIB_SITE}":/output \
+        "${IMAGE}" \
+        thumbsup --input /input --output /output \
+    && echo "Success"
+}
+
+load_config_file() {
+    if [[ ! -f "${1}" ]]; then return 1; fi
+    echo "Load config ${1}"
+    set -a; . "${1}"; set +a
+}
+
+serve() {
+    PORT="${PORT:-"8080"}"
+    cd "${PHOTOLIB_SITE}" || exit 1
+    echo "Start local http server http://localhost:${PORT}/ in ${PHOTOLIB_SITE}"
+    python3 -m http.server "${PORT}"
+}
+#-----------------------------------------------------------------------------
+cmd=${1:-"--help"}
+shift
+
+for cfg in "/etc/${HOSTNAME}.conf" "/etc/${NAME}.conf" "${HOME}/.config/${NAME}.conf"; do
+    if [[ -r "${cfg}" ]]; then
+        debug "Load config: ${HOME}/.config/${NAME}.conf"
+        . "${HOME}/.config/${NAME}.conf"
+    fi
+done
+
+PHOTOLIB_SRC=${PHOTOLIB_SRC:-"/mnt/photos/library"}
+PHOTOLIB_SITE=${PHOTOLIB_SITE:-"/var/www/home/photos"}
+
+case "${cmd}" in
+    config|default-config) show_config "$@" ;;
+    serve) serve "$@" ;;
+    start|s|run|r)
+        echo "Start '${NAME}' container..."
+        run_container
+        ;;
+    help|--help|-h)
+        # shellcheck disable=SC2312
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" \
+        | sed 's/{IMAGE}/'"$(echo "${IMAGE}" | sed 's/\//\\\//g')"'/g' \
+        | sed 's/{NAME}/'"${NAME}"'/g' \
+        | sed 's/{SCRIPT_NAME}/'"$(basename "${0}")"'/g'
+        exit 1 ;;
+    *) echo "Error: Unknow command '${cmd}'."; exit 1 ;;
+esac
+

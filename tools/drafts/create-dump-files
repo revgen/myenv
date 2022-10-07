@@ -1,0 +1,34 @@
+#!/bin/sh
+DEF_SIZE=100
+size=${DEF_SIZE}
+echo "The script is creating random files in the current directory to fill all free space on the partition"
+for arg in $@; do
+    case "${arg}" in
+        help|--help)
+	    echo "Usage: $(basename "${0}") [directory] [sizeMB]"
+	    echo "Default size is ${DEF_SIZE}MB"
+	    exit 1;;
+	*) if [ -d "${arg}" ]; then cd "${arg}"; else size=${arg}; fi
+    esac
+done
+
+echo "All result files will be ${size}MB each and have a name like ./<uuid>/<uuid>"
+read -p "Working directory ${PWD}. Continue (yes/No)? " opt
+if [ "${opt}" != "yes" ]; then echo "Skip"; exit 1; fi
+
+create_dump_file() {
+    mkdir -p "$(dirname "${1}")"
+    echo "Dump file [total=${2}MB]: ${1}"
+    printf " - "
+    dd if=/dev/urandom of="${1}" bs=1M count=${size} 2>&1 | xargs || exit 1
+    [ ! -f "${1}" ] && echo "Error: file '${1}' not created. Exit." && exit 1
+}
+
+total_size=0
+while true; do
+    dir=$(uuidgen -m -n 3a685764-346f-475b-9759-8dee20e144ed -N $(date +%S))
+    fn="${PWD}/${dir}/$(uuidgen)"
+    create_dump_file "${fn}" "${total_size}"
+    total_size=$((total_size + size))
+done
+

@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+import sys
+import xml.etree.ElementTree as ET
+import xmltodict
+import json
+
+xml_file = sys.argv[1]
+print(f'Parse: {xml_file}')
+#tree = ET.parse(xml_file)
+#xml_data = tree.getroot()
+#xmlstr = ET.tostring(xml_data, encoding='utf8', method='xml')
+#data_dict = dict(xmltodict.parse(xmlstr))
+data_dict=None
+with open(xml_file, 'r') as fo:
+    data_dict = dict(xmltodict.parse(fo.read()))
+
+print('Result json')
+print(json.dumps(data_dict, indent=2, sort_keys=True))
+
+#with open('new_data_2.json', 'w+') as json_file:
+#    json.dump(data_dict, json_file, indent=4, sort_keys=True)
+

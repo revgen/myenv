@@ -1,0 +1,36 @@
+#!/bin/sh
+#==============================================================================
+## Making a request to the server and show a https certificate information
+## Usage: {SCRIPT_NAME} <url>
+##
+## Example:
+##   {SCRIPT_NAME} https://github.com
+#==============================================================================
+case "${1:-help}" in
+    help|--help) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 255 ;;
+esac
+
+# Add https prefix if we don't have it.
+url=$(echo ${1} | sed 's/^http:/https:/g')
+if ! echo "${url}" | grep -q "^https://"; then
+    url="https://${url}"
+fi
+
+# Make a special request to get certificate information using 'curl -k..'
+resp=$(curl -vvI --insecure "${url}" 2>&1 | awk 'BEGIN { cert=0 } /^\* Server certificate:/ { cert=1 } /^\*/ { if (cert) print }')
+echo "------------------------------------------------"
+if [ -z "${resp}" ]; then
+    # show a raw server answer if we don't have a certificate information
+    echo "ERROR: Can't find server certificate information"
+    echo "Show a full response from the address ${url}...."
+    echo "------------------------------------------------"
+    curl --insecure -v "${url}"
+    exit 1
+else
+    echo "*  Address: ${url}"
+    echo "${resp}" | grep --color=no "SSL certificate verify" | sed 's/, continuing anyway//g'
+    echo "------------------------------------------------"
+    echo "${resp}"
+    echo "${resp}" | grep -q "SSL certificate verify ok"
+    exit $?
+fi

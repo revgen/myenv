@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# #############################################################################
+## Create playlist file (m3u( from the directory with audio files
+## Usage: dir-to-m3u [directory] [output-m3u-file-path]
+# #############################################################################
+debug() { if [ "${DEBUG}" == "true" ]; then >&2 echo "$@"; fi; }
+
+case "${1}" in
+  help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 1;;
+esac
+
+dir="${1:-"${PWD}"}"
+dir="$(echo "${dir}" | sed 's/\/$//g')"
+debug "Processing '${dir}' directory..."
+if [ -z "${2}" ]; then
+  output="${2}"
+  mkdir -p "$(dirname "${2}")"
+  debug "Output file: ${output}"
+else
+  output=/dev/stdout
+fi
+
+find "${dir}" -type d | sed 's/\/$//g' | while read subdir; do
+  debug "- Directory: ${subdir}"
+  find "${subdir}" -maxdepth 1 -type f | sort | while read fn; do
+    ext="$(echo "${fn##*.}" | tr '[A-Z]' '[a-z]')"
+    case "${ext}" in
+      mp3|flac|ogg|loss|aiff|aif)
+        debug "- File: '${subdir}/${fn}' - OK"
+	echo "${subdir}/${fn##*/}"
+	;;
+      *) debug "- File: '${subdir}/${fn}' - SKIP";;
+    esac
+  done
+done
+debug "Done"

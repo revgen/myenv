@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2312,SC2001,SC2310
+# ############################################################################
+## Command line interface to work with api.ecowitt.net.
+##
+## Usage: {SCRIPT_NAME}
+##   --from YYYY-MM-DD HH:MM:SS - default: yesterday 00:00:00
+##   --to YYYY-MM-DD HH:MM:SS   - default: from-date 23:59:59
+##
+## System environment or config values:
+##  APP_KEY         - need to connect to the API
+##  API_KEY         - need to connect to the API
+##  DEVICE          - MAC address of the device
+##  FROM            - YYYY-MM-DD HH:MM:SS - default: "yesterday 00:00:00"
+##  TO              - YYYY-MM-DD HH:MM:SS - default: "FROM 23:59:59"
+##  CALL_BACK       - default: indoor,outdoor
+##  CYCLE_TYPE      - default: 30min
+##  UNIT_T          - 1 - ℃ (default), 2 - ℉
+##  UNIT_P          - 3 - hPa (default), 4 - inHg, 5 - mmHg
+##  UNIT_W          - 6 - m/s (default), 7 - km/h, 8 - knots, 9 - mph, 10 - BFT, 11 - fpm
+##  UNIT_R          - 12 - mm (default), 13 - in
+##  UNIT_S          - 14 - lux (default), 15 - fc, 16 - W/m²
+##  OUTPUT          - output directory
+##                    the result file name format: YYYYMMDD-temperature.json
+##
+## Config files:
+##   /etc/ecowitt.conf
+##   ~/.config/ecowitt.conf
+##
+## Dependencies: curl
+##
+#  Author : Evgen Rusakov (https://github.com/revgen)
+#  Version: 20221101
+# ############################################################################
+set -e
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+
+NAME=ecowitt
+
+# We need to use gdate on the MacOS
+# shellcheck disable=SC2209
+if command -v gdate > /dev/null 2>&1; then
+    date_app=gdate
+else
+    date_app=date
+fi
+if command -v jq > /dev/null 2>&1; then
+    jq_app=jq
+else
+    jq_app=cat
+fi
+
+debug() {
+    if [[ "${DEBUG:-""}" == "true" ]]; then
+        >&2 echo "${@}"
+    fi
+}
+
+try_load_config_file() {
+    if [[ -f "${1}" ]]; then
+        debug "Load config file ${1}"
+        # shellcheck disable=SC1090
+        . "${1}"
+    fi
+}
+
+load_config() {
+    debug "Load configuration"
+    try_load_config_file "/etc/${NAME}.conf"
+    try_load_config_file "${HOME}/.config/${NAME}.conf"
+
+    APP_KEY="${APP_KEY:-"${ECOWITT_APP_KEY}"}"
+    API_KEY="${API_KEY:-"${ECOWITT_API_KEY}"}"
+    DEVICE="${DEVICE:-"${ECOWITT_DEVICE}"}"
+
+    CALL_BACK="${CALL_BACK:-"${ECOWITT_CALL_BACK:-"indoor,outdoor"}"}"
+    CYCLE_TYPE="${CYCLE_TYPE:-"${ECOWITT_CYCLE_TYPE:-"30min"}"}"
+    UNIT_T="${UNIT_T:-"1"}"
+    UNIT_P="${UNIT_P:-"3"}"
+    UNIT_W="${UNIT_W:-"6"}"
+    UNIT_R="${UNIT_R:-"12"}"
+    UNIT_S="${UNIT_S:-"14"}"
+
+    # TODO: add from-to period
+    from_def="$(${date_app} -d @$(( $(${date_app} +"%s") - 86400)) +"%Y-%m-%d 00:00:00")"
+    FROM="${FROM:-"${from_def}"}"
+    to_def="$(${date_app} -d "${FROM}" +"%Y-%m-%d 23:59:59")"
+    FROM="$(echo "${FROM}" | sed 's/ /T/g')"
+    TO="${TO:-"${to_def}"}"
+    TO="$(echo "${TO}" | sed 's/ /T/g')"
+    debug "Config: device='${DEVICE}', from='${FROM}', to='${TO}', "
+    debug "call_back=${CALL_BACK}, cycle_type=${CYCLE_TYPE}, temp_unitid=${UNIT_T},"
+    debug "pressure_unitid=${UNIT_P}, cycle_type=${CYCLE_TYPE}, rainfall_unitid=${UNIT_R},"
+    debug "wind_speed_unitid=${UNIT_W}, solar_irradiance_unitid=${UNIT_S}"
+}
+
+
+show_config() {
+    echo "# Example config file: ~/.config/ecowitt.conf"
+    echo "export ECOWITT_APP_KEY=${APP_KEY}"
+    echo "export ECOWITT_API_KEY=${API_KEY}"
+    echo "export ECOWITT_DEVICE=${DEVICE}"
+    echo "export ECOWITT_CALL_BACK=${CALL_BACK}"
+    echo "export ECOWITT_CYCLE_TYPE=${CYCLE_TYPE}"
+}
+
+
+show_history() {
+    debug "Get temperature data history: device='${DEVICE}', from='${FROM}', to='${TO}', call_back=${CALL_BACK}"
+    tmp_file=$(mktemp)
+    api_url="https://api.ecowitt.net/api/v3/device/history"
+    url="${api_url}?application_key=${APP_KEY}&api_key=${API_KEY}"
+    url="${url}&mac=${DEVICE}&start_date=${FROM}&end_date=${TO}"
+    url="${url}&cycle_type=${CYCLE_TYPE}&call_back=${CALL_BACK}"
+    url="${url}&temp_unitid=${UNIT_T}&pressure_unitid=${UNIT_P}&rainfall_unitid=${UNIT_R}"
+    url="${url}&wind_speed_unitid=${UNIT_W}&solar_irradiance_unitid=${UNIT_S}"
+
+    debug "Send request to ${api_url}"
+    debug "Full url: ${url}"
+    curl -s --url "${url}" \
+        -H "content-type: application/json" \
+        | ${jq_app} | tee "${tmp_file}" || exit 1
+    echo ""
+
+    if [ "${OUTPUT}" ]; then
+        output_file="$(${date_app} -d "${FROM}" +"%Y%m%d")-temperature-${NAME}.json"
+        output_dir=${OUTPUT}/$(${date_app} -d "${FROM}" +"%Y/%m-%b")
+        echo "Output file ${output_dir}/${output_file}"
+        mkdir -p "${output_dir}"
+        cp -v "${tmp_file}" "${output_dir}/${output_file}"
+    fi
+
+    if ! grep -q "[ ]*\"code\":[ ]*0\,[ ]*" "${tmp_file}"; then
+        debug "Error: $(grep '"code"' "${tmp_file}")"
+        exit 1
+    fi
+    debug "Remove temporary file: ${tmp_file}"
+    rm -f "${tmp_file}"
+    debug "Success"
+}
+
+cmd="${1:-""}"
+case "${cmd}" in
+    config) load_config || exit 1; show_config;;
+    help|--help|-h) show_help;;
+    "") ;;
+    *) echo "Error: unknown '${1}' command"; exit 1;;
+esac
+
+load_config || exit 1
+show_history

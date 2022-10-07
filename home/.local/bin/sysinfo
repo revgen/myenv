@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2312
+#==============================================================================
+## Show system information
+## Usage: {SCRIPT_NAME} [full/simple/banner]
+#==============================================================================
+case "$(uname -s | tr "[:lower:]" "[:upper:]")" in
+  linux*)
+    if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then OSNAME=wsl;
+    else OSNAME=linux; fi
+    ;;
+  solaris*) OSNAME=solaris ;;
+  darwin*)  OSNAME=macos ;;
+  bsd*)     OSNAME=bsd ;;
+  msys*)    OSNAME=windows ;;
+  cygwin*)  OSNAME=windows ;;
+  *)        OSNAME=unknown ;;
+esac
+export OSNAME="${OSNAME}"
+#------------------------------------------------------------------------------
+os_info() {
+    # MasOC OS information
+    if [[ "${OSNAME}" == "macos" ]]; then
+        printf "MacOS "; sw_vers | grep Product | cut -d":" -f2 | xargs
+        return 0
+    fi
+    
+    # Linux OS information (latest distributives)
+    if [[ -f "/etc/os-release" ]]; then
+        name=$(grep "^NAME\|VERSION_ID" /etc/os-release | sort |  sed 's/NAME=//g' | sed 's/VERSION_ID=//g' | sed 's/"//g' | xargs)
+        if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then
+            echo "${name} [WSL]"
+        else
+            echo "${name}"
+        fi
+        return 0
+    fi
+    # Linux - Debian
+    if [[ -f /etc/debian_version ]]; then
+        echo "Debian $(cat /etc/debian_version)"
+        return 0
+    fi
+    # Linux - Others
+    if [[ -n "$(command -v lsb_release 2>/dev/null)" ]]; then
+        lsb_release -d | sed 's/Description:[\t ]*//g'
+        return 0
+    fi
+    # Others
+    uname -sr
+}
+#------------------------------------------------------------------------------
+platform() {
+    uname -m | sed 's/x86_/x/g' | sed 's/amd/x/g'
+}
+#------------------------------------------------------------------------------
+cpu_info_ext() {
+    if [[ "${OSNAME}" == "macos" ]]; then
+        top -l 1 -s 0 | awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+    else
+        top -bn 1 | sed 's/:[ ]*/: /g' | awk ' /Cpu/ || /Mem/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+    fi
+}
+cpu_info() {
+    if [[ "${OSNAME}" == "macos" ]]; then
+        printf "%s" "$(sysctl -n hw.ncpu || true) units, "
+        sysctl -n machdep.cpu.brand_string
+    else
+        printf "%s" "$(nproc || true) units, "
+        grep "model name" /proc/cpuinfo | head -n 1 | cut -d":" -f2 | sed 's/^[ ]*//g'
+    fi
+}
+#------------------------------------------------------------------------------
+disk_info() {
+    if [[ "${OSNAME}" == "macos" ]]; then
+        df -h | grep "/dev/disk" | grep -v "/private" | grep -v "nobrowse" \
+        | grep -v "auto_home" | awk '{print ""$4" of "$2" available (capacity="$5") "$9}'
+    else
+        df -h | grep "/$\|/mnt/" | awk '{print ""$4" of "$2" available (capacity="$5") "$6}'
+    fi
+}
+#------------------------------------------------------------------------------
+active_users() {
+    if [[ "${OSNAME}" == "wsl" ]]; then
+        wslvar USERNAME
+    else
+        w -h | awk '{print $1}' | sort -r | uniq -c | awk '{printf"%s%s (%d)",c,$2,$1;c=", "}'
+    fi
+}
+#------------------------------------------------------------------------------
+local_ip() {
+    if command -v ip >/dev/null; then
+        ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+        return 0
+    fi
+    if command -v ifconfig >/dev/null; then
+        ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | sort | xargs | sed -e 's/ /, /g'
+        return 0
+    fi
+    echo "can't get local ip address"
+}
+#------------------------------------------------------------------------------
+public_ip() {
+    if command -v  wget >/dev/null; then wget -q -O -  http://checkip.amazonaws.com;
+    else  curl -skL http://checkip.amazonaws.com; fi
+}
+#------------------------------------------------------------------------------
+internet_status() {
+    internet=$(curl -sIL -m 3 "https://google.com" | grep "HTTP[^ ]* 200")
+    if [[ -n "${internet}" ]]; then echo "CONNECTED";
+    else echo "ERROR"; fi
+}
+#------------------------------------------------------------------------------
+show_uptime() {
+    uptime | cut -d"l" -f1 | sed 's/[, ]*$//g' | sed 's/^ //g' | sed 's/ [ ]*/ /g'
+}
+#------------------------------------------------------------------------------
+username() {
+    if [[ -n "${USER}" ]]; then echo "${USER}";
+    else grep ":${UID}:" /etc/passwd | cut -d":" -f1; fi
+}
+#------------------------------------------------------------------------------
+show_slim_info() {
+    echo "----[ System information ]--------------------------------"
+    echo "Hostname  : $(hostname)"
+    echo "Users     : $(active_users)"
+    echo "OS        : $(os_info) ($(platform))"
+    echo "Uptime    : $(show_uptime)"
+    echo "----------------------------------------------------------"
+    echo "CPU       : $(cpu_info)"
+    cpu_info_ext | sed 's/^%//g' | sed 's/Cpu(s)/Cpu(s) /g'
+    echo "----------------------------------------------------------"
+    disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
+    echo "----------------------------------------------------------"
+    echo "Local IP  : $(local_ip)"
+    echo "Public IP : $(public_ip)"
+    echo "Internet  : $(internet_status)"
+    echo "----------------------------------------------------------"
+    echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
+    echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
+}
+#------------------------------------------------------------------------------
+show_banner() {
+    if command -v figlet > /dev/null; then
+        echo -en "\033[34m\033[1m"
+        hostname | figlet
+        echo -en "\033[0m"
+    else
+        echo -e "\033[97m\033[1m  Hostname:\033[0m\033[34m $(hostname)\033[0m"
+    fi
+    tty_info=
+    if [[ -n "${SSH_CLIENT}" ]]; then tty_info="ssh: $(echo "${SSH_CLIENT}" | cut -d" " -f1)"; fi
+    if [[ -n "${STY}" ]]; then tty_info="$(echo "${tty_info} screen: ${STY}" | sed 's/^[ ]*//g')"; fi
+    if [[ -n "${tty_info}" ]]; then tty_info="(${tty_info})"; fi
+    echo -e "\033[97m\033[1m      User:\033[0m\033[36m $(username)\033[0m \033[97m\033[0m${tty_info}\033[0m"
+    echo -e "\033[97m\033[1m    System:\033[0m\033[32m $(os_info) ($(platform))\033[0m"
+    echo -e "\033[97m\033[1m     Users:\033[0m\033[96m $(active_users)\033[0m"
+    echo -e "\033[97m\033[1m Addresses:\033[0m\033[93m $(local_ip)\033[0m"
+    echo -e "\033[97m\033[1m    Uptime:\033[0m\033[35m $(show_uptime)\033[0m"
+}
+#------------------------------------------------------------------------------
+execute_inxi() {
+    if ! command -v inxi >/dev/null; then
+        echo "Error: inxi tool not found."
+        echo "Install in first: https://smxi.org/docs/inxi-installation.htm"
+        exit 1
+    fi
+    >&2 echo "Collecting system information..."
+    inxi -mF
+}
+#------------------------------------------------------------------------------
+arg1=${1:-"--simple"}
+case "${arg1}" in
+    help|--help|h|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;;
+    simple|--simple|-S) show_slim_info ;;
+    banner|--banner|-B) show_banner ;;
+    full|--full|-F) execute_inxi ;;
+    *) execute_inxi "$*" ;;
+esac

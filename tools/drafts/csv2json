@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# #############################################################################
+## Convert csv file into the json file
+## Usage: {SCRIPT_NAME} <file|directory> [output directory]
+##
+## System environment:
+##   MINIFY=true     - if you want to minify result JSON file
+##
+## Requirements:
+##   jq, csvtojson
+##   npm install csvtojson -g
+##   apt install jq
+# #############################################################################
+debug() { if [ "${DEBUG}" == "true" ]; then >&2 echo $@; fi; }
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+src=${1:-"--help"}
+output=${2}
+if [ "${src}" == "--help" ]; then show_help; fi
+if [ -z "$(which csvtojson)" ]; then echo "Error: csvtojson tool is required"; exit 1; fi
+if [ -z "$(which jq)" ]; then echo "Error: jq tool is required"; exit 1; fi
+
+convert_file() {
+    csv_file=${1}
+    if [ -n "${2}" ]; then output_dir=$(echo "${2}/" | sed 's/\/\/$/\//g');
+    else output_dir=; fi
+    if [ "${MINIFY}" == "true" ]; then minify="-c"; else minify=; fi
+    json_file="${output_dir}${csv_file%.*}.json"
+    debug "Converting ${csv_file} -> ${json_file}"
+    mkdir -p "$(dirname "${json_file}")" 2>/dev/null
+    csvtojson "${csv_file}" | jq ${minify} > "${json_file}" && echo "Convert ${csv_file} -> ${json_file} complete"
+}
+
+
+if [ -d "${src}" ];then
+    src_full=$(python -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "${src}")
+    output=${2:-"${src_full}"}
+
+    echo "Converting all csv files to json inside the ${src_full} directory..."
+    cd "${src_full}"
+    find . -iname *.csv | sort | while read f; do
+        convert_file "${f}" "${output}"
+    done
+    echo "Convert csv to json complete."
+else
+    convert_file "${src}" "${output}"
+fi

@@ -1,0 +1,52 @@
+#!/bin/sh
+#=======================================================================
+## Delete file/directory to trash from the cli
+#
+#  author   :Evgen Rusakov
+#  license  :MIT
+#  date     :2023-01-15
+#  version  :1.0
+#
+## Usage: {SCRIPT_NAME} <path>
+##
+#=======================================================================
+show_help() {
+    # shellcheck disable=SC2312
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+}
+
+# shellcheck disable=SC2249
+case "${1:-"--help"}" in
+    help|--help|-h) show_help; exit 255;;
+esac
+
+if [ "$(uname -s || true)" = "Darwin" ]; then
+    notify() { echo "${1} - ${2}"; osascript -e "display notification \"${2}\" with title \"Delete file to trash\" subtitle \"${1}\""; }
+    to_trash() { osascript -e "tell app \"Finder\" to delete POSIX file \"${1}\""; }
+else
+    notify() { echo "Not implemented"; }
+    to_trash() { echo "Not implemented"; exit 1; }
+fi
+
+if [ "$(uname -s || true)" != "Darwin" ]; then
+    echo "Error: the script suports only MacOS system"
+    exit 1
+fi
+
+for f in "$@"; do
+    file_path="$(readlink -f "${f}")"
+    echo "Delete '${file_path:-"${f}"}' to trash"
+    if [ ! -e "${file_path}" ]; then
+	notify "Failed: not found" "${f}"
+	exit 1
+    fi
+    to_trash "${file_path}"
+    errcode=$?
+    if [ "${errcode}" -eq 0 ]; then
+    	notify "Success" "${file_path}"
+    else
+    	notify "Failed: errorcode = ${errcode}" "${file_path}"
+	exit "${errcode}"
+    fi
+done

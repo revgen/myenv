@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+system=$(grep 'PRETTY_NAME=' /etc/os-release | sed 's/PRETTY_NAME=//g' | sed 's/"//g')
+platform=$(uname -i | sed 's/x86_64/x64/g')
+kernel=$(uname -r)
+echo "system: ${system} (${platform}) ${kernel}"
+
+python=$(python --version | sed 's/Python //g')
+pip=$(pip --version | cut -d" " -f2)
+echo "python: ${python}, pip: ${pip}"
+
+nodejs=$(node --version | sed 's/v//g')
+npm=$(npm --version | sed 's/v//g')
+echo "  node: ${nodejs}, npm: ${npm}"
+
+java=$(java --version | head -n 1)
+echo "  java: ${java}"
+
+perl=$(perl -e 'print $];')
+echo "  perl: ${perl}"
+
+ruby=$(ruby --version | cut -d" " -f2)
+echo "  ruby: ${ruby}"
+
+gcc=$(gcc -v 2>&1 | grep 'gcc version' | cut -d" " -f3)
+make=$(make -v | head -n 1 | cut -d" " -f3)
+glibc=$(ldd --version | head -n 1 | awk '{print $NF}')
+echo "   gcc: ${gcc}, make: ${make}, glibc: ${glibc}"
+
+awscli=$(aws --version | cut -d" " -f1 | sed 's/aws-cli\///g')
+echo "awscli: ${awscli}"
+

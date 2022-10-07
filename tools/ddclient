@@ -1,0 +1,76 @@
+#!/bin/sh
+# shellcheck shell=sh disable=SC3014 source=/dev/null
+# ############################################################################
+## DDclient is a shell script used o update dynamic DNS entries for accounts on Dynamic DNS Network Service Provider.
+## Usage: {SCRIPT_NAME} [-u username] [-p password] [-u url]
+##
+## System environment:
+##   DYNDNS_USER - account user name
+##   DYNDNS_PASS - account password
+##   DYNDNS_HOST - dyndns servername
+##   DYNDNS_NAME - dyndns network/profile name (default: main)
+##   DYNDNS_URL  - dyndns whole url
+##
+#  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
+# ############################################################################
+debug() { [ "${DEBUG:-""}" == "true" ] && >&2 echo "$*"; }
+load_config() {
+    file_path="${1}"
+    if [ -z "${file_path}" ]; then
+        debug "Load configuration file ${file_path}"
+        . "${file_path}"
+    fi
+}
+external_ip() {
+    if command -v curl >/dev/null; then curl -sL "http://checkip.amazonaws.com" 2>/dev/null;
+    else wget -qO - "http://checkip.amazonaws.com" 2>/dev/null; fi
+}
+TMPFILE="$(mktemp)"
+SCRIPT_NAME="$(basename "${0}")"
+TIMEOUT=10
+if [ "${1}" == "help" ] || [ "${1}" == "--help" ] || [ "${1}" == "-h" ]; then
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'
+    exit 1
+fi
+load_config "${HOME}/.config/.${SCRIPT_NAME}.conf"
+load_config "${HOME}/.${SCRIPT_NAME}.conf"
+load_config "/etc/${SCRIPT_NAME}.conf"
+
+
+EXTERNAL_IP=$(external_ip || true)
+DYNDNS_USER="${DYNDNS_USER:-""}"
+DYNDNS_PASS="${DYNDNS_PASS:-""}"
+DYNDNS_URL="${DYNDNS_URL:-""}"
+DYNDNS_HOST="${DYNDNS_HOST:-""}"
+DYNDNS_NAME="${DYNDNS_NAME:-"main"}"
+
+if [ -n "${DYNDNS_URL}" ]; then
+    url="${DYNDNS_URL}"
+else
+    url="https://${DYNDNS_HOST}/nic/update?hostname=${DYNDNS_NAME}&myip=${EXTERNAL_IP}"
+fi
+
+debug "Request ${url}..."
+debug "Command: curl --max-time ${TIMEOUT} --connect-timeout ${TIMEOUT} -Ls -u '${DYNDNS_USER}:${DYNDNS_PASS}' '${url}'"
+debug "Tmp file: ${TMPFILE}"
+# touch "${TMPFILE}"
+curl --max-time "${TIMEOUT}" --connect-timeout "${TIMEOUT}" -Ls -u ''"${DYNDNS_USER}:${DYNDNS_PASS}"'' "${url}" > "${TMPFILE}"
+errcode=$?
+resp="$(cat "${TMPFILE}")"
+errmsg="$(cut -d" " -f1 "${TMPFILE}")"
+debug "Response: ${resp}"
+case ${errmsg} in
+    "good") msg="SUCCESS: (good) DNS hostname successfully updated (${DYNDNS_NAME}=${EXTERNAL_IP})." ;;
+    "nochg") msg="SUCCESS: (nochg) no update performed (${DYNDNS_NAME}=${EXTERNAL_IP})." ;;
+    "nohost") errcode=1; msg="ERROR: (nohost) Hostname supplied does not exist under specified account. Revise config file." ;;
+    "badauth") errcode=1; msg="ERROR: (badauth) Invalid username password combination." ;;
+    "badagent") errcode=1; msg="ERROR: (badagent) Client disabled - Server is no longer allowing requests from this update script." ;;
+    '!donator') errcode=1; msg="ERROR: (donator) An update request was sent including a feature that is not available." ;;
+    "abuse") errcode=1; msg="ERROR: (abuse) username is blocked due to abuse." ;;
+    "911") errcode=1; msg="ERROR: (911) A fatal error on our side such as a database outage. Retry the update in no sooner than 30 minutes." ;;
+    "") errcode=1; msg="ERROR: (empty) No response received from the server. This may be due to rate limiting, timeout or a server-side problem." ;;
+    *) errcode=1; msg="ERROR: (error: ${resp}) Could not understand the response from No-IP. The DNS update server may be down." ;;
+esac
+logger -t "${SCRIPT_NAME}" "${msg}"
+echo "[${SCRIPT_NAME}] ${msg}"
+exit "${errcode}"

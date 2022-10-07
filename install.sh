@@ -2,10 +2,10 @@
 # ##############################################################################
 ## The script is using to install {ENV_NAME} environment
 ##
-## It will done:
+## It does:
 ## * pull the latest {REPO_NAME} source code form the git repository
 ## * use ~/.local/src/{REPO_NAME} as a main directory for this environment
-## * execute "{ENV_NAME} install" command
+## * execute "~/.local/src/{REPO_NAME}/{ENV_NAME}/{ENV_NAME} install" command
 ##
 ## Repository: {REPO_URL_HTTP}
 ##
@@ -13,42 +13,53 @@
 if [ -z "${BASH_VERSION:-}" ]; then echo "Error: Bash is required." >&2; exit 1; fi
 
 # --[ Project specific constants ]--------------------------------------------
-TITLE="The script will install My Custom environment"
+TITLE="The script will install the user environment"
 ENV_NAME=myenv
-REPO_NAME=myenv
-REPO_URL_SSH="git@github.com:revgen/myenv.git"
-REPO_URL_HTTP="https://github.com/revgen/myenv"
+REPO_NAME="${ENV_NAME}"
+REPO_URL_SSH="git@github.com:revgen/${REPO_NAME}.git"
+REPO_URL_HTTP="https://github.com/revgen/${REPO_NAME}}"
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
 ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
 USE_HTTP="${USE_HTTP:-"true"}"
+VERSION=1.0.0
 
 # --[ Variables and functions ]-----------------------------------------------
+cmd="${1:-"--version"}"
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 OLD_PWD="$(pwd)"
 
-# Settings for collor output
+# Settings for color output
 if [ -t 1 ] && [ -n "$(tput colors)" ] && [ -z "${NO_COLOR-}" ]; then
     NOFORMAT='\033[0m' INFO='\033[0;32m' ERROR='\033[0;31m';
 else NOFORMAT='' INFO=''  ERROR=''; fi
 # ------------------------------------------------------------------------------
 usage() {
-    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${ENV_HOME}"'/g' \
+    head -n 30 "${0}" \
+    | sed -n '/^##/,/^$/s/^## \{0,1\}//p' | sed 's/{SCRIPT_NAME}/'"${ENV_NAME}"'/g' \
     | sed 's/{ENV_NAME}/'"${ENV_NAME}"'/g' | sed 's/{REPO_NAME}/'"${REPO_NAME}"'/g' \
-    | sed 's/{REPO_URL_SSH}/'"${REPO_URL_SSH}"'/g' | sed 's/{REPO_URL_HTTP}/'"${REPO_URL_HTTP}"'/g' \
-    | sed 's/{ENV_HOME}/'"${ENV_HOME}"'/g' | sed 's/{REPO_BRANCH}/'"${REPO_BRANCH}"'/g'
+    | sed 's/{REPO_BRANCH}/'"${REPO_BRANCH}"'/g'
+    # | sed 's/{REPO_URL_SSH}/'"${REPO_URL_SSH}"'/g' | sed 's/{REPO_URL_HTTP}/'"${REPO_URL_HTTP}"'/g' \
+    # | sed 's/{ENV_HOME}/'"${ENV_HOME}"'/g' | 
     exit 1
 }
 cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
+debug() { echo >&2 -e "$*"; }
 info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
 error() { echo >&2 -e "${ERROR}$*${NOFORMAT}"; }
 prompt_ny() { read -r -p "${1} " opt; [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; }
 
+version() { echo -e "${INFO}${REPO_NAME} v${VERSION}${NOFORMAT} (ENV_HOME=${ENV_HOME})"; exit 0; }
 # ------------------------------------------------------------------------------
-case "${1:-"install"}" in
+install_local() {
+    echo "$0"
+}
+# ------------------------------------------------------------------------------
+case "${cmd}" in
     help|--help|-h) usage ;;
-    install) ;;
-    *) error "Command '${1}' not found"; exit 1;;
+    version|--version) version ;;
+    install|--install|install-local|--install-local) ;;
+    *) error "Command '${cmd}' not found"; exit 1;;
 esac
 
 if [ "${USE_HTTP:-"false"}" == "true" ]; then repo_url=${REPO_URL_HTTP};
@@ -56,13 +67,18 @@ else repo_url=${REPO_URL_SSH}; fi
 
 info "${TITLE}."
 info "* Name      : ${ENV_NAME}"
-info "* Repository: ${repo_url}:${REPO_BRANCH}"
+info "* Repository: ${repo_url}"
+info "* Branch    : ${REPO_BRANCH}"
 info "* Target    : ${ENV_HOME}"
-read -r -p "Do you want to continiue (y/N)? " opt
-if [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; then info "Skip"; exit 1; fi
+if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit 1; fi
 
+debug "Creating ${ENV_HOME} if not exists"
 mkdir -p "${ENV_HOME}" > /dev/null
-if [ ! -d "${ENV_HOME}/.git" ]; then info "Git clone ${repo_url}"; git clone "${repo_url}" "${ENV_HOME}" || exit 1; fi
+exit 1
+if [ ! -d "${ENV_HOME}/.git" ]; then
+    info "Git clone ${repo_url}"
+    git clone "${repo_url}" "${ENV_HOME}" || exit 1
+fi
 
 cd "${ENV_HOME}" || exit 1
 info "Switch to the $(pwd) directory"
@@ -71,13 +87,16 @@ if git status -s | grep -qv "^$"; then
     git status -s | head -n 10
     if prompt_ny "Are you sure you are ready to overwride all changes (y/N)?"; then info "Skip"; exit 1; fi
 fi
+debug "Checkout ${REPO_BRANCH} branch"
 git checkout "${REPO_BRANCH}" || exit 1
+debug "Update local repo"
 git remote prune origin || exit 1
 git fetch || exit 1
+debug "Reset to the remote origin/${REPO_BRANCH}"
 git reset --hard "origin/${REPO_BRANCH}" || exit 1
 info "Update '${ENV_NAME}' environment complete in the '${ENV_HOME}' directory"
 
-install_script="${PWD}/${ENV_NAME}/bin/${ENV_NAME}"
+install_script="${PWD}/${ENV_NAME}/${ENV_NAME}"
 info "Execute ${install_script}..."
 if [ -f "${install_script}" ]; then
     bash "${install_script}" install-local || exit 1

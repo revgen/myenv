@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#=======================================================================
+## Show your host public information
+## usge: {SCRIPT_NAME} [--all]
+#=======================================================================
+case "${1:-"--external-ip"}" in
+  public-ip|--public-ip|external-ip|--external-ip|-e)
+    if which jq 2>&1 >/dev/null; then curl -sL ipinfo.io | jq -r '.ip';
+    else curl -sL http://icanhazip.com; fi
+    ;;
+  all|--all|-a)
+    curl -sL ipinfo.io; echo ""
+    ;;
+  help|--help)
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 255
+    ;;
+  *)
+    echo "Error: unknown command '${1}'."; exit 1;
+    ;;
+esac

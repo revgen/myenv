@@ -75,7 +75,6 @@ if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit 1; fi
 
 debug "Creating ${ENV_HOME} if not exists"
 mkdir -p "${ENV_HOME}" > /dev/null
-exit 1
 if [ ! -d "${ENV_HOME}/.git" ]; then
     info "Git clone ${repo_url}"
     git clone "${repo_url}" "${ENV_HOME}" || exit 1

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+VERSION=1.0.0
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:
@@ -15,7 +16,6 @@ set -uo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 OLD_PWD="$(pwd)"
 
-VERSION=1.0.0
 ENV_NAME="$(basename "${0}")"
 DEF_ENV_HOME="$(cd "$(dirname "$(readlink "${0}" || echo "${0}")")/../.." &>/dev/null && pwd -P)"
 ENV_HOME=${ENV_HOME:-"${DEF_ENV_HOME}"}
@@ -37,9 +37,9 @@ prompt_yn() { read -r -p "${1} " opt; [ "${opt:-"y"}" == "y" ] || [ "${opt}" == 
 prompt_ny() { read -r -p "${1} " opt; [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; }
 usage() { sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${ENV_NAME}"'/g'; exit 1; }
 
-#-------------------------------------------------------------------------------
 cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
 
+#-------------------------------------------------------------------------------
 remove_symlinks_from_bin() {
   debug "Remove all ${ENV_NAME} symlinks from the ${BIN_DIR} directory"
   find "${BIN_DIR}" -maxdepth 1 -type l | while read -r link; do

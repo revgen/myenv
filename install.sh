@@ -13,15 +13,16 @@
 if [ -z "${BASH_VERSION:-}" ]; then echo "Error: Bash is required." >&2; exit 1; fi
 
 # --[ Project specific constants ]--------------------------------------------
-TITLE="The script will install the user environment"
+VERSION=1.0.0
 ENV_NAME=myenv
 REPO_NAME="${ENV_NAME}"
 REPO_URL_SSH="git@github.com:revgen/${REPO_NAME}.git"
-REPO_URL_HTTP="https://github.com/revgen/${REPO_NAME}}"
+REPO_URL_HTTP="https://github.com/revgen/${REPO_NAME}"
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
-ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
+TITLE="The script will install ${ENV_NAME} environment"
 USE_HTTP="${USE_HTTP:-"true"}"
-VERSION=1.0.0
+
+ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
 
 # --[ Variables and functions ]-----------------------------------------------
 cmd="${1:-"--version"}"

@@ -246,7 +246,9 @@ case "${1:-"--version"}" in
     list|--list) list ;;
     *)
     cmd="${1}"
-    pwd="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1] if len(sys.argv) > 1 else "."))' "${ENV_HOME}")"
+    
+    pwd="$(readlink -f "${ENV_HOME}")"
+    # pwd="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1] if len(sys.argv) > 1 else "."))' "${ENV_HOME}")"
     for subdir in $(echo ". bin lib ${ENV_NAME}/bin ${ENV_NAME}/lib"); do
         cmd="${pwd}/${subdir}/${1}"
         debug "Check: ${cmd}"

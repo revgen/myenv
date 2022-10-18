@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2312
+# ############################################################################
+#
+# Required:
+# * shellcheck
+#   'brew install shellcheck' or 'apt install shellcheck'
+#
+# ############################################################################
+step() {
+    echo "======================================================================"
+    echo "$*"
+}
+
+processing() {
+    echo "Processing: $1..."
+    shellcheck -o all "${1}"
+    errcode=$?
+    if [[ ${errcode} -ne 0 ]]; then
+        echo "          - With error: code=${errcode}"
+        return 1
+    else
+        echo "          - Success"
+    fi
+}
+
+errcounter=0
+path="${1:-"${PWD}"}"
+step "Checking syntax of shell scripts: path=${path}"
+if [[ -f "${path}" ]]; then
+    if ! processing "${fn}"; then errcounter=$((errcounter + 1)); fi
+else
+    cd "${path}" || exit 1
+    while read -r f; do
+        fn="$(echo "${f}" | cut -d":" -f1)"
+        if ! processing "${fn}"; then errcounter=$((errcounter + 1)); fi
+    done < <(find .  -type f -exec file "{}" \; | grep "shell script text executable" | grep -v "/.git/")
+fi
+step "Syntax check complete: path=${path}"
+echo "Errors = ${errcounter}"

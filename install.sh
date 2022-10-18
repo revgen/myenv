@@ -10,7 +10,7 @@
 ## Repository: {REPO_URL_HTTP}
 ##
 # ##############################################################################
-if [ -z "${BASH_VERSION:-}" ]; then echo "Error: Bash is required." >&2; exit 1; fi
+if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
 # --[ Project specific constants ]--------------------------------------------
 VERSION=1.0.0
@@ -26,12 +26,12 @@ ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
 
 # --[ Variables and functions ]-----------------------------------------------
 cmd="${1:-"--version"}"
-set -Eeuo pipefail
+set -Euo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 OLD_PWD="$(pwd)"
 
 # Settings for color output
-if [ -t 1 ] && [ -n "$(tput colors)" ] && [ -z "${NO_COLOR-}" ]; then
+if [[ -t 1 ]] && [[ -n "$(tput colors || true)" ]] && [[ -z "${NO_COLOR-}" ]]; then
     NOFORMAT='\033[0m' INFO='\033[0;32m' ERROR='\033[0;31m';
 else NOFORMAT='' INFO=''  ERROR=''; fi
 # ------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
 debug() { echo >&2 -e "$*"; }
 info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
 error() { echo >&2 -e "${ERROR}$*${NOFORMAT}"; }
-prompt_ny() { read -r -p "${1} " opt; [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; }
+prompt_ny() { read -r -p "${1} " opt; [[ "${opt:-"n"}" != "y" ]] && [[ "${opt}" != "Y" ]]; }
 
 version() { echo -e "${INFO}${REPO_NAME} v${VERSION}${NOFORMAT} (ENV_HOME=${ENV_HOME})"; exit 0; }
 # ------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ case "${cmd}" in
     *) error "Command '${cmd}' not found"; exit 1;;
 esac
 
-if [ "${USE_HTTP:-"false"}" == "true" ]; then repo_url=${REPO_URL_HTTP};
+if [[ "${USE_HTTP:-"false"}" == "true" ]]; then repo_url=${REPO_URL_HTTP};
 else repo_url=${REPO_URL_SSH}; fi
 
 info "${TITLE}."
@@ -75,13 +75,13 @@ if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit 1; fi
 
 debug "Creating ${ENV_HOME} if not exists"
 mkdir -p "${ENV_HOME}" > /dev/null
-if [ ! -d "${ENV_HOME}/.git" ]; then
+if [[ ! -d "${ENV_HOME}/.git" ]]; then
     info "Git clone ${repo_url}"
     git clone --depth 1 "${repo_url}" "${ENV_HOME}" || exit 1
 fi
 
 cd "${ENV_HOME}" || exit 1
-info "Switch to the $(pwd) directory"
+info "Switch to the $(pwd || true) directory"
 if git status -s | grep -qv "^$"; then
     error "You have changes in the repository '${PWD}'"
     git status -s | head -n 10
@@ -98,7 +98,7 @@ info "Update '${ENV_NAME}' environment complete in the '${ENV_HOME}' directory"
 
 install_script="${PWD}/${ENV_NAME}/${ENV_NAME}"
 info "Execute ${install_script}..."
-if [ -f "${install_script}" ]; then
+if [[ -f "${install_script}" ]]; then
     bash "${install_script}" install-local || exit 1
     info "Environment '${ENV_NAME}' installation complete."
     info "Now you need to restart current terminal session. You can close and reopen terminal again."

@@ -14,15 +14,19 @@
 ##    --help     - show this help screen
 ##
 #=======================================================================
-PREFIX=screen-session-${USER}
-SCREEN_CONFIG=${SCREEN_CONFIG:-"${HOME}/.screenrc"}
+PREFIX="screen-session-${USER}"
+SCREEN_CONFIG="${SCREEN_CONFIG:-"${HOME}/.screenrc"}"
+# shellcheck disable=SC2269
+TERMCAP="${TERMCAP}"
 
 show_help() {
+    # shellcheck disable=SC2312
     sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
     exit 255
 }
 
 default_config() {
+    # shellcheck disable=SC2016
     echo 'startup_message off
 vbell off
 defscrollback 4096
@@ -49,24 +53,26 @@ select 0
 }
 
 list_screen_sessions() {
+    # shellcheck disable=SC2312
     res=$(screen -list | grep "${PREFIX}" | awk '{gsub("\t"," ",$0); print $0}' \
     | sed 's/^[ 0-9.]*//g' \
-    | awk '{gsub("'${PREFIX}'-","",$0); print $0}')
-    if [ -z "${res}" ]; then
+    | awk '{gsub("'"${PREFIX}"'-","",$0); print $0}')
+    if [[ -z "${res}" ]]; then
         echo "There are now screen sessions."
     else
-        echo "$res"
+        echo "${res}"
     fi
     exit 0
 }
 
 start_session() {
     name=${1:-"main"}
-    session_name=${PREFIX}-${name}
-    screen_list=$(screen -ls | grep ${session_name})
-    if [ -n "${screen_list}" ]; then
-        if [ -n "$(echo ${screen_list} | grep Attached)" ]; then
-            if [ -z "$(echo ${TERMCAP} | grep screen)" ]; then
+    session_name="${PREFIX}-${name}"
+    # shellcheck disable=SC2312
+    screen_list=$(screen -ls | grep "${session_name}")
+    if [[ -n "${screen_list}" ]]; then
+        if echo "${screen_list}" | grep -q "Attached"; then
+            if ! echo "${TERMCAP}" | grep -q "screen"; then
                 echo "Enter into \"${name}\" screen session.";
                 sleep 1;
                 screen -x "${session_name}" ;
@@ -77,7 +83,7 @@ start_session() {
             screen -r "${session_name}" ;
         fi
     else
-        if [ ! -f "${SCREEN_CONFIG}" ]; then
+        if [[ ! -f "${SCREEN_CONFIG}" ]]; then
             echo "Configuration file '${SCREEN_CONFIG}' doesn't exist. Creating..."
             mkdir -p "$(dirname "${SCREEN_CONFIG}")" 2>/dev/null
             default_config > "${SCREEN_CONFIG}"
@@ -91,5 +97,5 @@ case "${1}" in
     list|-l|--list) list_screen_sessions ;;
     --list-all) screen -list; exit 0 ;;
     help|--help) show_help ;;
-    *) start_session $@ ;;
+    *) start_session "$*" ;;
 esac

@@ -10,14 +10,16 @@ VERSION=1.0.0
 ##   --version  - show current information about the tool
 ##
 # ##############################################################################
-if [ -z "${BASH_VERSION:-}" ]; then echo "Error: Bash is required." >&2; exit 1; fi
+if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
 set -uo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
-OLD_PWD="$(pwd)"
+OLD_PWD="$(pwd || true)"
 
+# shellcheck disable=SC2312
+script_dir="$(dirname "$(readlink "${0}" || pwd -P)")"
 ENV_NAME="$(basename "${0}")"
-DEF_ENV_HOME="$(cd "$(dirname "$(readlink "${0}" || echo "${0}")")/../.." &>/dev/null && pwd -P)"
+DEF_ENV_HOME="$(readlink "${script_dir}" || exit 1)"
 ENV_HOME=${ENV_HOME:-"${DEF_ENV_HOME}"}
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
 BIN_DIR="${HOME}/.local/bin"
@@ -30,11 +32,11 @@ if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
 else NOFORMAT='' INFO='' VERBOSE='' ERROR=''; fi
 
 #-------------------------------------------------------------------------------
-debug() { [ "${DEBUG}" == "true" ] && echo >&2 -e "${VERBOSE}$*${NOFORMAT}"; }
+debug() { [[ "${DEBUG}" == "true" ]] && echo >&2 -e "${VERBOSE}$*${NOFORMAT}"; }
 info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
 error() { echo >&2 -e "${ERROR}$*${NOFORMAT}"; }
-prompt_yn() { read -r -p "${1} " opt; [ "${opt:-"y"}" == "y" ] || [ "${opt}" == "Y" ]; }
-prompt_ny() { read -r -p "${1} " opt; [ "${opt:-"n"}" != "y" ] && [ "${opt}" != "Y" ]; }
+prompt_yn() { read -r -p "${1} " opt; [[ "${opt:-"y"}" == "y" ]] || [[ "${opt}" == "Y" ]]; }
+prompt_ny() { read -r -p "${1} " opt; [[ "${opt:-"n"}" != "y" ]] && [[ "${opt}" != "Y" ]]; }
 usage() { sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${ENV_NAME}"'/g'; exit 1; }
 
 cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
@@ -56,7 +58,7 @@ update_symlinks_to_bin() {
   cd "${ENV_HOME}/${ENV_NAME}" >/dev/null || exit 1
   info "Create symlinks for all files from ${ENV_HOME}/${ENV_NAME}/bin -> ${BIN_DIR}..."
   find ./bin -type f | while read -r f; do
-    if [ -x "${f}" ]; then
+    if [[ -x "${f}" ]]; then
       ln -vfs "${PWD}/${f}" "${BIN_DIR}"
     fi
   done
@@ -99,7 +101,7 @@ check_new_version() {
     stat_file="/tmp/${ENV_NAME}-update.stat"
     today=$(date +"%Y-%m-%d")
     touch "${stat_file}"
-    if [ "${1:-}" == "--daily" ] && [ "$(cat "${stat_file}")" == "${today}" ]; then
+    if [[ "${1:-}" == "--daily" ]] && [[ "$(cat "${stat_file}" || true)" == "${today}" ]]; then
         debug "Already checked today"
         return 1
     fi
@@ -108,7 +110,7 @@ check_new_version() {
     cd "${ENV_HOME}" || exit 1
     git fetch --all >/dev/null || exit 1
     new_version=$(git tag | tail -n 1)
-    if [ "${new_version}" == "${VERSION}" ]; then info "Current version ${VERSION} is up to date"; return 1; fi
+    if [[ "${new_version}" == "${VERSION}" ]]; then info "Current version ${VERSION} is up to date"; return 1; fi
     error "The ${ENV_NAME} has a new version ${new_version}. To update it use a command \"${ENV_NAME} update\"."
 }
 
@@ -117,16 +119,17 @@ install_local() {
     cd "${ENV_HOME}" >/dev/null || exit 1
     git fetch || exit 1
     git checkout "${REPO_BRANCH}" || exit 1
-    info "Script is installing '${ENV_NAME} v$(git tag | tail -n 1)' environment."
-    info "The '${ENV_NAME}' environment directory is $(pwd)"
-    info "Source directory is $(pwd)"
+    version="$(git tag | tail -n 1)"
+    info "Script is installing '${ENV_NAME} v${version}' environment."
+    info "The '${ENV_NAME}' environment directory is $(pwd || true)"
+    info "Source directory is $(pwd || true)"
     if ! prompt_yn "Do you want to continue setup (Y/n)?"; then
         info "Skip";
         return
     fi
     setup_settings
     setup_core_settings
-    if [ "${no_update}" != "--no-update" ] && [ "${no_update}" != "no-update" ]; then
+    if [[ "${no_update}" != "--no-update" ]] && [[ "${no_update}" != "no-update" ]]; then
         update
     fi
     update_bash_profile
@@ -147,7 +150,7 @@ setup_settings() {
     mkdir -p "${HOME}/.local/bin"
 
     debug "Check ~/.bashrc_${USER} file"
-    if [ -f "${HOME}/.bashrc_${USER}" ]; then
+    if [[ -f "${HOME}/.bashrc_${USER}" ]]; then
         info "File .bashrc_${USER} exists"
     else
         cp -v "${PWD}/${ENV_NAME}/.bashrc_user_example" "${HOME}/.bashrc_${USER}"
@@ -156,7 +159,7 @@ setup_settings() {
 
 update_bash_profile() {
     # Remove old bashrc configuration file if it exists
-    if [ -f "${HOME}/.bashrc_myenv" ]; then
+    if [[ -f "${HOME}/.bashrc_myenv" ]]; then
         mv -v "${HOME}/.bashrc_myenv" "${HOME}/.bashrc_myenv.bak"
     fi
     # Remove old bash_profile if it is a symlink
@@ -200,7 +203,7 @@ setup_mac_specific_settings() {
     info "You are using ${current_shell} as a default shell. We need to switch to bash"
     chsh -s /bin/bash
   fi
-  info "Check a current user shell: ${USER} - $(dscl . -read ~/ UserShell)"
+  info "Check a current user shell: ${USER} - $(dscl . -read ~/ UserShell || true)"
 
   info "Add custom brew repositories into the brew taps list"
   if brew tap | grep "custom/tap"; then
@@ -219,7 +222,7 @@ setup_linux_specific_settings() {
 }
 
 setup_core_settings() {
-    if [ ! -f "${HOME}/.git_completion" ]; then
+    if [[ ! -f "${HOME}/.git_completion" ]]; then
         info "Add git completion in terminal: '${HOME}/.git_completion'"
         wget -O "${HOME}/.git_completion" "https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash"
     fi
@@ -249,14 +252,14 @@ case "${1:-"--version"}" in
     
     pwd="$(readlink -f "${ENV_HOME}")"
     # pwd="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1] if len(sys.argv) > 1 else "."))' "${ENV_HOME}")"
-    for subdir in $(echo ". bin lib ${ENV_NAME}/bin ${ENV_NAME}/lib"); do
+    for subdir in echo ". bin lib ${ENV_NAME}/bin ${ENV_NAME}/lib"; do
         cmd="${pwd}/${subdir}/${1}"
         debug "Check: ${cmd}"
-        if command -v "${cmd}" > /dev/null; then
+        if command -v "${cmd}" >/dev/null; then
             break
         fi
     done
-    if command -v "${cmd}" > /dev/null; then
+    if command -v "${cmd}" >/dev/null; then
         shift; "${cmd}" "$@"
     else
         echo "Error: command '${1}' not found."; exit 1

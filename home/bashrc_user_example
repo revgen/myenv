@@ -1,0 +1,8 @@
+##############################################################################
+# Custom user settings
+# WARNING: This file is not synchronized with the rit repository.
+# Please update and backup this file manually.
+##############################################################################
+
+# export GITLAB_TOKEN=
+# export GITHUB_TOKEN=

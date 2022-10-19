@@ -161,7 +161,7 @@ setup_settings() {
     if [[ -f "${HOME}/.bashrc_${USER}" ]]; then
         info "File .bashrc_${USER} exists"
     else
-        cp -v "${PWD}/${ENV_NAME}/.bashrc_user_example" "${HOME}/.bashrc_${USER}"
+        cp -v "${PWD}/home/bashrc_user_example" "${HOME}/.bashrc_${USER}"
     fi
 }
 
@@ -177,12 +177,13 @@ update_bash_profile() {
         {
             echo ""
             echo "# --[ Load ${ENV_NAME} configuration:start ]------------------------"
-            echo "export MYENVHOME=TODO"
-            echo "if [ -r \"${ENV_HOME}/${ENV_NAME}/.bashrc_${ENV_NAME}\" ]; then"
-            echo "    . \"${ENV_HOME}/${ENV_NAME}/.bashrc_${ENV_NAME}\";"
-            echo "    echo \"Configuration '${ENV_HOME}/${ENV_NAME}/.bashrc_${ENV_NAME}' was loaded\""
+            echo "export MYENVHOME=\"${ENV_HOME}\""
+            echo "export MYENVLOGO=disabled"
+            echo "if [ -r \"${ENV_HOME}/home/.config/bashrc\" ]; then"
+            echo "    . \"${ENV_HOME}/home/.config/bashrc\";"
+            echo "    echo \"Configuration '${ENV_HOME}/home/.config/bashrc' was loaded\""
             echo "else"
-            echo "    echo \"WARNING: custom configuration '${ENV_HOME}/${ENV_NAME}/.bashrc_${ENV_NAME}' not found\""
+            echo "    echo \"WARNING: custom configuration '${ENV_HOME}/home/.config/bashrc' not found\""
             echo "fi"
             echo "# --[ Load ${ENV_NAME} configuration:end ]--------------------------"
             echo ""
@@ -200,22 +201,13 @@ setup_mac_specific_settings() {
   fi
   info "Check a current user shell: ${USER} - $(dscl . -read ~/ UserShell || true)"
 
-  info "Add custom brew repositories into the brew taps list"
-  if brew tap | grep "custom/tap"; then
-    info "You already have ENV_LOGO_DISABLED in your brew taps list. Skip."
-  else
-    brew tap ENV_LOGO_DISABLED git-repo-ssh-url
-    brew tap | grep "cpe/tools";
-  fi
-
-  # We need to remove awssaml from the local/bin, because we will start using awssaml from the cpe repository: brew install awssaml
-  rm -f "${HOME}/.local/bin/awssaml" >/dev/null
+  # info "Add custom brew repositories into the brew taps list"
+  # if brew tap | grep "custom/tap"; then
+  #  info "You already have custom/tap in your brew taps list. Skip."
+  # else
+  #  brew tap | grep "cpe/tools";
+  # fi
   
-  # Remove old bash_profile if it is a symlink
-  if stat "${HOME}/.bash_profile" | cut -d" " -f3 | grep -q "^l"; then
-    mv -v "${HOME}/.bash_profile" "${HOME}/.bash_profile.bak"
-  fi
-
   info "Update ~/.bash_profile if needed"
   touch "${HOME}/.bash_profile" || exit 1
 
@@ -240,12 +232,13 @@ setup_core_settings() {
 list() {
     echo "--[ Tools ]-------------"
     (
-        find "${ENV_HOME}/${ENV_NAME}/bin/" -type f -exec basename "{}" \;
-        find "${ENV_HOME}/${ENV_NAME}/lib/" -type f -exec basename "{}" \;
+        find "${ENV_HOME}/home/.local/bin/" -type f -exec basename "{}" \;
     ) | sort
     echo ""
     echo "--[ Aliases ]-----------"
-    grep "^alias" "${ENV_HOME}/${ENV_NAME}/.bashrc_${ENV_NAME}" | sed 's/^alias //g' | sed "s/=/ = /g" | sort
+    (
+        grep "^alias" "${ENV_HOME}/home/.config/bashrc" | sed 's/^alias //g' | sed "s/=/ = /g" | sort
+    ) | sort
 }
 
 #-------------------------------------------------------------------------------
@@ -261,7 +254,7 @@ case "${1:-"--version"}" in
     
     pwd="$(readlink -f "${ENV_HOME}")"
     # pwd="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1] if len(sys.argv) > 1 else "."))' "${ENV_HOME}")"
-    for subdir in echo ". bin lib ${ENV_NAME}/bin ${ENV_NAME}/lib"; do
+    for subdir in echo ". bin lib home/.local/bin"; do
         cmd="${pwd}/${subdir}/${1}"
         debug "Check: ${cmd}"
         if command -v "${cmd}" >/dev/null; then

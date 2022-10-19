@@ -1,0 +1,9 @@
+#!/bin/sh
+# shellcheck shell=sh disable=SC3014 source=/dev/null
+# ############################################################################
+## Utility script to use a Telegram Bot
+##
+## Usage: {SCRIPT_NAME} <command> [args..]
+## Commands:
+##   send <message>     - send message using bot
+# ############################################################################

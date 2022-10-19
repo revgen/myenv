@@ -113,7 +113,8 @@ check_new_version() {
     echo -n "${today}" > "${stat_file}"
     cd "${ENV_HOME}" || exit 1
     git fetch --all >/dev/null || exit 1
-    new_version=$(git tag | tail -n 1)
+    new_version="$(git tag | tail -n 1)"
+    new_version="${new_version:-"0.0.1"}"
     if [[ "${new_version}" == "${VERSION}" ]]; then info "Current version ${VERSION} is up to date"; return 1; fi
     error "The ${ENV_NAME} has a new version ${new_version}. To update it use a command \"${ENV_NAME} update\"."
 }
@@ -124,6 +125,7 @@ install_local() {
     git fetch || exit 1
     git checkout "${REPO_BRANCH}" || exit 1
     version="$(git tag | tail -n 1)"
+    version="${new_version:-"0.0.1"}"
     info "Script is installing '${ENV_NAME} v${version}' environment."
     info "The '${ENV_NAME}' environment directory is $(pwd || true)"
     info "Source directory is $(pwd || true)"

@@ -115,7 +115,7 @@ check_new_version() {
 }
 
 install_local() {
-    no_update="${1}"
+    no_update="${1:-""}"
     cd "${ENV_HOME}" >/dev/null || exit 1
     git fetch || exit 1
     git checkout "${REPO_BRANCH}" || exit 1

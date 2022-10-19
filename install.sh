@@ -96,7 +96,7 @@ debug "Reset to the remote origin/${REPO_BRANCH}"
 git reset --hard "origin/${REPO_BRANCH}" || exit 1
 info "Update '${ENV_NAME}' environment complete in the '${ENV_HOME}' directory"
 
-install_script="${PWD}/${ENV_NAME}/${ENV_NAME}"
+install_script="${PWD}/${ENV_NAME}"
 info "Execute ${install_script}..."
 if [[ -f "${install_script}" ]]; then
     bash "${install_script}" install-local || exit 1

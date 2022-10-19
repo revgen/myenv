@@ -129,7 +129,7 @@ install_local() {
     version="${new_version:-"0.0.1"}"
     info "Script is installing '${ENV_NAME} v${version}' environment."
     info "The '${ENV_NAME}' environment directory is $(pwd || true)"
-    info "Source directory is $(pwd || true)"
+    info "ENV_HOME=${ENV_HOME}"
     if ! prompt_yn "Do you want to continue setup (Y/n)?"; then
         info "Skip";
         return

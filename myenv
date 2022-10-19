@@ -12,7 +12,6 @@ VERSION=1.0.0
 # ##############################################################################
 if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
-
 #-------------------------------------------------------------------------------
 debug() { [[ "${DEBUG}" == "true" ]] && echo >&2 -e "${VERBOSE}$*${NOFORMAT}"; }
 info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
@@ -35,12 +34,27 @@ ENV_HOME=${ENV_HOME:-"${DEF_ENV_HOME}"}
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
 BIN_DIR="${HOME}/.local/bin"
 DEBUG=${DEBUG:-"false"}
+TMPDIT=/tmp
 export PATH="${ENV_HOME}:${PATH}"
 if [[ -z "${USER:-""}" ]]; then
     export USER="$(basename "${HOME}")"
 fi
 
-# Settings for collor output
+export OSTYPE="${OSTYPE}"
+case "${OSTYPE}" in
+  linux*)
+    if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
+    else export OSNAME=linux; fi
+    ;;
+  solaris*) export OSNAME=solaris ;;
+  darwin*)  export OSNAME=macos ;;
+  bsd*)     export OSNAME=bsd ;;
+  msys*)    export OSNAME=windows ;;
+  cygwin*)  export OSNAME=windows ;;
+  *)        export OSNAME=unknown ;;
+esac
+
+# Settings for color output
 if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
     NOFORMAT='\033[0m' INFO='\033[0;32m' VERBOSE='\033[0;36m' ERROR='\033[0;31m';
 else NOFORMAT='' INFO='' VERBOSE='' ERROR=''; fi
@@ -55,17 +69,27 @@ remove_symlinks_from_bin() {
   done
 }
 
+_make_symlinks_to_bin() {
+  dir="${1:-"/tmp/not-exists"}"
+  if [[ !-d "${dir}" ]]; then
+     debug "Directory ${dir} not exists. Skip."
+     return 0
+  fi
+  find "${1:-"/tmp/not-exists"} -type f | while read -r f; do
+    if [[ -x "${f}" ]]; then
+      ln -vfs "${PWD}/${f}" "${BIN_DIR}"
+    fi
+  done
+}
+
 update_symlinks_to_bin() {
   info "Reinitialize ${BIN_DIR} directory..."
   mkdir -vp "${BIN_DIR}"
   remove_symlinks_from_bin
   cd "${ENV_HOME}" >/dev/null || exit 1
   info "Create symlinks for all files from ${ENV_HOME}/home/.local/bin -> ${BIN_DIR}..."
-  find ./home/.local/bin -type f | while read -r f; do
-    if [[ -x "${f}" ]]; then
-      ln -vfs "${PWD}/${f}" "${BIN_DIR}"
-    fi
-  done
+  _make_symlinks_to_bin "./home/.local/bin"
+  _make_symlinks_to_bin "./home/.local/bin_${OSNAME}"
   info "Reinitialize ${BIN_DIR} directory - done"
 }
 
@@ -103,10 +127,10 @@ version() {
 }
 
 check_new_version() {
-    stat_file="/tmp/${ENV_NAME}-update.stat"
+    stat_file="${TMPDIR}/${ENV_NAME}-update.stat"
     today=$(date +"%Y-%m-%d")
     touch "${stat_file}"
-    if [[ "${1:-}" == "--daily" ]] && [[ "$(cat "${stat_file}" || true)" == "${today}" ]]; then
+    if [[ "${1:-""}" == "--daily" ]] && [[ "$(cat "${stat_file}" || true)" == "${today}" ]]; then
         debug "Already checked today"
         return 1
     fi

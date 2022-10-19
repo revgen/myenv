@@ -77,7 +77,7 @@ debug "Creating ${ENV_HOME} if not exists"
 mkdir -p "${ENV_HOME}" > /dev/null
 if [[ ! -d "${ENV_HOME}/.git" ]]; then
     info "Git clone ${repo_url}"
-    git clone --depth 1 "${repo_url}" "${ENV_HOME}" || exit 1
+    git clone "${repo_url}" "${ENV_HOME}" || exit 1
 fi
 
 cd "${ENV_HOME}" || exit 1

@@ -28,9 +28,9 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 OLD_PWD="$(pwd || true)"
 
 # shellcheck disable=SC2312
-script_dir="$(dirname "$(readlink "${0}" || pwd -P)")"
+script_dir="$(dirname "$(readlink -f "${0}" || pwd -P)")"
 ENV_NAME="$(basename "${0}")"
-DEF_ENV_HOME="$(readlink "${script_dir}" || exit 1)"
+DEF_ENV_HOME="$(readlink -f "${script_dir}" || exit 1)"
 ENV_HOME=${ENV_HOME:-"${DEF_ENV_HOME}"}
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
 BIN_DIR="${HOME}/.local/bin"
@@ -49,7 +49,7 @@ else NOFORMAT='' INFO='' VERBOSE='' ERROR=''; fi
 remove_symlinks_from_bin() {
   debug "Remove all ${ENV_NAME} symlinks from the ${BIN_DIR} directory"
   find "${BIN_DIR}" -maxdepth 1 -type l | while read -r link; do
-    if readlink "${link}" | grep -q "${ENV_NAME}"; then
+    if readlink -f "${link}" | grep -q "${ENV_NAME}"; then
         rm -r "${link}"
     fi
   done

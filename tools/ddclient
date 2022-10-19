@@ -1,7 +1,5 @@
-#!/bin/usr/env bash
-# To disable SC1090 warning, let's point a defautl source to /dev/null
-# shellcheck source=/dev/null
-#
+#!/bin/sh
+# shellcheck shell=sh disable=SC3014 source=/dev/null
 # ############################################################################
 ## DDclient is a shell script used o update dynamic DNS entries for accounts on Dynamic DNS Network Service Provider.
 ## Usage: {SCRIPT_NAME} [-u username] [-p password] [-u url]
@@ -9,15 +7,15 @@
 ## System environment:
 ##   DYNDNS_USER - account user name
 ##   DYNDNS_PASS - account password
-##   DYNDNS_URL  - dyndns url
-##   DYNDNS_HOST - dyndns url
+##   DYNDNS_HOST - dyndns servername
+##   DYNDNS_URL  - dyndns whole url
 ##
 #  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
 # ############################################################################
-debug() { [[ "${DEBUG}" == "true" ]] && >&2 echo "$*"; }
+debug() { [ "${DEBUG:-""}" == "true" ] && >&2 echo "$*"; }
 load_config() {
     file_path="${1}"
-    if [[ -z "${file_path}" ]]; then
+    if [ -z "${file_path}" ]; then
         debug "Load configuration file ${file_path}"
         . "${file_path}"
     fi
@@ -29,7 +27,7 @@ external_ip() {
 TMPFILE="$(mktemp)"
 SCRIPT_NAME="$(basename "${0}")"
 TIMEOUT=10
-if [[ "${1}" == "help" ]] || [[ "${1}" == "--help" ]] || [[ "${1}" == "-h" ]]; then
+if [ "${1}" == "help" ] || [ "${1}" == "--help" ] || [ "${1}" == "-h" ]; then
     sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'
     exit 1
 fi
@@ -40,11 +38,11 @@ load_config "/etc/${SCRIPT_NAME}.conf"
 
 
 EXTERNAL_IP=$(external_ip || true)
-DYNDNS_USER=${DYNDNS_USER}
-DYNDNS_PASS=${DYNDNS_PASS}
-DYNDNS_URL=${DYNDNS_URL}
-DYNDNS_HOST=${DYNDNS_HOST}
-DYNDNS_PROFILE=main
+DYNDNS_USER="${DYNDNS_USER:-""}"
+DYNDNS_PASS="${DYNDNS_PASS:-""}"
+DYNDNS_URL="${DYNDNS_URL:-""}"
+DYNDNS_HOST="${DYNDNS_HOST:-""}"
+DYNDNS_PROFILE="main"
 
 if [ -n "${DYNDNS_URL}" ]; then
     url="${DYNDNS_URL}"
@@ -56,10 +54,10 @@ debug "Request ${url}..."
 debug "Command: curl --max-time ${TIMEOUT} --connect-timeout ${TIMEOUT} -Ls -u '${DYNDNS_USER}:${DYNDNS_PASS}' '${url}'"
 debug "Tmp file: ${TMPFILE}"
 # touch "${TMPFILE}"
-curl --max-time ${TIMEOUT} --connect-timeout ${TIMEOUT} -Ls -u ''"${DYNDNS_USER}:${DYNDNS_PASS}"'' "${url}" > "${TMPFILE}"
+curl --max-time "${TIMEOUT}" --connect-timeout "${TIMEOUT}" -Ls -u ''"${DYNDNS_USER}:${DYNDNS_PASS}"'' "${url}" > "${TMPFILE}"
 errcode=$?
 resp="$(cat "${TMPFILE}")"
-errmsg="$(cat "${TMPFILE}" | cut -d" " -f1)"
+errmsg="$(cut -d" " -f1 "${TMPFILE}")"
 debug "Response: ${resp}"
 case ${errmsg} in
     "good") msg="SUCCESS: (good) DNS hostname successfully updated (${DYNDNS_PROFILE}=${EXTERNAL_IP})." ;;
@@ -75,4 +73,4 @@ case ${errmsg} in
 esac
 logger -t "${SCRIPT_NAME}" "${msg}"
 echo "${msg}"
-exit ${errcode}
+exit "${errcode}"

@@ -90,6 +90,7 @@ update() {
         git reset --hard "origin/${REPO_BRANCH}" || exit 1
         git log --pretty=format:"%h%x09%an%x09%ad%x09%s" | head -n 10
         info "Update ${ENV_NAME} environment local repository complete: ${ENV_HOME}"
+        # yes | "./${ENV_NAME}/bin/${ENV_NAME}" install-local --no-update
         yes | "./${ENV_NAME}/bin/${ENV_NAME}" install-local --no-update
     else
         info "Skip"
@@ -136,9 +137,9 @@ install_local() {
     setup_settings
     setup_core_settings
     update_symlinks_to_bin
-    if [[ "${no_update}" != "--no-update" ]] && [[ "${no_update}" != "no-update" ]]; then
-        update
-    fi
+    # if [[ "${no_update}" != "--no-update" ]] && [[ "${no_update}" != "no-update" ]]; then
+    #     update
+    # fi
     update_bash_profile
     info "Done ${ENV_NAME} local setup"
     info "Please restart your terminal session to have all settings apply."

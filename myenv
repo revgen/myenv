@@ -125,8 +125,8 @@ install_local() {
     cd "${ENV_HOME}" >/dev/null || exit 1
     git fetch || exit 1
     git checkout "${REPO_BRANCH}" || exit 1
-    version="$(git tag | tail -n 1)"
-    version="${new_version:-"0.0.1"}"
+    # version="$(git tag | tail -n 1)"
+    version="${VERSION}"
     info "Script is installing '${ENV_NAME} v${version}' environment."
     info "The '${ENV_NAME}' environment directory is $(pwd || true)"
     info "ENV_HOME=${ENV_HOME}"

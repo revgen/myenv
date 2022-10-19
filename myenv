@@ -59,9 +59,9 @@ update_symlinks_to_bin() {
   info "Reinitialize ${BIN_DIR} directory..."
   mkdir -vp "${BIN_DIR}"
   remove_symlinks_from_bin
-  cd "${ENV_HOME}/${ENV_NAME}" >/dev/null || exit 1
-  info "Create symlinks for all files from ${ENV_HOME}/${ENV_NAME}/bin -> ${BIN_DIR}..."
-  find ./bin -type f | while read -r f; do
+  cd "${ENV_HOME}" >/dev/null || exit 1
+  info "Create symlinks for all files from ${ENV_HOME}/home/.local/bin -> ${BIN_DIR}..."
+  find ./home/.local/bin -type f | while read -r f; do
     if [[ -x "${f}" ]]; then
       ln -vfs "${PWD}/${f}" "${BIN_DIR}"
     fi

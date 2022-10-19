@@ -133,6 +133,7 @@ install_local() {
     fi
     setup_settings
     setup_core_settings
+    update_symlinks_to_bin
     if [[ "${no_update}" != "--no-update" ]] && [[ "${no_update}" != "no-update" ]]; then
         update
     fi
@@ -166,19 +167,6 @@ update_bash_profile() {
     if [[ -f "${HOME}/.bashrc_myenv" ]]; then
         mv -v "${HOME}/.bashrc_myenv" "${HOME}/.bashrc_myenv.bak"
     fi
-    # Remove old bash_profile if it is a symlink
-    if stat "${HOME}/.bash_profile" | cut -d" " -f3 | grep -q "^l"; then
-        mv -v "${HOME}/.bash_profile" "${HOME}/.bash_profile.bak"
-    fi
-
-    info "Update ~/.bash_profile if needed"
-    touch "${HOME}/.bash_profile" || exit 1
-
-    if ! grep -q ".bashrc" "${HOME}/.bash_profile" 2>/dev/null; then
-        # shellcheck disable=SC2016
-        echo -e '\n[ -r "${HOME}/.bashrc" ] && . "${HOME}/.bashrc"\n' >> "${HOME}/.bash_profile"
-    fi
-    grep ".bashrc" "${HOME}/.bash_profile"
 
     info "Update ~/.bashrc if needed"
     touch "${HOME}/.bashrc" || exit 1
@@ -219,6 +207,20 @@ setup_mac_specific_settings() {
 
   # We need to remove awssaml from the local/bin, because we will start using awssaml from the cpe repository: brew install awssaml
   rm -f "${HOME}/.local/bin/awssaml" >/dev/null
+  
+  # Remove old bash_profile if it is a symlink
+  if stat "${HOME}/.bash_profile" | cut -d" " -f3 | grep -q "^l"; then
+    mv -v "${HOME}/.bash_profile" "${HOME}/.bash_profile.bak"
+  fi
+
+  info "Update ~/.bash_profile if needed"
+  touch "${HOME}/.bash_profile" || exit 1
+
+  if ! grep -q ".bashrc" "${HOME}/.bash_profile" 2>/dev/null; then
+    # shellcheck disable=SC2016
+    echo -e '\n[ -r "${HOME}/.bashrc" ] && . "${HOME}/.bashrc"\n' >> "${HOME}/.bash_profile"
+  fi
+  grep ".bashrc" "${HOME}/.bash_profile"
 }
 
 setup_linux_specific_settings() {

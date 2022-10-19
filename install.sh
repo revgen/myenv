@@ -25,7 +25,7 @@ USE_HTTP="${USE_HTTP:-"true"}"
 ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
 
 # --[ Variables and functions ]-----------------------------------------------
-cmd="${1:-"--version"}"
+cmd="${1:-"install"}"
 set -Euo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 OLD_PWD="$(pwd)"

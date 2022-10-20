@@ -40,6 +40,6 @@ send_message() {
 
 case "${1:-"--help"}" in
     help|--help|-h) show_help;;
-    send) send_message "$*";;
+    send) shift; send_message "$*";;
     *) echo "Error: command '${1}' not found"; exit 1;;
 esac

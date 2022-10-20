@@ -12,26 +12,34 @@ debug() { [ "${DEBUG:-""}" == "true" ] && >&2 echo "$*"; }
 api_token=${TELEGRAM_TOKEN:-""}
 chat_id=${TELEGRAM_CHAT_ID:-""}
 
-flag=✉️
-for arg in "$@"; do
-    case "${arg:-""}" in
-        --alert) flag=❗;;
-        --warning) flag=⚠️;;
-        *) message="${arg}"
-    esac
-done
-message=${message:-""}
-if [ -z "${message}" ]; then
-    debug "Read message form the stdin:"
-    message=$(cat /dev/stdin)
-fi
-message="${flag} ${message}"
+send_message() {
+    flag=✉️
+    for arg in "$@"; do
+        case "${arg:-""}" in
+            --alert) flag=❗;;
+            --warning) flag=⚠️;;
+            *) message="${arg}"
+        esac
+    done
+    message=${message:-""}
+    if [ -z "${message}" ]; then
+        debug "Read message form the stdin:"
+        message=$(cat /dev/stdin)
+    fi
+    message="${flag} ${message}"
 
-url="https://api.telegram.org/bot${api_token}/sendMessage"
-debug "Sending message"
-debug "message=${message}" 
-url="${url}?chat_id=${chat_id}&text=${message}"
-debug "url=${url}"
-if command -v  curl >/dev/null; then curl -sL "${url}";
-else  wget -qO - "${url}"; fi
-echo ""
+    url="https://api.telegram.org/bot${api_token}/sendMessage"
+    debug "Sending message"
+    debug "message=${message}" 
+    url="${url}?chat_id=${chat_id}&text=${message}"
+    debug "url=${url}"
+    if command -v  curl >/dev/null; then curl -sL "${url}";
+    else  wget -qO - "${url}"; fi
+    echo ""
+}
+
+case "${1:-"--help"}" in
+    help|--help|-h) show_help;;
+    send) send_message "$*";;
+    *) echo "Error: command '${1}' not found"; exit 1;;
+esac

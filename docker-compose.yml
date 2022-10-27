@@ -5,14 +5,12 @@ services:
     image: "rev9en/sandbox"
     volumes: [./:/opt/myenv]
     environment: [REPO_BRANCH=develop]
+    working_dir: /opt/myenv
     command:
       - /bin/sh
       - -c
       - |
-        echo "Install myenf first"
-        /opt/myenv/install.sh --noninteractive
-        echo "Start tests after installation"
-        bash
+        ./install.sh --noninteractive && ./test-installation.sh
 
 
   test-debian:

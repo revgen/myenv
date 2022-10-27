@@ -47,12 +47,7 @@ cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
 debug() { echo >&2 -e "$*"; }
 info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
 error() { echo >&2 -e "${ERROR}$*${NOFORMAT}"; }
-prompt_ny() {
-  if [[ "${NONINTERACTIVE}" == "true" ]]; then debug "Noninteractive mode."; return 1; fi
-  read -r -p "${1} " opt
-  if [[ "${opt:-"n"}" == "y" ]] || [[ "${opt}" == "Y" ]]; then return 1; fi
-  return 0
-}
+prompt_ny() { read -r -p "${1} " opt; [[ "${opt:-"n"}" != "y" ]] && [[ "${opt}" != "Y" ]]; }
 version() { echo -e "${INFO}${REPO_NAME} v${VERSION}${NOFORMAT} (ENV_HOME=${ENV_HOME})"; exit 0; }
 
 # ----------------------------------------------------------------------------
@@ -104,7 +99,7 @@ install_local() {
     info "Now you need to restart current terminal session. You can close and reopen terminal again."
   else
     error "The script ${install_script} not found. Skip local setup."
-    exit 1
+    return 1
   fi
 }
 # ----------------------------------------------------------------------------
@@ -117,7 +112,11 @@ for arg in "$*"; do
 done
 
 if [[ "${NONINTERACTIVE}" == "true" ]]; then
+  debug "Noninteractive mode."
   yes | install_local
+  errcode=$?
+  if [ ${errcode} == 141 ]; then errcode=0; fi
+  exit ${errcode}
 else
   install_local
 fi

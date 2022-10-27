@@ -4,7 +4,16 @@ services:
   test-ubuntu:
     image: "rev9en/sandbox"
     volumes: [./:/opt/myenv]
-    command: /opt/myenv/install.sh --noninteractive
+    environment: [REPO_BRANCH=develop]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "Install myenf first"
+        /opt/myenv/install.sh --noninteractive
+        echo "Start tests after installation"
+        bash
+
 
   test-debian:
     image: "bitnami/git"

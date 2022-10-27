@@ -7,12 +7,8 @@ case "${OSTYPE}" in
     if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
     else export OSNAME=linux; fi
     ;;
-  solaris*) export OSNAME=solaris ;;
-  darwin*)  export OSNAME=macos ;;
-  bsd*)     export OSNAME=bsd ;;
-  msys*)    export OSNAME=windows ;;
-  cygwin*)  export OSNAME=windows ;;
-  *)        export OSNAME=unknown ;;
+  darwin*|macos*) export OSNAME=macos ;;
+  *) export OSNAME=unknown ;;
 esac
 export PATH="${HOME}/.local/bin:/opt/homebrew/bin:${PATH}"
 export USERBIN="${USERBIN:-"${HOME}/.local/bin"}"

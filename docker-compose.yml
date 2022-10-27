@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+
+  test-ubuntu:
+    image: "rev9en/sandbox"
+    volumes: [./:/opt/myenv]
+    command: /opt/myenv/install.sh --noninteractive
+
+  test-debian:
+    image: "bitnami/git"
+    volumes: [./:/opt/myenv]
+    command: /opt/myenv/install.sh --noninteractive
+
+  test-alpine:
+    image: "alpine"
+    volumes: [./:/opt/myenv]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache git bash
+        /opt/myenv/install.sh --noninteractive

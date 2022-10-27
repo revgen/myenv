@@ -34,10 +34,12 @@ ENV_HOME=${ENV_HOME:-"${DEF_ENV_HOME}"}
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
 BIN_DIR="${HOME}/.local/bin"
 DEBUG=${DEBUG:-"false"}
-TMPDIT=/tmp
-export PATH="${ENV_HOME}:${PATH}"
+# TMPDIT=/tmp
+PATH="${ENV_HOME}:${PATH}"
+export PATH="${PATH}"
 if [[ -z "${USER:-""}" ]]; then
-    export USER="$(basename "${HOME}")"
+    USER="$(basename "${HOME}")"
+    export USER="${USER}"
 fi
 
 export OSTYPE="${OSTYPE}"
@@ -46,12 +48,8 @@ case "${OSTYPE}" in
     if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then export OSNAME=wsl;
     else export OSNAME=linux; fi
     ;;
-  solaris*) export OSNAME=solaris ;;
   darwin*)  export OSNAME=macos ;;
-  bsd*)     export OSNAME=bsd ;;
-  msys*)    export OSNAME=windows ;;
-  cygwin*)  export OSNAME=windows ;;
-  *)        export OSNAME=unknown ;;
+  *)        export OSNAME=unknown ;;    # solaris* / bsd* / msys* / cygwin*
 esac
 
 # Settings for color output
@@ -71,11 +69,11 @@ remove_symlinks_from_bin() {
 
 _make_symlinks_to_bin() {
   dir="${1:-"/tmp/not-exists"}"
-  if [[ !-d "${dir}" ]]; then
+  if [[ ! -d "${dir}" ]]; then
      debug "Directory ${dir} not exists. Skip."
      return 0
   fi
-  find "${1:-"/tmp/not-exists"} -type f | while read -r f; do
+  find "${1:-"/tmp/not-exists"}" -type f | while read -r f; do
     if [[ -x "${f}" ]]; then
       ln -vfs "${PWD}/${f}" "${BIN_DIR}"
     fi
@@ -145,7 +143,7 @@ check_new_version() {
 }
 
 install_local() {
-    no_update="${1:-""}"
+    # no_update="${1:-""}"
     cd "${ENV_HOME}" >/dev/null || exit 1
     git fetch || exit 1
     git checkout "${REPO_BRANCH}" || exit 1

@@ -1,13 +1,12 @@
 name: MYENV - Tests
 
 on:
+  schedule:
+    - cron: "*/10 * * * *"
   push:
     branches: [ develop ]
   pull_request:
     branches: [ develop ]
-  schedule:
-    branches: [ develop ]
-    - cron:  '*/15 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -16,6 +15,8 @@ jobs:
     name: "Execute tests on Ubuntu"
     env:
       REPO_BRANCH: develop
+    with:
+      ref: develop
     steps:
       - name: Check out repo
         uses: actions/checkout@v2

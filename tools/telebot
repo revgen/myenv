@@ -32,7 +32,7 @@ send_message() {
     debug "Sending message"
     debug "message=${message}" 
     url="${url}?chat_id=${chat_id}&text=${message}"
-    debug "url=${url}"
+    # debug "url=${url}"
     output="$(mktemp).log"
     if command -v  curl >/dev/null; then curl -sL "${url}" > "${output}";
     else  wget -qO - "${url}" > "${output}"; fi

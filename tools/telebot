@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 # shellcheck shell=sh disable=SC3014 source=/dev/null
 # ############################################################################
 ## Utility script to use a Telegram Bot
@@ -33,9 +33,13 @@ send_message() {
     debug "message=${message}" 
     url="${url}?chat_id=${chat_id}&text=${message}"
     debug "url=${url}"
-    if command -v  curl >/dev/null; then curl -sL "${url}";
-    else  wget -qO - "${url}"; fi
+    output="$(mktemp).log"
+    if command -v  curl >/dev/null; then curl -sL "${url}" > "${output}";
+    else  wget -qO - "${url}" > "${output}"; fi
+    # TODO: add error check
+    debug "Sending message success"
     echo ""
+    rm -f "${output}"
 }
 
 case "${1:-"--help"}" in

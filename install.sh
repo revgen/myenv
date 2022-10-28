@@ -23,6 +23,7 @@ TITLE="The script will install ${ENV_NAME} environment"
 USE_HTTP="${USE_HTTP:-"true"}"
 NONINTERACTIVE="${NONINTERACTIVE:-"false"}"
 ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
+ERRCODE=15
 
 # --[ Variables and functions ]-----------------------------------------------
 set -Euo pipefail
@@ -66,13 +67,13 @@ install_local() {
   info "* Branch    : ${REPO_BRANCH}"
   info "* Target    : ${ENV_HOME}"
 
-  if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit 1; fi
+  if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit ${ERRCODE}; fi
 
   debug "Creating ${ENV_HOME} if not exists"
   mkdir -p "${ENV_HOME}" > /dev/null
   if [[ ! -d "${ENV_HOME}/.git" ]]; then
     info "Git clone ${repo_url}"
-    git clone "${repo_url}" "${ENV_HOME}" || exit 1
+    git clone "${repo_url}" "${ENV_HOME}" || exit ${ERRCODE}
   fi
 
   cd "${ENV_HOME}" || exit 1
@@ -83,10 +84,10 @@ install_local() {
     if prompt_ny "Are you sure you are ready to overwride all changes (y/N)?"; then info "Skip"; exit 1; fi
   fi
   debug "Checkout ${REPO_BRANCH} branch"
-  git checkout "${REPO_BRANCH}" || exit 1
+  git checkout "${REPO_BRANCH}" || exit ${ERRCODE}
   debug "Update local repo"
-  git remote prune origin || exit 1
-  git fetch || exit 1
+  git remote prune origin || exit ${ERRCODE}
+  git fetch || exit ${ERRCODE}
   debug "Reset to the remote origin/${REPO_BRANCH}"
   git reset --hard "origin/${REPO_BRANCH}" || exit 1
   info "Update '${ENV_NAME}' environment complete in the '${ENV_HOME}' directory"
@@ -94,12 +95,12 @@ install_local() {
   install_script="${PWD}/${ENV_NAME}"
   info "Execute ${install_script}..."
   if [[ -f "${install_script}" ]]; then
-    bash "${install_script}" install-local || exit 1
+    bash "${install_script}" install-local || exit ${ERRCODE}
     info "Environment '${ENV_NAME}' installation complete."
     info "Now you need to restart current terminal session. You can close and reopen terminal again."
   else
     error "The script ${install_script} not found. Skip local setup."
-    return 1
+    return ${ERRCODE}
   fi
 }
 # ----------------------------------------------------------------------------

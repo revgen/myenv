@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "Execute tests on Ubuntu"
     env:
-      REPO_BRANCH: $develop
+      REPO_BRANCH: develop
     steps:
       - name: Check out repo
         uses: actions/checkout@v2

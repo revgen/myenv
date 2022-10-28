@@ -1,0 +1,21 @@
+name: MYENV - Tests
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  tests-on-ubuntu:
+    runs-on: ubuntu-latest
+    name: "Execute tests on Ubuntu"
+    env:
+      REPO_BRANCH: $develop
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+      - name: Run tests
+        run: |
+          ./install.sh --noninteractive && ./tests/test-installation.sh

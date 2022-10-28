@@ -113,9 +113,11 @@ done
 
 if [[ "${NONINTERACTIVE}" == "true" ]]; then
   debug "Noninteractive mode."
-  yes | install_local
+  yes 2>/dev/null | head -n 2 | install_local
   errcode=$?
   if [ ${errcode} == 141 ]; then errcode=0; fi
+  info "Installation finished"
+  debug "Errorcode = ${errcode}"
   exit ${errcode}
 else
   install_local

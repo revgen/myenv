@@ -15,11 +15,11 @@ jobs:
     name: "Execute tests on Ubuntu"
     env:
       REPO_BRANCH: develop
-    with:
-      ref: develop
     steps:
       - name: Check out repo
         uses: actions/checkout@v2
+        with:
+          ref: develop
       - name: Run tests
         id: tests
         run: |

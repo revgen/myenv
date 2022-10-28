@@ -25,4 +25,4 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DEBUG: true
         run: |
-          ./tools/telebot send --warning "Github action result"
+          ./tools/telebot send "Github action result"

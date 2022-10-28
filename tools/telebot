@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # shellcheck shell=sh disable=SC3014 source=/dev/null
 # ############################################################################
 ## Utility script to use a Telegram Bot

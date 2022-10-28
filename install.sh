@@ -23,7 +23,7 @@ TITLE="The script will install ${ENV_NAME} environment"
 USE_HTTP="${USE_HTTP:-"true"}"
 NONINTERACTIVE="${NONINTERACTIVE:-"false"}"
 ENV_HOME="${HOME}/.local/src/${REPO_NAME}"
-ERRCODE=15
+INSTALLATION_ERROR=15
 
 # --[ Variables and functions ]-----------------------------------------------
 set -Euo pipefail
@@ -67,13 +67,13 @@ install_local() {
   info "* Branch    : ${REPO_BRANCH}"
   info "* Target    : ${ENV_HOME}"
 
-  if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit ${ERRCODE}; fi
+  if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit ${INSTALLATION_ERROR}; fi
 
   debug "Creating ${ENV_HOME} if not exists"
   mkdir -p "${ENV_HOME}" > /dev/null
   if [[ ! -d "${ENV_HOME}/.git" ]]; then
     info "Git clone ${repo_url}"
-    git clone "${repo_url}" "${ENV_HOME}" || exit ${ERRCODE}
+    git clone "${repo_url}" "${ENV_HOME}" || exit ${INSTALLATION_ERROR}
   fi
 
   cd "${ENV_HOME}" || exit 1
@@ -84,10 +84,10 @@ install_local() {
     if prompt_ny "Are you sure you are ready to overwride all changes (y/N)?"; then info "Skip"; exit 1; fi
   fi
   debug "Checkout ${REPO_BRANCH} branch"
-  git checkout "${REPO_BRANCH}" || exit ${ERRCODE}
+  git checkout "${REPO_BRANCH}" || exit ${INSTALLATION_ERROR}
   debug "Update local repo"
-  git remote prune origin || exit ${ERRCODE}
-  git fetch || exit ${ERRCODE}
+  git remote prune origin || exit ${INSTALLATION_ERROR}
+  git fetch || exit ${INSTALLATION_ERROR}
   debug "Reset to the remote origin/${REPO_BRANCH}"
   git reset --hard "origin/${REPO_BRANCH}" || exit 1
   info "Update '${ENV_NAME}' environment complete in the '${ENV_HOME}' directory"
@@ -95,12 +95,12 @@ install_local() {
   install_script="${PWD}/${ENV_NAME}"
   info "Execute ${install_script}..."
   if [[ -f "${install_script}" ]]; then
-    bash "${install_script}" install-local || exit ${ERRCODE}
+    bash "${install_script}" install-local || exit ${INSTALLATION_ERROR}
     info "Environment '${ENV_NAME}' installation complete."
     info "Now you need to restart current terminal session. You can close and reopen terminal again."
   else
     error "The script ${install_script} not found. Skip local setup."
-    return ${ERRCODE}
+    return ${INSTALLATION_ERROR}
   fi
 }
 # ----------------------------------------------------------------------------
@@ -114,10 +114,10 @@ done
 
 if [[ "${NONINTERACTIVE}" == "true" ]]; then
   debug "Noninteractive mode."
+  # we ned to use a trick with "tail -n +2 | head -n 2" to fix: broken pipes error
   yes 2>/dev/null | tail -n +2 | head -n 2 | install_local
   errcode=$?
-  debug "Errorcode = ${errcode}"
-  if [ ${errcode} == 141 ]; then errcode=0; fi
+  if [ ${errcode} != ${INSTALLATION_ERROR} ]; then errcode=0; fi
   info "Installation finished"
   debug "Errorcode = ${errcode}"
   exit ${errcode}

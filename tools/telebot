@@ -14,7 +14,7 @@ chat_id=${TELEGRAM_CHAT_ID:-""}
 
 send_message() {
     flag=✉️
-    for arg in "$@"; do
+    for arg in "$*"; do
         case "${arg:-""}" in
             --alert) flag=❗;;
             --warning) flag=⚠️;;

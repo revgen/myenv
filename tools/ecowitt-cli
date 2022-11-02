@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# ############################################################################
+## Command line interface to work with api.ecowitt.net.
+##
+## Usage: {SCRIPT_NAME}
+##   --from YYYY-MM-DD HH:MM:SS - default: yesterday 00:00:00
+##   --to YYYY-MM-DD HH:MM:SS   - default: from-date 23:59:59
+##
+## System environment or config values:
+##  APP_KEY         - need to connect to the API
+##  API_KEY         - need to connect to the API
+##  DEVICE          - MAC address of the device
+##  FROM            - YYYY-MM-DD HH:MM:SS - default: "yesterday 00:00:00"
+##  TO              - YYYY-MM-DD HH:MM:SS - default: "FROM 23:59:59"
+##  CALL_BACK       - default: indoor,outdoor
+##  CYCLE_TYPE      - default: 30min
+##  UNIT_T          - 1 - ℃ (default), 2 - ℉
+##  UNIT_P          - 3 - hPa (default), 4 - inHg, 5 - mmHg
+##  UNIT_W          - 6 - m/s (default), 7 - km/h, 8 - knots, 9 - mph, 10 - BFT, 11 - fpm
+##  UNIT_R          - 12 - mm (default), 13 - in
+##  UNIT_S          - 14 - lux (default), 15 - fc, 16 - W/m²
+##
+## Config files:
+##   /etc/ecowitt.conf
+##   ~/.config/ecowitt.conf
+##
+## Dependencies: curl
+##
+#  Author: Evgen Rusakov (https://github.com/revgen)
+#
+# ############################################################################
+set -e
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
+
+NAME=ecowitt
+VERSION=20221101
+
+# We need to use gdate on the MacOS
+date_app=$(which gdate || which date)
+debug() { if [ "${DEBUG}" == "true" ]; then >&2 echo $@; fi; }
+
+try_load_config_file() { [ -f "${1}" ] && debug "Load config file ${1}" && . "${1}"; }
+
+load_config() {
+    debug "Load configuration"
+    try_load_config_file "/etc/${NAME}.conf"
+    try_load_config_file "${HOME}/.config/${NAME}.conf"
+
+    APP_KEY=${APP_KEY}
+    API_KEY=${API_KEY}
+    DEVICE=${DEVICE}
+
+    CALL_BACK=${CALL_BACK:-"indoor,outdoor"}
+    CYCLE_TYPE=${CYCLE_TYPE:-"30min"}
+    UNIT_T=${UNIT_T:-"1"}
+    UNIT_P=${UNIT_P:-"3"}
+    UNIT_W=${UNIT_W:-"6"}
+    UNIT_R=${UNIT_R:-"12"}
+    UNIT_S=${UNIT_S:-"14"}
+
+    from_def="$(${date_app} -d @$(( $(${date_app} +"%s") - 86400)) +"%Y-%m-%d 00:00:00")"
+    FROM="${FROM:-"${from_def}"}"
+    to_def="$(${date_app} -d "${FROM}" +"%Y-%m-%d 23:59:59")"
+    TO="${TO:-"${to_def}"}"
+    debug "Config: device='${MAC}', from='${FROM}', to='${TO}', "
+    debug "call_back=${CALL_BACK}, cycle_type=${CYCLE_TYPE}, temp_unitid=${UNIT_T},"
+    debug "pressure_unitid=${UNIT_P}, cycle_type=${CYCLE_TYPE}, rainfall_unitid=${UNIT_R},"
+    debug "wind_speed_unitid=${UNIT_W}, solar_irradiance_unitid=${UNIT_S}"
+}
+
+
+
+show_history() {
+    debug "Get temperature data history: device='${MAC}', from='${FROM}', to='${TO}', call_back=${CALL_BACK}"
+    tmp_file=$(mktemp)
+    api_url="https://api.ecowitt.net/api/v3/device/history"
+    url="${api_url}?application_key=${APP_KEY}&${url}&api_key=${API_KEY}"
+    url="${url}&mac=${MAC}&start_date=${FROM}&end_date=${TO}"
+    url="${url}&cycle_type=${CYCLE_TYPE}&call_back=${CALL_BACK}"
+    url="${url}&temp_unitid=${UNIT_T}&pressure_unitid=${UNIT_P}&rainfall_unitid=${UNIT_R}"
+    url="${url}&wind_speed_unitid=${UNIT_W}&solar_irradiance_unitid=${UNIT_S}"
+
+    debug "Send request to ${api_url}"
+    curl -s --url "${url}" \
+        -H "content-type: application/json" \
+        | tee "${tmp_file}" || exit 1
+    echo ""
+
+    if ! grep -q "[ ]*\"code\":[ ]*0\,[ ]*" "${tmp_file}"; then
+        debug "Error: $(grep '"code"' "${tmp_file}")"
+        exit 1
+    fi
+    debug "Remove temporary file: ${tmp_file}"
+    rm -f "${tmp_file}"
+    debug "Success"
+}
+
+cmd="${1:-""}"
+case "${cmd}" in
+    config) load_config && show_config;;
+    help|--help|-h) show_help;;
+    "") ;;
+    *) echo "Error: unknown '${1}' command"; exit 1;;
+esac
+
+load_config && show_history

@@ -65,7 +65,7 @@ load_config() {
     FROM="${FROM:-"${from_def}"}"
     to_def="$(${date_app} -d "${FROM}" +"%Y-%m-%d 23:59:59")"
     TO="${TO:-"${to_def}"}"
-    debug "Config: device='${MAC}', from='${FROM}', to='${TO}', "
+    debug "Config: device='${DEVICE}', from='${FROM}', to='${TO}', "
     debug "call_back=${CALL_BACK}, cycle_type=${CYCLE_TYPE}, temp_unitid=${UNIT_T},"
     debug "pressure_unitid=${UNIT_P}, cycle_type=${CYCLE_TYPE}, rainfall_unitid=${UNIT_R},"
     debug "wind_speed_unitid=${UNIT_W}, solar_irradiance_unitid=${UNIT_S}"
@@ -74,11 +74,11 @@ load_config() {
 
 
 show_history() {
-    debug "Get temperature data history: device='${MAC}', from='${FROM}', to='${TO}', call_back=${CALL_BACK}"
+    debug "Get temperature data history: device='${DEVICE}', from='${FROM}', to='${TO}', call_back=${CALL_BACK}"
     tmp_file=$(mktemp)
     api_url="https://api.ecowitt.net/api/v3/device/history"
     url="${api_url}?application_key=${APP_KEY}&${url}&api_key=${API_KEY}"
-    url="${url}&mac=${MAC}&start_date=${FROM}&end_date=${TO}"
+    url="${url}&mac=${DEVICE}&start_date=${FROM}&end_date=${TO}"
     url="${url}&cycle_type=${CYCLE_TYPE}&call_back=${CALL_BACK}"
     url="${url}&temp_unitid=${UNIT_T}&pressure_unitid=${UNIT_P}&rainfall_unitid=${UNIT_R}"
     url="${url}&wind_speed_unitid=${UNIT_W}&solar_irradiance_unitid=${UNIT_S}"

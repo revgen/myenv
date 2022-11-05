@@ -24,7 +24,7 @@ send_message() {
     url="https://api.telegram.org/bot${api_token}/sendMessage"
     debug "Sending message..."
     debug "Source message: ${message}"
-    message="$(echo "${flag} ${message}" | tr '\n' '▐' | sed 's/▐/%0A/g')"
+    message="$(echo -n "${flag} ${message}" | tr '\n' '▐' | sed 's/▐/%0A/g')"
     debug "Message: ${message}" 
     url="${url}?chat_id=${chat_id}&text=${message}"
     debug "url=${url}"

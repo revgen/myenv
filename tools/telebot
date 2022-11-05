@@ -3,36 +3,31 @@
 # ############################################################################
 ## Utility script to use a Telegram Bot
 ##
-## Usage: {SCRIPT_NAME} <command> [--alert] [--warning] [message]
-## Commands:
-##   send <message>     - send message using bot
+## Usage: {SCRIPT_NAME} [--alert] [--warning] [--debug] [message]
 # ############################################################################
 debug() { [ "${DEBUG:-""}" == "true" ] && >&2 echo "$*"; }
+show_help() {
+    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+    exit 1
+}
 
 api_token=${TELEGRAM_TOKEN:-""}
 chat_id=${TELEGRAM_CHAT_ID:-""}
 
 send_message() {
-    flag=✉️
-    for arg in "$*"; do
-        case "${arg:-""}" in
-            --alert) flag=❗;;
-            --warning) flag=⚠️;;
-            *) message="${arg}"
-        esac
-    done
-    message=${message:-""}
+    flag="${1}"
+    message="${2:-""}"
     if [ -z "${message}" ]; then
         debug "Read message form the stdin:"
         message=$(cat /dev/stdin)
     fi
-    message="${flag} ${message}"
-
     url="https://api.telegram.org/bot${api_token}/sendMessage"
     debug "Sending message"
+    message="$(echo "${flag} ${message}" | tr '\n' '▐' | sed 's/▐/%0A/g')"
+    echo "${message}"
     debug "message=${message}" 
     url="${url}?chat_id=${chat_id}&text=${message}"
-    # debug "url=${url}"
+    debug "url=${url}"
     output="$(mktemp).log"
     if command -v  curl >/dev/null; then curl -sL "${url}" > "${output}";
     else  wget -qO - "${url}" > "${output}"; fi
@@ -42,8 +37,16 @@ send_message() {
     rm -f "${output}"
 }
 
-case "${1:-"--help"}" in
-    help|--help|-h) show_help;;
-    send) shift; send_message "$*";;
-    *) echo "Error: command '${1}' not found"; exit 1;;
-esac
+flag=✉️
+message=""
+for arg in "$@"; do
+    case "${arg:-""}" in
+        help|--help|-h) show_help; exit 1;;
+        --alert) flag=❗;;
+        --warning) flag=⚠️;;
+        --debug) DEBUG=true;;
+        *) message="${arg}"
+    esac
+done
+
+send_message "${flag}" "${message}"

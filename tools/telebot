@@ -33,6 +33,9 @@ send_message() {
     else  wget -qO - "${url}" > "${output}"; fi
     # TODO: add error check
     debug "Sending message success"
+    echo "----------------------------------------"
+    cat "${output}"
+    echo "----------------------------------------"
     echo ""
     rm -f "${output}"
 }

@@ -1,20 +1,22 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # shellcheck shell=sh disable=SC3014 source=/dev/null
 # ############################################################################
 ## Utility script to use a Telegram Bot
 ##
 ## Usage: {SCRIPT_NAME} [--alert] [--warning] [--debug] [message]
 # ############################################################################
-debug() { [ "${DEBUG:-""}" == "true" ] && >&2 echo "$*"; }
 show_help() {
     sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
     exit 1
 }
+debug() { [ "${DEBUG}" = "true" ] && >&2 echo "$*"; }
 
 api_token=${TELEGRAM_TOKEN:-""}
 chat_id=${TELEGRAM_CHAT_ID:-""}
 
 send_message() {
+    printf "Sending message to telebot"
+    debug ""
     flag="${1}"
     message="${2:-""}"
     if [ -z "${message}" ]; then
@@ -23,21 +25,34 @@ send_message() {
     fi
     url="https://api.telegram.org/bot${api_token}/sendMessage"
     debug "Sending message..."
-    debug "Source message: ${message}"
-    message="$(echo -n "${flag} ${message}" | tr '\n' '▐' | sed 's/▐/%0A/g')"
-    debug "Message: ${message}" 
-    url="${url}?chat_id=${chat_id}&text=${message}"
+    debug "--[ Message ]------------------------------------------------"
+    # debug "Source message: ${message}"
+    # message="$(echo -n "${flag} ${message}" | tr '\n' '|' | sed 's/|/%0A/g')"
+    message="$(echo -n "${flag} ${message}" | tr '\n' '|' | sed 's/|/\n/g')"
+    debug "${message}" 
+    debug "------------------------------------------------------------"
+    # url="${url}?chat_id=${chat_id}&text=${message}"
     debug "url=${url}"
-    output="$(mktemp).log"
-    if command -v  curl >/dev/null; then curl -sL "${url}" > "${output}";
+    output="$(mktemp).telebot.json"
+    debug "output: ${output}"
+    if command -v  curl >/dev/null; then
+        # curl -sL "${url}" > "${output}";
+        curl -sL \
+            --data-urlencode "chat_id=${chat_id}" \
+            --data-urlencode "text=${message}" \
+            "${url}" > "${output}";
     else  wget -qO - "${url}" > "${output}"; fi
-    # TODO: add error check
-    debug "Sending message success"
-    echo "----------------------------------------"
-    cat "${output}"
-    echo "----------------------------------------"
-    echo ""
-    rm -f "${output}"
+    errcode=1
+    if grep -q "error_code" "${output}"; then
+        echo " - FAILED"
+        cat "${output}"
+        echo ""
+    else
+        echo " - SUCCESS"
+        errcode=0
+    fi
+    if [ "${DEBUG}" != "true" ]; then rm -f "${output}"; fi
+    return ${errcode}
 }
 
 flag=✉️

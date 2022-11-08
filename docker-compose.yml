@@ -12,6 +12,15 @@ services:
       - |
         ./install.sh --noninteractive && ./tests/test-installation.sh
 
+  shell:
+    image: "rev9en/sandbox"
+    volumes: [./:/opt/myenv]
+    environment:
+      - REPO_BRANCH=develop
+      - TELEGRAM_TOKEN
+      - TELEGRAM_CHAT_ID
+    working_dir: /opt/myenv
+    command: /bin/bash
 
   test-debian:
     image: "bitnami/git"

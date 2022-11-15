@@ -1,28 +1,17 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #=======================================================================
 ## Show your host public information
 ## usge: {SCRIPT_NAME} [--all]
 #=======================================================================
 request() {
-    if command -v  curl >/dev/null; then curl -sL "${1}" 2>/dev/null;
+    if which curl >/dev/null; then curl -sL "${1}" 2>/dev/null;
     else  wget -qO - "${1}" 2>/dev/null; fi
 }
 
 case "${1:-"--external-ip"}" in
-  public-ip|--public-ip|external-ip|--external-ip|-e)
-    # shellcheck disable=SC2312
-    request http://checkip.amazonaws.com
-    # http://icanhazip.com
-    ;;
-  all|--all|-a)
-    request ipinfo.io; echo ""
-    ;;
-  help|--help)
-    # shellcheck disable=SC2312
-    sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
-    exit 255
-    ;;
-  *)
-    echo "Error: unknown command '${1}'."; exit 1;
-    ;;
+  # http://icanhazip.com
+  public-ip|--public-ip|external-ip|--external-ip|-e) request http://checkip.amazonaws.com ;;
+  all|--all|-a) request ipinfo.io; echo "" ;;
+  help|--help) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'; exit 255 ;;
+  *) echo "Error: unknown command '${1}'."; exit 1; ;;
 esac

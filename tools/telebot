@@ -4,6 +4,8 @@
 ## Utility script to use a Telegram Bot
 ##
 ## Usage: {SCRIPT_NAME} [--alert] [--warning] [--debug] [message]
+##
+#  Version: 1.11.14.1
 # ############################################################################
 show_help() {
     sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'

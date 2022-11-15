@@ -10,18 +10,22 @@ show_help() {
     exit 1
 }
 debug() { [ "${DEBUG}" = "true" ] && >&2 echo "$*"; }
-
-api_token=${TELEGRAM_TOKEN:-""}
-chat_id=${TELEGRAM_CHAT_ID:-""}
+appname="$(basename "${0}")"
 
 send_message() {
+    if [ -f "/etc/${appname}.conf" ]; then debug "/etc/${appname}.conf"; . "/etc/${appname}.conf"; fi
+    if [ -f "${HOME}/.config/${appname}.conf" ]; then debug "/${HOME}/.config/${appname}.conf"; . "/${HOME}/.config/${appname}.conf"; fi
+
+    api_token=${TELEGRAM_TOKEN:-""}
+    chat_id=${TELEGRAM_CHAT_ID:-""}
+
     printf "Sending message to telebot"
     debug ""
     flag="${1}"
     message="${2:-""}"
     if [ -z "${message}" ]; then
         debug "Read message form the stdin:"
-        message=$(cat /dev/stdin)
+        message=$(cat -)
     fi
     url="https://api.telegram.org/bot${api_token}/sendMessage"
     debug "Sending message..."

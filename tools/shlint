@@ -38,3 +38,4 @@ else
 fi
 step "Syntax check complete: path=${path}"
 echo "Errors = ${errcounter}"
+exit ${errcounter}

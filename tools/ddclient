@@ -8,6 +8,7 @@
 ##   DYNDNS_USER - account user name
 ##   DYNDNS_PASS - account password
 ##   DYNDNS_HOST - dyndns servername
+##   DYNDNS_NAME - dyndns network/profile name (default: main)
 ##   DYNDNS_URL  - dyndns whole url
 ##
 #  Evgen Rusakov (https://github.com/revgen) 2019 MIT License
@@ -31,7 +32,6 @@ if [ "${1}" == "help" ] || [ "${1}" == "--help" ] || [ "${1}" == "-h" ]; then
     sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'
     exit 1
 fi
-
 load_config "${HOME}/.config/.${SCRIPT_NAME}.conf"
 load_config "${HOME}/.${SCRIPT_NAME}.conf"
 load_config "/etc/${SCRIPT_NAME}.conf"
@@ -42,12 +42,12 @@ DYNDNS_USER="${DYNDNS_USER:-""}"
 DYNDNS_PASS="${DYNDNS_PASS:-""}"
 DYNDNS_URL="${DYNDNS_URL:-""}"
 DYNDNS_HOST="${DYNDNS_HOST:-""}"
-DYNDNS_PROFILE="main"
+DYNDNS_NAME="${DYNDNS_NAME:-"main"}"
 
 if [ -n "${DYNDNS_URL}" ]; then
     url="${DYNDNS_URL}"
 else
-    url="https://${DYNDNS_HOST}/nic/update?hostname=${DYNDNS_PROFILE}&myip=${EXTERNAL_IP}"
+    url="https://${DYNDNS_HOST}/nic/update?hostname=${DYNDNS_NAME}&myip=${EXTERNAL_IP}"
 fi
 
 debug "Request ${url}..."
@@ -60,8 +60,8 @@ resp="$(cat "${TMPFILE}")"
 errmsg="$(cut -d" " -f1 "${TMPFILE}")"
 debug "Response: ${resp}"
 case ${errmsg} in
-    "good") msg="SUCCESS: (good) DNS hostname successfully updated (${DYNDNS_PROFILE}=${EXTERNAL_IP})." ;;
-    "nochg") msg="SUCCESS: (nochg) no update performed (${DYNDNS_PROFILE}=${EXTERNAL_IP})." ;;
+    "good") msg="SUCCESS: (good) DNS hostname successfully updated (${DYNDNS_NAME}=${EXTERNAL_IP})." ;;
+    "nochg") msg="SUCCESS: (nochg) no update performed (${DYNDNS_NAME}=${EXTERNAL_IP})." ;;
     "nohost") errcode=1; msg="ERROR: (nohost) Hostname supplied does not exist under specified account. Revise config file." ;;
     "badauth") errcode=1; msg="ERROR: (badauth) Invalid username password combination." ;;
     "badagent") errcode=1; msg="ERROR: (badagent) Client disabled - Server is no longer allowing requests from this update script." ;;
@@ -72,5 +72,5 @@ case ${errmsg} in
     *) errcode=1; msg="ERROR: (error: ${resp}) Could not understand the response from No-IP. The DNS update server may be down." ;;
 esac
 logger -t "${SCRIPT_NAME}" "${msg}"
-echo "${msg}"
+echo "[${SCRIPT_NAME}] ${msg}"
 exit "${errcode}"

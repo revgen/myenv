@@ -107,7 +107,7 @@ if ! command -v "${MYENVNAME}" >/dev/null; then
   echo "MYENVHOME = ${MYENVHOME}"
   ls -ahl "${MYENVHOME}"
 else
-  if [ -z "${TERM_PROGRAM}" ]; then       # do not show additional information in not regular terminals
+  if [ -n "${TERM_PROGRAM}" ]; then       # show additional information in a regular terminals
     if [ -x "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome" ]; then
       "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome"
     else

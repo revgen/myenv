@@ -1,0 +1,43 @@
+name: MYENV-Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  tests-on-ubuntu:
+    runs-on: ubuntu-latest
+    name: "Update version"
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v2
+        with:
+          ref: master
+      - name: Get current version
+        run: |
+          new_version=
+          git fetch --tags
+          repo_version=$(git tag | sort --version-sort | tail -n 1)
+          echo "repo_version=${repo_version}"
+          myenv_version=$(grep "^VERSION" ./myenv | cut -d"=" -f2)
+          echo "myenv_version=${myenv_version}"
+          if [ "${SKIP_VERSION_UPDATE}" == "true" ]; then
+            echo "Variable SKIP_VERSION_UPDATE=true. Skip"
+          else
+            max_version=$(echo -e "${repo_version}\n${myenv_version}\n0.0.0" | sort --version-sort | tail -n 1)
+            version_1_2=$(echo $max_version | awk -F"." '{print $1"."$2}')
+            release=$(echo $max_version | awk -F"." '{print $3}')
+            echo "processing version: ${version_1_2}.(${release})"
+            release=$((release + 1))
+            new_version="${version_1_2}.${release}"
+          fi
+          echo "new_version=${new_version}"
+          echo "NEW_VERSION=${new_version}" >> "$GITHUB_ENV"
+      - name: Use new version
+        id: current_version
+        run: |
+          echo "Updating version for myenv repository"
+          echo "NEW_VERSION=${NEW_VERSION}"

@@ -13,7 +13,7 @@
 if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
 # --[ Project specific constants ]--------------------------------------------
-VERSION=1.0.0
+VERSION=1.0.1
 ENV_NAME=myenv
 REPO_NAME="${ENV_NAME}"
 REPO_URL_SSH="git@github.com:revgen/${REPO_NAME}.git"
@@ -57,15 +57,22 @@ install_local() {
   else repo_url=${REPO_URL_SSH}; fi
 
   info "${TITLE}."
+  info "============================================================"
+  system_name=Unknown
   case "${OSTYPE}" in
-    linux*) info "* System    : $(grep PRETTY_NAME /etc/os-release | sed 's/"//g' | sed 's/PRETTY_NAME=//g')" ;;
-    darwin*|macos*) info "* System    : $(sw_vers -productName) $(sw_vers -productVersion)" ;;
+    linux*) system_name="$(grep PRETTY_NAME /etc/os-release | sed 's/"//g' | sed 's/PRETTY_NAME=//g')" ;;
+    darwin*|macos*) system_name="$(sw_vers -productName) $(sw_vers -productVersion)" ;;
     *) error "Unsupported system"; exit 1 ;;
   esac
-  info "* Name      : ${ENV_NAME}"
-  info "* Repository: ${repo_url}"
-  info "* Branch    : ${REPO_BRANCH}"
-  info "* Target    : ${ENV_HOME}"
+  USER=${USER:-"unknown"}
+  HOSTNAME=${HOSTNAME:-"$(hostname 2>/dev/null)"}
+  info "* System     : ${system_name} ($(uname -pm | sed 's/x86_64/x86/g' | sed 's/ /\//g'))"
+  info "* Username   : ${USER}"
+  info "* Hostname   : ${HOSTNAME}"
+  info "* Environment: ${ENV_NAME} v${VERSION}"
+  info "* Repository : ${repo_url} (${REPO_BRANCH})"
+  info "* Target     : ${ENV_HOME}"
+  info "============================================================"
 
   if prompt_ny "Do you want to continiue (y/N)? "; then info "Skip"; exit ${INSTALLATION_ERROR}; fi
 

@@ -37,7 +37,7 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DEBUG: true
-          TESTS_RESULT: 
+          TESTS_RESULT:
         run: |
           echo "${{ toJson(steps.lints) }}"
           echo "${{ toJson(steps.tests) }}"

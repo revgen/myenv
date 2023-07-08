@@ -1,9 +1,9 @@
-name: MYENV-Tests
+name: User-Environment-Tests
 
 on:
-  schedule:
-    - cron: "15 * * * *"
-    - cron: "45 * * * *"
+  # schedule:
+  #   - cron: "15 * * * *"
+  #   - cron: "45 * * * *"
   push:
     branches: [ develop ]
   pull_request:

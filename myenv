@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1.0.1
+VERSION=1.0.2
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:
@@ -33,11 +33,13 @@ OLD_PWD="$(pwd || true)"
 # shellcheck disable=SC2312
 script_dir="$(dirname "$(readlink -f "${0}" || pwd -P)")"
 ENV_NAME="$(basename "${0}")"
+ENV_VAR_NAME="$(echo | tr "[:lower:]" "[:upper:]")"
 DEF_ENV_HOME="$(readlink -f "${script_dir}" || exit 1)"
-ENV_HOME=${ENV_HOME:-"${DEF_ENV_HOME}"}
+ENV_HOME="${ENV_HOME:-"${DEF_ENV_HOME}"}"
+ENV_LOGO="${ENV_LOGO:-"enabled"}"
 REPO_BRANCH="${REPO_BRANCH:-"${BRANCH:-"master"}"}"
 BIN_DIR="${HOME}/.local/bin"
-DEBUG=${DEBUG:-"false"}
+DEBUG="${DEBUG:-"false"}"
 WORKSPACE="${WORKSPACE:-"${HOME}/Documents/Workspace"}"
 # TMPDIT=/tmp
 PATH="${ENV_HOME}:${PATH}"
@@ -112,13 +114,12 @@ update_symlinks_to_home() {
   find . -type f -o -type l | grep -v ".config/" | grep -v ".local/" | sed 's/^\.\///g' \
   | while read f; do
       target="${HOME}"
-      # echo "${target} -> ${MYENVHOME}/home/${f}"
       mkdir -p "$(dirname "${target}")" 2>/dev/null
-      _create_symlinks "${MYENVHOME}/home/${f}" "${target}"
+      _create_symlinks "./home/${f}" "${target}"
   done
   cd - >/dev/null
-  _create_symlinks "${MYENVHOME}/myenv" "${BIN_DIR}"
-  chmod +x "${BIN_DIR}/myenv"
+  _create_symlinks "./${ENV_NAME}" "${BIN_DIR}"
+  chmod +x "${BIN_DIR}/${ENV_NAME}"
   info "Reinitialize ${HOME} directory - done"
 }
 
@@ -234,9 +235,9 @@ update_bash_profile() {
             echo ""
             echo "# --[ Load ${ENV_NAME} configuration:start ]------------------------"
             echo "export PATH=\"${WORKSPACE}/bin:${HOME}/.local/bin:${PATH}\""
-            echo "export MYENVNAME=\"${ENV_NAME}\""
-            echo "export MYENVHOME=\"${ENV_HOME}\""
-            echo "export MYENVLOGO=${MYENVLOGO:-"disabled"}"
+            echo "export ${ENV_VAR_NAME}NAME=\"${ENV_NAME}\""
+            echo "export ${ENV_VAR_NAME}HOME=\"${ENV_HOME}\""
+            echo "export ${ENV_VAR_NAME}LOGO=\"${ENV_LOGO}\""
             echo "export WORKSPACE=\"${WORKSPACE}\""
             echo "if [ -r \"${ENV_HOME}/home/.config/${ENV_NAME}/bashrc\" ]; then"
             echo "    . \"${ENV_HOME}/home/.config/${ENV_NAME}/bashrc\";"

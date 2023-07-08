@@ -1,4 +1,4 @@
-name: MYENV-Tests
+name: Update repo
 
 on:
   push:
@@ -17,17 +17,19 @@ jobs:
         with:
           ref: master
       - name: Get current version
+        env:
+          ENV_APP: myenv
         run: |
           new_version=
           git fetch --tags
           repo_version=$(git tag | sort --version-sort | tail -n 1)
           echo "repo_version=${repo_version}"
-          myenv_version=$(grep "^VERSION" ./myenv | cut -d"=" -f2)
-          echo "myenv_version=${myenv_version}"
+          current_version=$(grep "^VERSION" ./${ENV_APP} | cut -d"=" -f2)
+          echo "current_version=${current_version}"
           if [ "${SKIP_VERSION_UPDATE}" == "true" ]; then
             echo "Variable SKIP_VERSION_UPDATE=true. Skip"
           else
-            max_version=$(echo -e "${repo_version}\n${myenv_version}\n0.0.0" | sort --version-sort | tail -n 1)
+            max_version=$(echo -e "${repo_version}\n${current_version}\n0.0.0" | sort --version-sort | tail -n 1)
             version_1_2=$(echo $max_version | awk -F"." '{print $1"."$2}')
             release=$(echo $max_version | awk -F"." '{print $3}')
             echo "processing version: ${version_1_2}.(${release})"
@@ -37,7 +39,22 @@ jobs:
           echo "new_version=${new_version}"
           echo "NEW_VERSION=${new_version}" >> "$GITHUB_ENV"
       - name: Use new version
-        id: current_version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+          GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
         run: |
-          echo "Updating version for myenv repository"
+          echo "Updating version variables in the repository"
           echo "NEW_VERSION=${NEW_VERSION}"
+          if [ -n "${NEW_VERSION}" ]; then
+            git config user.name "${GIT_USERNAME}"
+            git config user.email "${GIT_EMAIL}"
+            ./.github/workflows/update-version-in-repo.sh "${NEW_VERSION}"
+            echo "Create a new commit with changes: version=${NEW_VERSION}"
+            git add -A
+            git commit -am "Update version: ${NEW_VERSION} [skip ci]"
+            echo "Create ${NEW_VERSION} tag"
+            git tag "${NEW_VERSION}"
+            git push origin ${CI_COMMIT_BRANCH}
+            git push origin ${NEW_VERSION}
+          fi

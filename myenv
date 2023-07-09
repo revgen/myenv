@@ -83,8 +83,9 @@ _make_symlinks_to_bin() {
   fi
   find "${1:-"/tmp/not-exists"}" -type f | while read -r f; do
     if [[ -x "${f}" ]]; then
-      _create_symlinks "${PWD}/${f}" "${BIN_DIR}"
-      chmod +x "${BIN_DIR}/$(basename "${f}")"
+      name="$(basename "${f}")"
+      _create_symlinks "${PWD}/${f}" "${BIN_DIR}/${name}"
+      chmod +x "${BIN_DIR}/${name}"
     fi
   done
 }
@@ -92,11 +93,11 @@ _make_symlinks_to_bin() {
 _create_symlinks() {
   src="${1}"
   target="${2}"
-  src_name="$(basename "${src}")"
-  if [ -f "${target}/${src_name}" ] && [ ! -L "${target}/${src_name}" ]; then
-    mv -v "${target}/${src_name}" "${target}/${src_name}.$(date +"%Y%m%d-%H%M%S")"
+  if [ -f "${target}" ] && [ ! -L "${target}" ]; then
+    mv -v "${target}" "${target}.$(date +"%Y%m%d-%H%M%S")"
   fi
-  ln -vfs "${src}" "${target}/${src_name}"
+  mkdir -p "$(dirname "${target}")"
+  ln -vfs "${src}" "${target}"
 }
 
 update_symlinks_to_home() {
@@ -113,12 +114,10 @@ update_symlinks_to_home() {
   cd "${ENV_HOME}/home"
   find . -type f -o -type l | grep -v ".config/" | grep -v ".local/" | sed 's/^\.\///g' \
   | while read f; do
-      target="${HOME}"
-      mkdir -p "$(dirname "${target}")" 2>/dev/null
-      _create_symlinks "./home/${f}" "${target}"
+      _create_symlinks "${ENV_HOME}/home/${f}" "${HOME}/${f}"
   done
   cd - >/dev/null
-  _create_symlinks "./${ENV_NAME}" "${BIN_DIR}"
+  _create_symlinks "${ENV_HOME}/${ENV_NAME}" "${BIN_DIR}/${ENV_NAME}"
   chmod +x "${BIN_DIR}/${ENV_NAME}"
   info "Reinitialize ${HOME} directory - done"
 }

@@ -73,9 +73,9 @@ cpu_info() {
 disk_info() {
     if [[ "${OSNAME}" == "macos" ]]; then
         df -h | grep "/dev/disk" | grep -v "/private" | grep -v "nobrowse" \
-        | grep -v "auto_home" | awk '{print ""$4" of "$2" free ("$5") "$9}'
+        | grep -v "auto_home" | awk '{print ""$4"/"$2" free "$9}'
     else
-        df -h | grep "/$\|/mnt/" | awk '{print ""$4" of "$2" free ("$5") "$6}'
+        df -h | grep "/$\|/mnt/" | awk '{print ""$4"/"$2" free "$6}'
     fi
 }
 #------------------------------------------------------------------------------

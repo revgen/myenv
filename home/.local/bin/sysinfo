@@ -129,11 +129,11 @@ show_slim_info() {
     echo "CPU       : $(cpu_info)"
     cpu_info_ext | sed 's/^%//g' | sed 's/Cpu(s)/Cpu(s) /g'
     echo "----------------------------------------------------------"
-    disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
-    echo "----------------------------------------------------------"
     echo "Local IP  : $(local_ip)"
     echo "Public IP : $(public_ip)"
     echo "Internet  : $(internet_status)"
+    echo "----------------------------------------------------------"
+    disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
     echo "----------------------------------------------------------"
     echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"

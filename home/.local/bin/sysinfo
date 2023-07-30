@@ -4,7 +4,7 @@
 ## Show system information
 ## Usage: {SCRIPT_NAME} [full/simple/banner]
 #==============================================================================
-case "$(uname -s | tr "[:lower:]" "[:upper:]")" in
+case "$(uname -s | tr "[:upper:]" "[:lower:]")" in
   linux*)
     if grep "Microsoft\|WSL" /proc/sys/kernel/osrelease > /dev/null; then OSNAME=wsl;
     else OSNAME=linux; fi

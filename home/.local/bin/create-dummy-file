@@ -1,0 +1,32 @@
+#!/bin/sh
+#=======================================================================
+## Create fake file with random data inside
+## Usage: {SCRIPT_NAME} [size]
+##
+##   size   - size in K/M/G (default: 10M)
+##   name   - file name (default: dummy-<timestamp>.bin)
+##   alg    - algorithm: zero/random (default: random)
+#
+#=======================================================================
+case "${1}" in
+    help|--help|h|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
+        exit 255;
+esac
+
+size="${1:-"10M"}"
+file_name="dummy-$(date +%s).bin"
+alg=/dev/random
+
+echo "Create dummy file '${file_name}' with ${size} size using '${alg}' data"
+read -r -p "Whould you like to continue (y/N)? " opt
+
+[ "${opt:-"n"}" != "y" ] && echo "Exit" && exit 1
+
+
+if which -s pv; then
+    pv -Ss ${size} < ${alg} > "${file_name}"
+else
+    head -c ${size} < ${alg} > "${file_name}"
+fi
+ 

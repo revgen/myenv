@@ -12,6 +12,7 @@ case "${OSTYPE}" in
   *) export OSNAME=unknown ;;
 esac
 export PATH="${HOME}/.local/bin:/opt/homebrew/bin:${PATH}"
+export EDITOR=vi
 export USERBIN="${USERBIN:-"${HOME}/.local/bin"}"
 
 # ------[ Terminal settings ]--------------------------------------------------

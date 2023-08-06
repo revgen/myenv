@@ -131,7 +131,7 @@ update() {
     git remote prune origin || exit 1
     git tag -l | xargs git tag -d 2>/dev/null >/dev/null
     git fetch --tags --all || exit 1
-    echo "Geting latest tag..."
+    echo "Getting latest tag..."
     printf " * [latest tag]      "; git tag -l --sort=-version:refname | head -n 1
     new_version=$(git tag | sort --version-sort | tail -n 1)
     repo_url=$(git config --get remote.origin.url 2>/dev/null)

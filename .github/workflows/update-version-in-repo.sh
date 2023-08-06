@@ -9,7 +9,7 @@ update_sh_file() {
     echo "Putting new version ${version} to the ${filepath} file..."
     cp "${filepath}" "${filepath}.orig"
     cat "${filepath}.orig" \
-    | sed 's/^VERSION=[0-9]*\.[0-9]\.[0-9]/VERSION='"${version}"'/' \
+    | sed 's/^VERSION=[0-9]*\.[0-9]*\.[0-9]*/VERSION='"${version}"'/' \
     > "${filepath}" && rm -f "${filepath}.orig"
     grep "^VERSION=" "${filepath}"
     echo "Done with the ${filepath} file"

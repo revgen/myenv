@@ -71,6 +71,6 @@ case ${errmsg} in
     "") errcode=1; msg="ERROR: (empty) No response received from the server. This may be due to rate limiting, timeout or a server-side problem." ;;
     *) errcode=1; msg="ERROR: (error: ${resp}) Could not understand the response from No-IP. The DNS update server may be down." ;;
 esac
-logger -t "${SCRIPT_NAME}" "${msg}"
+logger -t "[${SCRIPT_NAME}]" "${msg}"
 echo "[${SCRIPT_NAME}] ${msg}"
 exit "${errcode}"

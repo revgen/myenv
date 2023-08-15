@@ -114,10 +114,14 @@ update_symlinks_to_home() {
 
   info "Create symlinks for all paths in the ${ENV_HOME}/home/ -> ${HOME}..."
   cd "${ENV_HOME}/home"
-  find . -type f -o -type l | grep -v ".config/" | grep -v ".local/" | sed 's/^\.\///g' \
+  find . -type f -o -type l | grep -v ".config/" | grep -v ".local/" | grep -v "\.gitconfig.local" | sed 's/^\.\///g' \
   | while read f; do
       _create_symlinks "${ENV_HOME}/home/${f}" "${HOME}/${f}"
   done
+  # Create files if it is not exists (local specific)
+  if [ ! -f "${HOME}/.gitconfig.local" ]; then
+    cp -v ".gitconfig.local" "${HOME}/.gitconfig.local"
+  fi
   cd - >/dev/null
   _create_symlinks "${ENV_HOME}/${ENV_NAME}" "${BIN_DIR}/${ENV_NAME}"
   chmod +x "${BIN_DIR}/${ENV_NAME}"

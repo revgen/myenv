@@ -11,6 +11,7 @@ ignore = [
     "ANN204",
     "TRY003",
     "UP007",
+    "PT009",
 ]
 
 # File specific settings

@@ -78,6 +78,7 @@ alias tig='tig --all'
 alias hex='xxd'
 alias tohex='xxd -p'
 alias fromhex='xxd -p -r'
+alias json-minify='jq -r tostring'
 
 alias nocomments='sed "s/#\!/@#\!/g" | grep  "^[^\s*\(#\|$\)]" | sed "s/@#\!/#\!/g"'
 

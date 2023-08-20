@@ -79,12 +79,13 @@ remove_symlinks_from_bin() {
 
 _make_symlinks_to_bin() {
   dir="${1:-"/tmp/not-exists"}"
-  debug "Making symlink bin/* -> ${dir} ..."
+  debug "Making symlink ${BIN_DIR}/* -> ${dir}/* ..."
   if [[ ! -d "${dir}" ]]; then
      debug "Directory ${dir} not exists. Skip."
      return 0
   fi
-  find "${1:-"/tmp/not-exists"}" -type f | while read -r f; do
+  find "${dir}" -type f -or -type l | while read -r f; do
+    debug "Processing ${f} file..."
     if [[ -x "${f}" ]]; then
       name="$(basename "${f}")"
       _create_symlinks "${PWD}/${f}" "${BIN_DIR}/${name}"

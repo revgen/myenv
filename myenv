@@ -79,6 +79,7 @@ remove_symlinks_from_bin() {
 
 _make_symlinks_to_bin() {
   dir="${1:-"/tmp/not-exists"}"
+  debug "Making symlink bin/* -> ${dir} ..."
   if [[ ! -d "${dir}" ]]; then
      debug "Directory ${dir} not exists. Skip."
      return 0
@@ -130,7 +131,9 @@ update_symlinks_to_home() {
 
 update() {
     cd "${ENV_HOME}" || exit 1
-    info "Updating ${ENV_NAME} v${VERSION} environment in ${ENV_HOME}..."
+    info "You are using ${ENV_NAME} v${VERSION} environment on ${OSNAME} system."
+    info "Environemnt home directory is '${ENV_HOME}'"
+    echo "Updating..."
     debug "Reset to the ${REPO_BRANCH}:HEAD"
     git remote prune origin || exit 1
     git tag -l | xargs git tag -d 2>/dev/null >/dev/null

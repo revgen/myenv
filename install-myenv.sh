@@ -13,7 +13,7 @@
 if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
 # --[ Project specific constants ]--------------------------------------------
-VERSION=1.0.26
+VERSION=1.0.27
 ENV_NAME=myenv
 REPO_NAME="${ENV_NAME}"
 REPO_URL_SSH="git@github.com:revgen/${REPO_NAME}.git"

@@ -125,8 +125,17 @@ setup_05_setup_rc_local() {
             echo "Looks like rc.local already setup. Skip"
         else
             if [ ! -f /etc/rc.local ]; then
-                ( echo '#!/bin/bash'; echo 'exit 0') | sudo tee /etc/rc.local
+                (
+                    echo '#!/bin/bash'
+                    echo 'logger -st "rc.local" "Start execution at $(date +%FT%T%z)"'
+                    echo ""
+                    echo "# put your custom code here"
+                    echo ""
+                    echo 'logger -st "rc.local" "Stop execution at $(date +%FT%T%z)"'
+                    echo 'exit 0'
+                ) | sudo tee /etc/rc.local
             fi
+            sudo chmod +x /etc/rc.local
             if [ ! -f /etc/systemd/system/rc-local.service ]; then
                 (
                     echo "[Unit]"
@@ -160,7 +169,7 @@ setup_21_install_docker() {
         if prompt_ny_slim "Add user to the docker group"; then
             read -p "Input username (default: ${USER}): " opt
             sudo usermod -a -G docker "${opt:-"${USER}"}"
-            id "${USER}"
+            id "${opt:-"${USER}"}"
         fi
     fi
 }
@@ -198,7 +207,7 @@ setup_20_add_user() {
             sudo adduser --home "/home/${new_user}" --shell /bin/bash --quiet --disabled-password \
                 --gecos "${new_user}" "${new_user}" || return 1
             new_pass="$(head -c 32 /dev/random  | base64 | head -c 32)"
-            echo "${new_user}:${new_pass}" | chpasswd
+            echo "${new_user}:${new_pass}" | sudo chpasswd
             if which startxfce4 >/dev/null; then    # if xfce, add User Letter to the Avatar
                 user_letter="$(echo "${user_name}" | tr [:lower:] [:upper:] | head -c 1)"
                 wget -O /tmp/.face "https://placehold.co/96x96/283C50/FFFFFF/png?text=${user_letter}"

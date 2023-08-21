@@ -167,7 +167,7 @@ setup_21_install_docker() {
 # -----------------------------------------------------------------------------
 setup_99_enable_firewall_open_ssh_http() {
     if prompt_ny "Setup firewall: ports 22,80,443 were openned"; then
-        if ! which ufw >/dev/null; sudo apt install -y ufw; fi
+        if ! which ufw >/dev/null; then sudo apt install -y ufw; fi
         sudo ufw allow ssh
         sudo ufw allow http
         sudo ufw allow https

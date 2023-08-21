@@ -63,33 +63,19 @@ setup_01_remove_snapd_package() {
 }
 # -----------------------------------------------------------------------------
 setup_02_install_core_tool_01() {
-    if prompt_ny "Install core tools #1 (neovim, screen, mc, htop, tree, lynx)"; then
+    if prompt_ny "Install core tools #1 (neovim, screen, mc, htop, tree, lynx, git)"; then
         sudo apt -y purge vim vim-tiny vim-common
-        sudo apt -y install curl wget mc htop screen neovim tree net-tools
+        sudo apt -y install curl wget mc htop screen neovim tree net-tools git
+        sudo cp -v /etc/bash.bashrc /etc/bash.bashrc.$(date +%s)
+        (echo ''; echo 'export EDITOR=vi'; echo '') | sudo tee -a /etc/bash.bashrc
     fi
 }
 setup_02_install_core_tool_02() {
-    if prompt_ny "Install core tools #2 (git, p7zip-full)"; then
-        sudo apt -y install git tig p7zip-full
-    fi
-}
-setup_02_install_core_tool_03() {
     if prompt_ny "Install core tools #2 (inxi, duf)"; then
         sudo apt -y install inxi
         rm -f /tmp/duf.deb
         wget -O /tmp/duf.deb https://github.com/muesli/duf/releases/download/v0.8.1/duf_0.8.1_linux_amd64.deb
         sudo apt install /tmp/duf.deb
-    fi
-}
-setup_02_install_my_tools() {
-    if prompt_ny "Install my core tools (session, telebot, sysinfo)"; then
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/session"
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/sysinfo"
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/localip"
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/externalip"
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/tools/telebot"
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/tools/ddclient"
-        download_app "https://raw.githubusercontent.com/revgen/myenv/master/tools/gitlab"
     fi
 }
 # -----------------------------------------------------------------------------
@@ -121,7 +107,19 @@ setup_02_install_xwindow_tools() {
     fi
 }
 # -----------------------------------------------------------------------------
-setup_03_setup_rc_local() {
+setup_03_install_my_tools() {
+    if prompt_ny "Install my core tools (session, telebot, sysinfo)"; then
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/session"
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/sysinfo"
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/localip"
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/home/.local/bin/externalip"
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/tools/telebot"
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/tools/ddclient"
+        download_app "https://raw.githubusercontent.com/revgen/myenv/master/tools/gitlab"
+    fi
+}
+# -----------------------------------------------------------------------------
+setup_05_setup_rc_local() {
     if prompt_ny "Enable rc.local"; then
         if [ -f /etc/systemd/system/rc-local.service ] && [ -f /etc/rc.local ]; then
             echo "Looks like rc.local already setup. Skip"
@@ -169,6 +167,7 @@ setup_21_install_docker() {
 # -----------------------------------------------------------------------------
 setup_99_enable_firewall_open_ssh_http() {
     if prompt_ny "Setup firewall: ports 22,80,443 were openned"; then
+        if ! which ufw >/dev/null; sudo apt install -y ufw; fi
         sudo ufw allow ssh
         sudo ufw allow http
         sudo ufw allow https
@@ -196,14 +195,17 @@ setup_20_add_user() {
         new_user="${opt}"
         [ -z "${new_user}" ] && return 0
         if prompt_ny_slim "Do you want to add '${new_user}' user to the system"; then
-            sudo adduser --home "/home/${new_user}" --shell /bin/bash --gecos "" "${new_user}" || return 1
-            # if which startxfce4 >/dev/null; then    # if xfce, add User Letter to the Avatar
+            sudo adduser --home "/home/${new_user}" --shell /bin/bash --quiet --disabled-password \
+                --gecos "${new_user}" "${new_user}" || return 1
+            new_pass="$(head -c 32 /dev/random  | base64 | head -c 32)"
+            echo "${new_user}:${new_pass}" | chpasswd
+            if which startxfce4 >/dev/null; then    # if xfce, add User Letter to the Avatar
                 user_letter="$(echo "${user_name}" | tr [:lower:] [:upper:] | head -c 1)"
                 wget -O /tmp/.face "https://placehold.co/96x96/283C50/FFFFFF/png?text=${user_letter}"
                 sudo mv -v /tmp/.face "/home/${new_user}/.face" || return 1
                 sudo chown -v "${new_user}:${new_user}" "/home/${new_user}/.face" || return 1
                 sudo chmod -v 0640 "/home/${new_user}/.face" || return 1
-            # fi
+            fi
             echo "User '${new_user}' added"
         fi
     done

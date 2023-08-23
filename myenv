@@ -314,17 +314,17 @@ list() {
     echo "--[ Aliases ]-----------"
     (
         grep "^alias" "${ENV_HOME}/home/.config/${ENV_NAME}/bashrc" | sed 's/^alias //g' | sed "s/=/ = /g" | sort
-    ) | sort
+    ) | sort | sed 's/^/* /g'
     echo ""
     echo "--[ Tools ]-------------"
     (
         find "${ENV_HOME}/home/.local/bin/" -type f -exec basename "{}" \;
-    ) | sort
-    if [[ "${1:-""}" != "extra" ]]; then return; fi
+    ) | sort | sed 's/^/* /g'
+    echo ""
     echo "--[ Tools: extra ]------"
     (
         find "${ENV_HOME}/tools/" -type f -exec basename "{}" \;
-    ) | sort
+    ) | sort | sed 's/^/* /g'
     
     
 }

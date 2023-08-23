@@ -1,2 +1,2 @@
 #!/bin/sh
-open -a iBooks.app "$1"
+open -a iBooks.app "${1}"

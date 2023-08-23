@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-logfile=${HOME}/speedtest.log
+logfile=${HOME}/.speedtest.log
 echo "Check internet speed with speedtest-cli tool (logfile=${logfile})"
 res=$((speedtest --simple || echo "Error from speedtest-cli: code=$?") | tr '\n' ', ')
 echo "$(date +"%Y-%m-%d %H:%M:%S") ${res}" >> "${logfile}"

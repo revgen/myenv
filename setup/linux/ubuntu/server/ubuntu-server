@@ -67,7 +67,11 @@ setup_02_install_core_tool_01() {
         sudo apt -y purge vim-tiny
         sudo apt -y purge vim
         sudo apt -y purge vim-common vim-runtime
-        sudo apt -y install curl wget mc htop screen neovim tree net-tools dnsutils git lynx jq yq ncdu
+        sudo apt -y install curl wget mc htop screen neovim tree net-tools dnsutils git lynx jq ncdu
+
+        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod a+x /usr/local/bin/yq
+
         sudo cp -v /etc/bash.bashrc /etc/bash.bashrc.$(date +%s)
         (echo ''; echo 'export EDITOR=vi'; echo '') | sudo tee -a /etc/bash.bashrc
     fi

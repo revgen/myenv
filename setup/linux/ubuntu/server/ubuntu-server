@@ -64,8 +64,10 @@ setup_01_remove_snapd_package() {
 # -----------------------------------------------------------------------------
 setup_02_install_core_tool_01() {
     if prompt_ny "Install core tools #1 (neovim, screen, mc, htop, tree, lynx, git)"; then
-        sudo apt -y purge vim vim-tiny vim-common
-        sudo apt -y install curl wget mc htop screen neovim tree net-tools git
+        sudo apt -y purge vim-tiny
+        sudo apt -y purge vim
+        sudo apt -y purge vim-common vim-runtime
+        sudo apt -y install curl wget mc htop screen neovim tree net-tools dnsutils git lynx jq yq ncdu
         sudo cp -v /etc/bash.bashrc /etc/bash.bashrc.$(date +%s)
         (echo ''; echo 'export EDITOR=vi'; echo '') | sudo tee -a /etc/bash.bashrc
     fi

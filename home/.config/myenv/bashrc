@@ -70,6 +70,7 @@ alias lynx='lynx -accept_all_cookies'
 
 alias vd='LC_ALL="${LC_ALL:-"en_US.UTF-8"}" vd'
 alias csvview='vd'
+alias qview='gqview'
 
 alias lower='tr "[:upper:]" "[:lower:]"'
 alias upper='tr "[:lower:]" "[:upper:]"'
@@ -92,6 +93,19 @@ alias docker-clean-unused='echo "Prune images..."; docker image prune -f; echo "
 ls-recursively() { find ${1:-"${PWD}"} -type f -print0 | xargs -0 ls -al; }
 du0() { du -xhd ${2:-"0"} "${1:-"."}" | sort -rhk1; }
 du1() { du0 1; }
+
+rmdir-empty() {
+    wd="${1:-"."}"
+    echo "All empty directories inside ${wd}:"
+    find "${wd}" -type d -empty -print
+    read -r -p "Do you want to delete all empty directories (Y/n)? " opt
+    if [ "${opt:-"y"}" == "y" ] || [ "${opt}" != "Y" ]; then
+        find "${wd}" -type d -empty -print -delete
+    else
+        echo "Exit"
+        return 1
+    fi
+}
 
 #-- Git settions --------------------------------------------------------------
 if [ -f "${HOME}/.git_completion" ]; then . "${HOME}/.git_completion"; fi

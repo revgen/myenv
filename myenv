@@ -143,6 +143,7 @@ update() {
     git diff --stat HEAD..origin/${REPO_BRANCH}
     echo "Getting latest tag..."
     printf " * [latest tag]      "; git tag -l --sort=-version:refname | head -n 1
+    echo " * [local version]   ${VERSION}"
     new_version=$(git tag | sort --version-sort | tail -n 1)
     repo_url=$(git config --get remote.origin.url 2>/dev/null)
     info "The remote repository '${repo_url} (${REPO_BRANCH})' has a version == ${new_version}."

@@ -1,0 +1,23 @@
+#!/bin/bash
+#=============================================================
+## Small script to test audio settings
+#=============================================================
+audio_file="https://github.com/revgen/myenv/releases/download/0.0.1/left-right-channel-audio-test-01.mp3"
+cache_dir="${HOME}/.cache"
+mkdir -p "${cache_dir}"
+cache_file="${cache_dir}/test-audio.mp3"
+
+if [ ! -f "${cache_file}" ]; then
+    echo "Audio test file '${cache_file}' not found. Downloading it..."
+    curl -L -o "${cache_file}" "${audio_file}" || exit 1
+fi
+
+echo "Playing ${cache_file} file (press Ctrl+C if you want to stop)..."
+if [ "$(uname -s)" == "Darwin" ]; then
+    afplay --debug "${cache_file}"
+else
+    ffplay -nodisp -autoexit "${cache_file}"
+fi
+
+echo "Play ${cache_file} file complete."
+echo "If you didn't hear a sound there are some problem wiht your audio settings"

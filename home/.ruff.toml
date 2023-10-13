@@ -3,19 +3,34 @@ select = ["ALL"]
 line-length = 120
 target-version = "py39"
 
+pylint = {max-args = 7, max-branches = 14}
+
 ignore = [
-    "D", "EM", "G", "FBT", "PGH", "TD", "FIX", 
+    "D", "T", "EM", "G", "FBT", "PGH", "TD", "FIX", "ERA",
     "ANN002",
     "ANN003",
     "ANN101",
     "ANN204",
+    "E402",
+    "I001",
+    "Q003",
     "TRY003",
     "UP007",
     "PT009",
+    "SIM105",
+    "RET504",
+
+    "DTZ005",
+    "PERF401",
+    "BLE001",
+    "TRY301",
+    "TRY300",
+    "ANN401",
+
 ]
 
 # File specific settings
 # Ignore: E401 - imported but unused
-per-file-ignores = {"__init__.py" = ["F401"]}
+per-file-ignores = {"__init__.py"=["F401"], "*cli*.py"=["T201"], "setup.py"=["INP001"]}
 
 flake8-quotes = {docstring-quotes = "double", inline-quotes = "double", multiline-quotes = "double"}

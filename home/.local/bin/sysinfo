@@ -17,7 +17,24 @@ case "$(uname -s | tr "[:upper:]" "[:lower:]")" in
   *)        OSNAME=unknown ;;
 esac
 export OSNAME="${OSNAME}"
+export TTY="$(basename "$(tty 2>/dev/null)")"
 #------------------------------------------------------------------------------
+hardware_info() {
+    if [ -f /sys/firmware/devicetree/base/model ]; then     # Raspbian
+        cat /sys/firmware/devicetree/base/model | xargs -0; echo ""
+        return 0
+    fi
+    if [ -f /sys/devices/virtual/dmi/id/board_name ]; then
+        echo "$(cat /sys/devices/virtual/dmi/id/board_name) $(cat /sys/devices/virtual/dmi/id/board_vendor)"
+        return 0
+    fi
+    if [[ "${OSNAME}" == "macos" ]]; then               # MacBook
+        defaults read ~/Library/Preferences/com.apple.SystemProfiler.plist 'CPU Names' \
+            | grep "=" | cut -d"=" -f 2 | sed "s/[ \";]//g" | sed 's/(/ (/g'
+        return 0
+    fi
+    echo "Unknown hardware"
+}
 os_info() {
     # MasOC OS information
     if [[ "${OSNAME}" == "macos" ]]; then
@@ -73,7 +90,7 @@ cpu_info() {
 disk_info() {
     if [[ "${OSNAME}" == "macos" ]]; then
         df -h | grep "/dev/disk" | grep -v "/private" | grep -v "nobrowse" \
-        | grep -v "auto_home" | awk '{print ""$4"/"$2" free "$9}'
+        | grep -v "auto_home" | awk '{print ""$4"/"$2" free "$9}' | grep -v "/System/Volumes"
     else
         df -h | grep "/$\|/mnt/" | awk '{print ""$4"/"$2" free "$6}'
     fi
@@ -119,15 +136,22 @@ username() {
     else grep ":${UID}:" /etc/passwd | cut -d":" -f1; fi
 }
 #------------------------------------------------------------------------------
-show_slim_info() {
+terminal_info() {
+    size="$(tput cols 2>/dev/null || 'X')x$(tput lines 2>/dev/null || 'X')"
+    echo "${TTY}, ${SHELL}, ${size}"
+}
+#------------------------------------------------------------------------------
+show_normal_info() {
     echo "----[ System information ]--------------------------------"
     echo "Hostname  : $(hostname)"
     echo "Users     : $(active_users)"
-    echo "OS        : $(os_info) ($(platform))"
+    echo "System    : $(os_info) ($(platform))"
     echo "Uptime    : $(show_uptime)"
     echo "----------------------------------------------------------"
+    echo "Hardware  : $(hardware_info)"
     echo "CPU       : $(cpu_info)"
-    cpu_info_ext | sed 's/^%//g' | sed 's/Cpu(s)/Cpu(s) /g'
+    cpu_info_ext | sed 's/^%//g' | sed 's/Cpu(s)/Cpu(s) /g' \
+    | sed 's/PhysMem/Mem    /g' | sort
     echo "----------------------------------------------------------"
     echo "Local IP  : $(local_ip)"
     echo "Public IP : $(public_ip)"
@@ -135,8 +159,13 @@ show_slim_info() {
     echo "----------------------------------------------------------"
     disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
     echo "----------------------------------------------------------"
+    echo "Terminal  : $(terminal_info)"
+    echo "----------------------------------------------------------"
     echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"
+}
+show_slim_info() {
+    show_normal_info | grep -v '^-'
 }
 #------------------------------------------------------------------------------
 show_banner() {
@@ -168,12 +197,13 @@ execute_inxi() {
     inxi -mF
 }
 #------------------------------------------------------------------------------
-arg1=${1:-"--simple"}
+arg1=${1:-"--normal"}
 case "${arg1}" in
     help|--help|h|-h)
         sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${0##*/}"'/g'
         exit 255;;
-    simple|--simple|-S) show_slim_info ;;
+    notmal|--normal|-N) show_normal_info ;;
+    slim|--slim|simple|--simple|-S) show_slim_info ;;
     banner|--banner|-B) show_banner ;;
     full|--full|-F) execute_inxi ;;
     *) execute_inxi "$*" ;;

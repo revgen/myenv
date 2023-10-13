@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+script_name="$(basename "${0}")"
+
+find_drive() {
+    disk_name="${1}"
+    blkid  | grep "${disk_name}" | cut -d":" -f1
+}
+
+mount_usb_disk() {
+    disk_name="${1}"
+    mount_point="${2}"
+    opt="${3}"
+    echo "Mounting ${disk_name} -> ${mount_point}..."
+    disk_id="$(find_drive "${disk_name}")"
+    if [ -z "${disk_id}" ]; then
+        echo "- Disk: not found"
+        return 1
+    else   
+        echo "- DiskPath: ${disk_id}"
+    fi
+    echo "- Mounting..."
+    if mount | grep "${disk_id}" | grep -q "${mount_point}"; then
+        echo "- Disk already mounted"
+    else
+        mount ${opt} "${disk_id}" "${mount_point}"
+        if [ $? -ne 0 ]; then
+            echo "Error"
+            return 1
+        fi
+        echo "- Disk mounted to ${mount_point}"
+    fi
+    return 0
+}
+
+mount_disks() {
+    mount_usb_disk "disk1" "/mnt/disk1"
+}
+
+start_service() {
+    delay_sec=60
+    while true; do
+        (
+        echo "Check disks at $(date +"%F %T %Z")"
+        mount_disks
+        echo "Wait ${delay_sec} sec...."
+        ) >> "/tmp/${script_name}.log"
+        sleep ${delay_sec}
+    done
+}
+
+case "${1}" in
+    -d|--daemon|--service) start_service;;
+    "") mount_disks;;
+    help|--help) echo "Show: $(basename "${0}") -d"; exit 1;;
+    *) echo "Error: command '${1}' not found"; exit 1;;
+esac
+

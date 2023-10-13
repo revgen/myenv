@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# https://manpages.ubuntu.com/manpages/jammy/man1/streamripper.1.html
+
+output="${HOME}/Music/Downloads/radio"
+# def_url="http://ice2.somafm.com/deepspaceone-128-mp3"
+def_url="http://ice6.somafm.com/missioncontrol-128-mp3"
+
+trap cleanup INT
+
+cleanup() {
+  echo "Cleanup in the ${output} directory..."
+  target="${output}/ad"
+  mkdir -p "${target}"
+  size=2000000
+  echo "Move all files less than ${size} into the ${target}"
+  find "${output}" -type f -maxdepth 1 -size -2000000c -exec mv -fv "{}" "${output}/ad/" \;
+  echo "Cleanup - done"
+}
+
+radio_ripper() {
+  url="${1:-"${def_url}"}"
+  def_name="$(basename "$(echo "${url}" | cut -d"?" -f1 | cut -d"-" -f1)")"
+  name="${2:-"${def_name}"}"
+  port=8701
+  output="${output}/${name}"
+  mkdir -p "${output}"
+  echo "Rip audio from the '${url}' into the '${output}' ..."
+  # limit 1GB
+  streamripper "${url}" \
+    -d "${output}" \
+    -D "%A-%T" \
+    -o never \
+    -M 1024 \
+    -m 60 \
+    -r ${port} \
+    -R 5 \
+    -z \
+    -k 1 \
+    -u "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101 Firefox/78.0"
+}
+
+radio_ripper "${@}"
+

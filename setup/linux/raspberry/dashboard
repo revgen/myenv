@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+##############################################################################
+# Show system information in the terminal
+##############################################################################
+exit_flag=0
+delay="${DASHBOARD_REFRESH_SEC:-"30"}"
+trap cleanup SIGINT SIGTERM ERR EXIT
+cleanup() { echo -e "\033[0m"; exit_flag=1; clear; }
+
+
+#echo -e "\033[44m"
+echo -e "\e[1;44m\033[1;33m"
+dashboard_log="${HOME}/.local/var/tmp"
+mkdir -p "${dashboard_log}"
+dashboard_log="${dashboard_log}/dashboard.log"
+TTY="$(basename "$(tty)")"
+
+while [ "${exit_flag}" == "0" ]; do
+    clear
+    echo "Loading system information..."
+    (
+    sysinfo --simple | grep -v '^-' \
+    | grep -v "^Local time" | grep -v "^UTC" | grep -v 'Cpu(s)' || exit 1
+    printf "Updated   : $(date +"%F %T %Z")"
+    ) > "${dashboard_log}"
+    clear
+    cat "${dashboard_log}"
+    if [ -d /var/www/html ]; then
+        (
+        echo "<html><hed><title>$(hostname) - sysinfo</title></head>"
+        echo "<body><pre>"
+        cat "${dashboard_log}"
+        echo "</pre></body></html>"
+        ) > /var/www/html/status/index.html
+    fi
+    sleep ${delay}
+done
+echo -e "\033[0m"
+

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1.0.47
+VERSION=1.0.46
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:
@@ -144,7 +144,7 @@ update() {
     echo "Getting latest tag..."
     printf " * [latest tag]      "; git tag -l --sort=-version:refname | head -n 1
     echo " * [local version]   ${VERSION}"
-    new_version=$(git tag -l --sort=-version:refname | tail -n 1)
+    new_version=$(git tag -l --sort=-version:refname | head -n 1)
     repo_url=$(git config --get remote.origin.url 2>/dev/null)
     info "The remote repository '${repo_url} (${REPO_BRANCH})' has a version == ${new_version}."
     if prompt_yn "Do you really want to update (Y/n)?"; then
@@ -185,7 +185,7 @@ check_new_version() {
     echo -n "${today}" > "${stat_file}"
     cd "${ENV_HOME}" || exit 1
     git fetch --all >/dev/null || exit 1
-    new_version="$(git tag -l --sort=-version:refname | tail -n 1)"
+    new_version="$(git tag -l --sort=-version:refname | head -n 1)"
     new_version="${new_version:-"0.0.1"}"
     if [[ "${new_version}" == "${VERSION}" ]]; then info "Current version ${VERSION} is up to date"; return 1; fi
     error "The ${ENV_NAME} has a new version ${new_version}. To update it use a command \"${ENV_NAME} update\"."
@@ -196,7 +196,7 @@ install_local() {
     cd "${ENV_HOME}" >/dev/null || exit 1
     git fetch || exit 1
     git checkout "${REPO_BRANCH}" || exit 1
-    # version="$(git tag -l --sort=-version:refname | tail -n 1)"
+    # version="$(git tag -l --sort=-version:refname | head -n 1)"
     version="${VERSION}"
     info "Script is installing '${ENV_NAME} v${version}' environment."
     info "The '${ENV_NAME}' environment directory is $(pwd || true)"

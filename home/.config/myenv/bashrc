@@ -114,6 +114,9 @@ if [ -f "${HOME}/.git_completion" ]; then . "${HOME}/.git_completion"; fi
 if [ -r "${MYENVHOME}/home/.config/${MYENVNAME}/bashrc_${OSNAME}" ]; then
     . "${MYENVHOME}/home/.config/${MYENVNAME}/bashrc_${OSNAME}"
 fi
+#-- Terminal settings ---------------------------------------------------------
+[ ! -d "${HOME}/.local/var/tmp" ] && mkdir -p "${HOME}/.local/var/tmp"
+echo "${COLUMNS}x${LINES}" > "${HOME}/.local/var/tmp/$(basename $(tty))-geometry"
 
 # ------[ Customer welcome screen ]--------------------------------------------
 if ! command -v "${MYENVNAME}" >/dev/null; then

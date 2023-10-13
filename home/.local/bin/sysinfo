@@ -154,7 +154,12 @@ show_normal_info() {
     echo "----------------------------------------------------------"
     disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
     echo "----------------------------------------------------------"
-    echo "Terminal  : ${TTY}, ${SHELL}, ${COLUMNS}x${LINES}"
+    printf "Terminal  : ${TTY}, ${SHELL}, "
+    if [ -n "${COLUMNS}" ]; then
+        echo "${COLUMNS}x${LINES}"
+    else
+        cat "${HOME}/.local/var/tmp/${TTY}-geometry" 2>/dev/null
+    fi
     echo "----------------------------------------------------------"
     echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"

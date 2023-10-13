@@ -30,7 +30,7 @@ hardware_info() {
     fi
     if [[ "${OSNAME}" == "macos" ]]; then               # MacBook
         defaults read ~/Library/Preferences/com.apple.SystemProfiler.plist 'CPU Names' \
-            | grep "=" | cut -d"=" -f 2 | sed "s/[ \";]//g" | sed 's/(/ (/g'
+            | grep "=" | head -n 1 | cut -d"=" -f 2 | sed "s/[ \";]//g" | sed 's/(/ (/g'
         return 0
     fi
     echo "Unknown hardware"
@@ -72,7 +72,7 @@ platform() {
 #------------------------------------------------------------------------------
 cpu_info_ext() {
     if [[ "${OSNAME}" == "macos" ]]; then
-        top -l 1 -s 0 | awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
+        top -l 1 -s 0 -n 0| awk ' /Processes/ || /PhysMem/ || /Load Avg/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}'
     else
         top -bn 1 | sed 's/:[ ]*/: /g' | awk ' /Cpu/ || /Mem/{print}' | awk -F":" '{printf "%-10s:%s\n", $1, $2}' | sed 's/,   /, /g' | sed 's/,  /, /g'
     fi
@@ -136,11 +136,6 @@ username() {
     else grep ":${UID}:" /etc/passwd | cut -d":" -f1; fi
 }
 #------------------------------------------------------------------------------
-terminal_info() {
-    size="$(tput cols 2>/dev/null || 'X')x$(tput lines 2>/dev/null || 'X')"
-    echo "${TTY}, ${SHELL}, ${size}"
-}
-#------------------------------------------------------------------------------
 show_normal_info() {
     echo "----[ System information ]--------------------------------"
     echo "Hostname  : $(hostname)"
@@ -159,7 +154,7 @@ show_normal_info() {
     echo "----------------------------------------------------------"
     disk_info | sed 's/^/  : /g' | cat -n |  sed 's/^[ ]*/Disk-/g'
     echo "----------------------------------------------------------"
-    echo "Terminal  : $(terminal_info)"
+    echo "Terminal  : ${TTY}, ${SHELL}, ${COLUMNS}x${LINES}"
     echo "----------------------------------------------------------"
     echo "Local time: $(date +"%Y-%m-%d %T %Z (%a)")"
     echo "UTC time  : $(date -u +"%Y-%m-%d %T %Z (%a)")"

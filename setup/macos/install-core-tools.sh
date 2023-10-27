@@ -5,6 +5,14 @@ title() {
     echo $@
     echo "----------------------------------------------------------------------"
 }
+
+title "Install pip for the system $(python --version)"
+if [ -z "$(which pip)" ]; then
+    sudo easy_install pip
+else
+    echo "Pip already installed in the system: $(which pip)"
+fi
+
 mkdir -p ~/.local/bin 2>/dev/null
 
 echo ""

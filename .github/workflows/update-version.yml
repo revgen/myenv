@@ -49,7 +49,7 @@ jobs:
           if [ -n "${NEW_VERSION}" ]; then
             git config user.name "${GIT_USERNAME}"
             git config user.email "${GIT_EMAIL}"
-            ./.github/workflows/update-version-in-repo.sh "${NEW_VERSION}"
+            ./.github/scripts/update-version-in-repo.sh "${NEW_VERSION}"
             echo "Create a new commit with changes: version=${NEW_VERSION}"
             git add -A
             git commit -am "Update version: ${NEW_VERSION} [skip ci]"

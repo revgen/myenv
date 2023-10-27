@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa
 import sys
 import xml.etree.ElementTree as ET
 import xmltodict

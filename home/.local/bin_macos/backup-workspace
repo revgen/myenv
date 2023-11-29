@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+title() {
+    echo "------------------------------------------------------------"
+    echo "${@}"
+}
+cd "$(dirname "${0}")"
+echo "Working directory is ${PWD}"
+
+title "Backup chrome"
+../../../tools/chrome.sh backup
+
+title "Backup private-workspace"
+./private-workspace backup
+
+title "Done"

@@ -14,8 +14,10 @@ backup_bookmarks() {
     if [ ! -f "${bookmark_file}" ]; then echo "Error: bookmark file not found: ${bookmark_file}"; exit 1; fi
     mkdir -p "${BACKUP_TARGET}"
     echo "Backup chrome bookmarkds into the '${BACKUP_TARGET}' directory"
-    cp -vf "${bookmark_file}" "${BACKUP_TARGET}/google-chrome-bookmarks-$(date +"%F-%H%M%S").bak" || exit 1
-    echo "Done"
+    time="$(date +"%F-%H%M")"
+    target_file="${BACKUP_TARGET}/google-chrome-bookmarks-${time}.bak"
+    cat "${bookmark_file}" | gzip -v > "${target_file}" || exit 1
+    echo "Done: ${target_file}"
 }
 
 show_bookmarks() {

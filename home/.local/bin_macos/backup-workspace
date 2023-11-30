@@ -3,13 +3,13 @@ title() {
     echo "------------------------------------------------------------"
     echo "${@}"
 }
-cd "$(dirname "${0}")"
+cd "$(dirname "$(readlink -f "${0}")")"
 echo "Working directory is ${PWD}"
 
-title "Backup chrome"
+title "Execute: backup chrome script"
 ../../../tools/chrome.sh backup
 
-title "Backup private-workspace"
+title "Execute: backup private-workspace script"
 ./private-workspace backup
 
 title "Done"

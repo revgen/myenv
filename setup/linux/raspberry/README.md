@@ -2,6 +2,22 @@
 
 ## Setup
 
+## Users
+
+### Add a new user
+
+```bash
+sudo useradd -m -s /bin/bash john
+sudo usermod -a -G sudo,adm,users,gpio,spi,i2c,input,audio,video john
+sudo passwd john
+```
+
+### Change privileges for the 'pi' user: make it lower
+
+```bash
+sudo usermod -G users,gpio,input,audio,video pi
+```
+
 ### Install core tools
 
 ```bash
@@ -31,7 +47,7 @@ sudo ln -fs $(which pip3) /usr/bin/pip
 
 ```bash
 [ ! -f /etc/issue.orig ] && sudo cp -v /etc/issue /etc/issue.orig
-system_name="$(grep "Name" /etc/os-release)"
+system_name="$(grep "^NAME" /etc/os-release | cut -d"=" -f2 | sed 's/"//g')"
 system_version="$(cat /etc/debian_version)"
 (
 echo "[\l] ${system_name} ${system_version}"
@@ -54,16 +70,18 @@ echo "alias ll='ls -ahl'" >> ${HOME}/.bashrc
 You need to setup autologin into the terminal with a 'pi' user
 
 ```bash
-wget -O /home/pi/dashboard https://raw.githubusercontent.com/revgen/myenv/master/setup/linux/raspberry/dashboard
-chown pi:users /home/pi/dashboard
-chown +x /home/pi/dashboard
+wget -O /tmp/dashboard https://raw.githubusercontent.com/revgen/myenv/master/setup/linux/raspberry/dashboard
+chmod +x /tmp/dashboard
+sudo mv -v /tmp/dashboard /usr/local/bin/
+```
 
+```bash
 (
     echo "# -- Run dashboard on the first terminal screen"
     echo "if tty | grep -q 'tty1'; then"
     echo "    dashboard"
     echo "fi"
-) >> "${HOME}/.bashrc"
+) | sudo tee -a "/home/pi/.bashrc"
 ```
 
 ### Setup www home page
@@ -73,22 +91,6 @@ sudo chown master:users -R /var/www/html/
 curl -L "https://assets.raspberrypi.com/favicon.png" > /var/www/html/favicon.png
 wget -O /var/www/html/index.tmpl.html https://raw.githubusercontent.com/revgen/myenv/master/setup/linux/raspberry/index.tmpl.html
 TITLE="$(hostname)" envsubst < /var/www/html/index.tmpl.html > /var/www/html/index.html
-```
-
-## Users
-
-### Add a new user
-
-```bash
-sudo useradd -m -s /bin/bash john
-sudo usermod -a -G sudo,adm,users,gpio,spi,i2c,input,audio,video john
-sudo passwd john
-```
-
-### Change privileges for the 'pi' user: make it lower
-
-```bash
-sudo usermod -G users,gpio,input,audio,video pi
 ```
 
 ## KB

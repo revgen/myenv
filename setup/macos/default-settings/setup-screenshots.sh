@@ -22,12 +22,14 @@ echo ""
 echo "* Disable drop shadows on a screenshot"
 defaults write com.apple.screencapture disable-shadow -bool TRUE
 
-defaults write com.apple.screencapture name "Screenshot"
-
 echo "* Writing new screenshot location to the OS settings..."
+defaults write com.apple.screencapture name "screenshot"
 defaults write com.apple.screencapture location "${SCREEENSHOT_LOCATION}" && \
 killall SystemUIServer && \
 echo "Success. Location=$(defaults read com.apple.screencapture location )"
 # open -a Finder.app --args "${SCREENSHOT_LOCATION}"
 open "https://support.apple.com/en-us/HT201361"
 
+
+
+find "${SCREEENSHOT_LOCATION}" -mtime +1 | 

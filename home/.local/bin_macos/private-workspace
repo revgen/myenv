@@ -48,7 +48,8 @@ mount_image() {
     echo "Error: '${private_image}' not found."
     return 1
   fi
-  hdiutil attach -mountpoint "${mount_point}" "${private_image}" || return 1
+  echo hdiutil attach -mountpoint "${mount_point}" "${private_image}"
+  sudo hdiutil attach -mountpoint "${mount_point}" "${private_image}" || return 1
   show_mount_point
 }
 
@@ -96,7 +97,16 @@ backup_private_image() {
   backup_path="${PRIVATE_DISK_BACKUP_DIRECTORY}/${disk_name}.backup-$(date +"%u")"
   log "Backup Disk '${disk_name}' to '${backup_path}'"
   echo "" >> "${HOME}/.${script_name}.log"
-  rsync -av "${private_image}" "${backup_path}" 2>&1 >> "${HOME}/.${script_name}.log" 
+  mv -f "${backup_path}" "${backup_path}.bak"
+  rsync -av "${private_image}" "${backup_path}" 2>&1 >> "${HOME}/.${script_name}.log" || exit 1
+  rm -r "${backup_path}.bak"
+  size="$(du -sh "${private_image}" | awk '{print $1}')"
+  echo "Backup workspace
+  Source : ${private_image}
+  Target : ${backup_path}
+  Size   : ${size}
+  Updated: $(date +%FT%T)
+  " | sed 's/^[ ]*//g' > "${backup_path}.txt"
   errcode=$?
   if [ "${errcode}" == "0" ]; then
     size="$(du -sh "${backup_path}" | awk '{print $1}')"

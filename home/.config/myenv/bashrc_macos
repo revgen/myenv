@@ -13,7 +13,7 @@ fi
 if [ -z "${NODE_PATH}" ] && [ -d "/usr/local/lib/node_modules" ]; then
   export NODE_PATH=/usr/local/lib/node_modules
 fi
-PYTHON3_HOME=$(ls -d /usr/local/Cellar/python*/3* 2>/dev/null | gsort --version-sort | tail -n 1)
+PYTHON3_HOME=$(ls -d /usr/local/Cellar/python*/3* 2>/dev/null | sort --version-sort | tail -n 1)
 if [ -n "${PYTHON3_HOME}" ]; then
     export PYTHON3_HOME="${PYTHON3_HOME}"
     export PATH="${PYTHON3_HOME}/bin:${PATH}"

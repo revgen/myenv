@@ -1,0 +1,50 @@
+#!/bin/sh
+###############################################################################
+## Simple script to encrypt directory using 7zip tool 
+## 
+## NEED TO FIND A WAY DO NOT PUT PASSWORD INTO THE ARGUMENT
+###############################################################################
+line() { echo "============================================================"; }
+error() {
+    2> echo "$@"
+}
+hash() { md5sum | cut -d" " -f1; }
+get_pass() {
+    if [ ! -r "${1}" ]; then error "Key file '${1}' not found"; exit 1; fi
+    head -n 1 "${1}"
+}
+encrypt() {
+    source="${1}"
+    target="${2}"
+    key_file="${KEY:-"${KEY_FILE:-"${def_key_file}"}"}"
+    pass=$(get_pass "${key_file}")
+    line
+    echo "Backup '${source}' to '${target}'"
+    if [ ! -d "${source}" ]; then echo "Error: ${source} is not a directory"; fi
+    if [ -f "${target}" ]; then
+        read -p "File '${target}' exists. Do you want to overwrite (yes/No)? " opt
+        if [ "${opt:-"n"}" != "yes" ]; then echo "Skip"; exit 1; fi
+        echo ""
+    fi
+
+    echo "Using a '${key_file}' key file"
+    printf "Password: "; echo "${pass}" | hash | hash | hash | hash | hash | hash
+    7z a -t7z -m0=lzma2 -mx=9 -mfb=64 -md=32m -ms=on -mhe=on -p"${pass}" "${target}" "${source}" || exit 1
+    line
+    echo "Testing..."
+
+    pass=$(get_pass "${key_file}")
+    7z l -slt -p"${pass}" "${target}" || exit 1
+    line
+    ls -ahl "${target}"
+    file "${target}"
+    stat "${target}"
+    echo "Done"
+}
+
+cmd=encrypt
+if [ "${1}" == "-d" ] || [ "${1}" == "decrypt" ]; then cmd=decrypt; shift; fi
+
+def_key_file="${HOME}/.config/${USER}-$(basename "${0}").key"
+key_file="${KEY:-"${KEY_FILE:-"${def_key_file}"}"}"
+"${cmd}" "${1}" "${2}" "${key_file}"

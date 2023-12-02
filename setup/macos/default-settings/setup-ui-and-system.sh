@@ -77,9 +77,9 @@ ask "* Don't show recent application in the dock" && \
     defaults write com.apple.dock show-recents -bool false || skipped
 ask "* Do not hide non-active apps in your Dock" && \
     defaults write com.apple.dock static-only -bool FALSE || skipped
-ask "* Dock: Wipe all (default) app icons from the Dock" && \
-    defaults write com.apple.dock persistent-apps -array || skipped
-echo ""
+# ask "* Dock: Wipe all (default) app icons from the Dock" && \
+#     defaults write com.apple.dock persistent-apps -array || skipped
+# echo ""
 
 # -----------------------------------------------------------------------------
 title "System"

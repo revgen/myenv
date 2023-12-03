@@ -13,10 +13,17 @@ fi
 if [ -z "${NODE_PATH}" ] && [ -d "/usr/local/lib/node_modules" ]; then
   export NODE_PATH=/usr/local/lib/node_modules
 fi
+
 PYTHON3_HOME=$(ls -d /usr/local/Cellar/python*/3* 2>/dev/null | sort --version-sort | tail -n 1)
 if [ -n "${PYTHON3_HOME}" ]; then
     export PYTHON3_HOME="${PYTHON3_HOME}"
     export PATH="${PYTHON3_HOME}/bin:${PATH}"
+else
+    PYTHON3_HOME=$(ls -d ~/Library/Python/3.* | sort --version-sort | tail -n 1)
+    if [ -n "${PYTHON3_HOME}" ]; then
+        export PYTHON3_HOME="${PYTHON3_HOME}"
+        export PATH="${PYTHON3_HOME}/bin:${PATH}"
+    fi
 fi
 
 # Fix the DISPLAY variable if it is empty
@@ -26,10 +33,8 @@ fi
 
 if [ -f /etc/bash_completion ]; then  . /etc/bash_completion; fi
 
-if [ -d "/usr/local/opt/openssl@1.1" ]; then
-    # use openssl 1.1
-    export PATH="/usr/local/opt/openssl@1.1/bin:$PATH"
-fi
+# use openssl 1.1
+# if [ -d "/usr/local/opt/openssl@1.1" ]; then export PATH="/usr/local/opt/openssl@1.1/bin:$PATH"; fi
 
 #-- Useful aliases -----------------------------------------------------------
 alias lt='ls -ATlh'

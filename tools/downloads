@@ -1,0 +1,23 @@
+#!/bin/sh
+DOWNLOADS_LOCATION="${HOME}/Downloads"
+ARCHIVE_LOCATION="${DOWNLOADS_LOCATION}/.archive"
+
+backup_directory() {
+    days=14
+    mkdir -p "${ARCHIVE_LOCATION}"
+    target="${ARCHIVE_LOCATION}/$(date +"%Y-%m-%d")"
+    mkdir -p "${target}"
+    echo "Backup old files in the ${DOWNLOADS_LOCATION} directory (older than ${days} days)..."
+    find "${DOWNLOADS_LOCATION}" -type f -mtime +${days} | while read f; do
+        name=$(basename "${f}")
+        mv -v "${f}" "${target}/${name}"
+    done
+    echo "Done: archive=${ARCHIVE_LOCATION}"
+}
+
+cmd="${1:-open}"
+case "${cmd}" in
+    backup|bak) backup_directory ;;
+    open) open "${DOWNLOADS_LOCATION}" ;;
+    *) echo "Error: unknown command '${cmd}'"; exit 1;;
+esac

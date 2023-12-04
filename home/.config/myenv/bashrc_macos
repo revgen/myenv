@@ -39,6 +39,7 @@ if [ -f /etc/bash_completion ]; then  . /etc/bash_completion; fi
 #-- Useful aliases -----------------------------------------------------------
 alias lt='ls -ATlh'
 alias ports='lsof -i -n -P'
+alias nettop='nettop -c -t external'
 alias osinfo='sw_vers'
 alias osver='sw_vers -productVersion'
 alias srm='rm -rvP'
@@ -51,6 +52,8 @@ alias ncdu-root='sudo ncdu / --exclude /Volumes --exclude /System/Volumes --excl
 alias filerestore='testdisk'
 alias mplayer='mpv'
 alias kid3='/usr/bin/open -a kid3.app'
+alias mull-local='mutt -f /var/mail/${USER}'
+alias mail-local='mull-local'
 
 #-- Useful functions ----------------------------------------------------------
 toclip() {

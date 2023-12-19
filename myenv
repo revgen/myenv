@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1.0.63
+VERSION=1.0.64
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:

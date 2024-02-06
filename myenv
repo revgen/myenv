@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-VERSION=1.0.64
+VERSION=1.0.63
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:
 ##   list       - to see list of tools and aliases
 ##   update     - update {ENV_NAME}
+##   install    - install current myenv to the system
 ##   check      - check new version on the remote repository
 ##                use argument '--daily' if you want to check once per day only
 ##   --version  - show current information about the tool
 ##
+## Source code:
+##   https://github.com/revgen/myenv.git
+##   git clone git@github.com:revgen/myenv.git
 # ##############################################################################
 if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
@@ -116,7 +120,7 @@ update_symlinks_to_home() {
 
   info "Create symlinks for all paths in the ${ENV_HOME}/home/ -> ${HOME}..."
   cd "${ENV_HOME}/home"
-  find . -type f -o -type l | grep -v ".config/" | grep -v ".local/" | grep -v "\.gitconfig.local" | sed 's/^\.\///g' \
+  find . -type f -o -type l | grep -v ".config/${ENV_NAME}" | grep -v ".local/" | grep -v "\.gitconfig.local" | sed 's/^\.\///g' \
   | while read f; do
       _create_symlinks "${ENV_HOME}/home/${f}" "${HOME}/${f}"
   done

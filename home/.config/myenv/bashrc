@@ -94,6 +94,14 @@ ls-recursively() { find ${1:-"${PWD}"} -type f -print0 | xargs -0 ls -al; }
 du0() { du -xhd ${2:-"0"} "${1:-"."}" | sort -rhk1; }
 du1() { du0 1; }
 
+dirinfo() {
+    cd "${1:-"."}" || return 1
+    printf "Name : "; pwd
+    printf "Files: "; find . -type f | wc -l | sed 's/ //g'
+    printf "Dirs : "; find . -type d | wc -l | sed 's/ //g'
+    printf "Size : "; du -sh . | awk '{print $1}'
+}
+
 rmdir-empty() {
     wd="${1:-"."}"
     echo "All empty directories inside ${wd}:"

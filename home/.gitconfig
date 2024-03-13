@@ -11,6 +11,7 @@
     ci = commit
     co = checkout
     br = branch
+    brd = branch --sort=-committerdate
     brc = "!sh -c 'git branch | grep -e \"^*\" | cut -d\" \" -f2'"
     bra = branch -a
     pleas = push --force-with-lease

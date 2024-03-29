@@ -36,6 +36,8 @@
     remote-name = "!git remote show -n origin | grep Fetch | cut -d: -f2- | sed 's/^[ ]*//g'"
     init-repository = "!sh -c 'git-helper init'"
     daily = "!sh -c 'echo Update: branches list && git remote prune origin && echo Update: repository && git fetch' && echo Branch: $(git brc) && git changes-origin && git changes-local"
+    sync-master = "!git remote prune origin  && git fetch  && git co master && git pull --rebase"
+    sm = sync-master
     cleanup-history = "!sh -c 'du -hs \"${PWD}\"; echo \"Cleanup unnecessary files and optimize the local repository\"; git reflog expire --all --expire=now; git gc --prune=now --aggressive; du -hs \"${PWD}\"; echo \"Cleanup finished\"'"
     aliases = "!sh -c 'echo \"--[ git aliases ]-----------------\" && (git config --list | grep alias | sort)'"
     # update user.email for old commits: git change-commits GIT_AUTHOR_EMAIL "OLD-EMAIL" "NEW-EMAIL"

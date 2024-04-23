@@ -1,17 +1,50 @@
 #!/bin/sh
-read -p "Clean all firewall rules (y/N)? " opt
-if [ "${opt:-"n"}" != "y" ]; then
-    echo "Skip"
-    exit 1
-fi
-iptables -F
-iptables -X
-iptables -t nat -F
-iptables -t nat -X
-iptables -t mangle -F
-iptables -t mangle -X
-# Unlimited access to loop back
-iptables -A INPUT -i lo -j ACCEPT
-iptables -A OUTPUT -o lo -j ACCEPT
+#==============================================================================
+## Reset iptables settings
+## Usage: {SCRIPT_NAME} <help|reset>
+##
+#==============================================================================
 
-echo "Done"
+dry_run() {
+    assert_iptables
+    echo "Thes sript will do commands:"
+    grep "iptables " "${0}" | grep -v "#" | sed 's/    /> /g'
+}
+
+reset() {
+    assert_iptables
+    read -p "Clean all firewall rules (y/N)? " opt
+    if [ "${opt:-"n"}" != "y" ]; then
+        echo "Skip"
+        exit 1
+    fi
+    # TODO: add backup
+    echo "Start iptables reset process..."
+    iptables -F
+    iptables -X
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t mangle -F
+    iptables -t mangle -X
+    # Unlimited access to loop back
+    iptables -A INPUT -i lo -j ACCEPT
+    iptables -A OUTPUT -o lo -j ACCEPT
+    echo "Done"
+}
+
+assert_iptables() {
+    if ! which -s iptables >/dev/null; then
+        echo "Error: iptables command not found"
+        exit 1
+    fi
+}
+
+case "${1:-"reset"}" in
+    reset) dry_run; echo ""; reset;;
+    dry-run|check) dry_run ;;
+    help|--help|-h)
+        sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g' \
+        | sed 's/{HOME}/'~'/g'
+        exit 1;;
+    *) echo "Error: unknown command '${1}'"; exit 1;;
+esac

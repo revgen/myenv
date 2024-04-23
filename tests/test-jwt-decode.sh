@@ -22,7 +22,7 @@ test_jwt() {
 }
 
 
-cd $(dirname "${0}")/..
+cd $(dirname "${0}")/../tools/
 echo "Working directory: ${PWD}"
 errcode=0
 jwt_test_value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwidG9rZW4iOiI2Mjk5OUE2Mi1BMTAwLTQ4NEItQTBDMy1EQkE0MjQ4NzhGRDIifQ.EUcJuXk33JFs-DC9b5aiBieKs9EyROUkqjWMtQJUdLk"

@@ -83,6 +83,9 @@ alias tohex='xxd -p'
 alias fromhex='xxd -p -r'
 alias json-minify='jq -r tostring'
 
+alias cleanup-sources='myenv cleanup-sources'
+alias cleanup-downloads='myenv downloads clean'
+
 alias nocomments='sed "s/#\!/@#\!/g" | grep  "^[^\s*\(#\|$\)]" | sed "s/@#\!/#\!/g"'
 
 if ! which ctop 2>&1 >/dev/null && ! alias upper 2>/dev/null>/dev/null; then

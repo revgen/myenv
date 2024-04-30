@@ -1,23 +1,44 @@
 #!/bin/sh
+# ############################################################################
+## Work wit download directory for cli
+## Usage: {SCRIPT_NAME} <command>
+## Commands:
+##  clean   - move files older than 14 days into the Downloads/.archive, remove all files older than 60 days
+##  open    - open Download directory
+##
+## Required:
+##   trash - macos-trash tool https://github.com/sindresorhus/macos-trash (brew install macos-trash)
+# ############################################################################
+PRUNE_DAYS=14
+TRASH_DAYS=62
 DOWNLOADS_LOCATION="${HOME}/Downloads"
 ARCHIVE_LOCATION="${DOWNLOADS_LOCATION}/.archive"
 
-backup_directory() {
-    days=14
+prune_directory() {
     mkdir -p "${ARCHIVE_LOCATION}"
     target="${ARCHIVE_LOCATION}/$(date +"%Y-%m-%d")"
     mkdir -p "${target}"
-    echo "Backup old files in the ${DOWNLOADS_LOCATION} directory (older than ${days} days)..."
-    find "${DOWNLOADS_LOCATION}" -type f -mtime +${days} | while read f; do
+    echo "Prune old files in the ${DOWNLOADS_LOCATION} directory (older than ${PRUNE_DAYS} days)..."
+    find "${DOWNLOADS_LOCATION}" -mindepth 1 -maxdepth 1 -type f -mtime +${PRUNE_DAYS} | while read f; do
         name=$(basename "${f}")
         mv -v "${f}" "${target}/${name}"
     done
     echo "Done: archive=${ARCHIVE_LOCATION}"
 }
 
+trash_old_files() {
+    if ! which trash >/dev/null; then echo "Tool 'trash' not found. Install macos-trash first"; return 1; fi
+    echo "Trash old files in the ${DOWNLOADS_LOCATION} directory (older than ${TRASH_DAYS} days)..."
+    find "${DOWNLOADS_LOCATION}" -type f -mtime +${TRASH_DAYS} | while read f; do
+        trash "${f}"
+    done
+    echo "Done: archive=${ARCHIVE_LOCATION}"
+}
+
 cmd="${1:-open}"
 case "${cmd}" in
-    backup|bak) backup_directory ;;
+    help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
+    clanup|clean|prune) prune_directory && trash_old_files ;;
     open) open "${DOWNLOADS_LOCATION}" ;;
     *) echo "Error: unknown command '${cmd}'"; exit 1;;
 esac

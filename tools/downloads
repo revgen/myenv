@@ -36,10 +36,15 @@ trash_old_files() {
     echo "Done: archive=${ARCHIVE_LOCATION}"
 }
 
+cleanup_downloads() {
+    prune_directory && trash_old_files
+    tree -L 1 -dirsfirst ~/Downloads/
+}
+
 cmd="${1:-open}"
 case "${cmd}" in
     help|--help|-h) sed -n '/^##/,/^$/s/^## \{0,1\}//p' "$0" | sed 's/{SCRIPT_NAME}/'"${SCRIPT_NAME}"'/g'; exit 1;;
-    clanup|clean|prune) prune_directory && trash_old_files ;;
+    clanup|clean|prune) cleanup_downloads ;;
     open) open "${DOWNLOADS_LOCATION}" ;;
     *) echo "Error: unknown command '${cmd}'"; exit 1;;
 esac

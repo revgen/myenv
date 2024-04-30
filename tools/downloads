@@ -29,7 +29,9 @@ prune_directory() {
 trash_old_files() {
     if ! which trash >/dev/null; then echo "Tool 'trash' not found. Install macos-trash first"; return 1; fi
     echo "Trash old files in the ${DOWNLOADS_LOCATION} directory (older than ${TRASH_DAYS} days)..."
-    find "${DOWNLOADS_LOCATION}" -type f -mtime +${TRASH_DAYS} | while read f; do
+    echo "Directory at the root of the ./Downloads with '_' will not be processed."
+    find "${DOWNLOADS_LOCATION}" -type f -mtime +${TRASH_DAYS} \
+    | grep -v "^./_" | while read f; do
         echo "Move to trash: ${f}"
         trash "${f}"
     done

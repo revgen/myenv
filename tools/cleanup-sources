@@ -1,0 +1,221 @@
+#!/usr/bin/env python
+#=======================================================================
+## Script to clean up in the source code repositories
+## - The script is deleting language specific temporary files/directories.
+##   Example: node_modules, __pycache__, .pypy_cache, *.pyc, .etc
+## - Prune all git repositories: https://git-scm.com/docs/git-prune
+##
+## Usage: cleanup-sources
+##
+## Required:
+##   git - (brew install git)
+##   trash - macos-trash tool https://github.com/sindresorhus/macos-trash (brew install macos-trash)
+#=======================================================================
+from __future__ import annotations
+import os
+import subprocess
+import sys
+from collections.abc import Generator
+from pathlib import Path
+from typing import Optional
+
+
+def debug(msg: str) -> None:
+    sys.stderr.write(msg)
+    sys.stderr.write(os.linesep)
+
+def sys_exec(command: str, args: Optional[list[str]] = None,
+             stdout_enabled: bool = False) -> tuple[int, list[str]]:            # pragma: no cover
+    """ Execute command using subprocess module
+    """
+    if stdout_enabled:
+        sys.stdout.write(f"sys_exec: Arguments: command={command}, args={args}, {os.linesep}")
+    log = []
+    full_command = [command]
+    if args:
+        full_command.extend(args)
+    command2log = " ".join(full_command)
+    if stdout_enabled:
+        sys.stdout.write(f"sys_exec: Executing a command: {command2log}{os.linesep}")
+    # TODO: need to check ruff:S603
+    with subprocess.Popen(full_command, stderr=subprocess.STDOUT, stdout=subprocess.PIPE,   # noqa: S603
+                          text=True, encoding="utf-8") as proc:
+        while True:
+            output = proc.stdout.readline()                                     # type: ignore
+            if output == "" and proc.poll() is not None:
+                break
+            if stdout_enabled:
+                sys.stdout.write(output)
+            if output:
+                log.append(output.rstrip(os.linesep).rstrip("\n"))
+        errcode = proc.poll() or 0
+        if stdout_enabled:
+            sys.stdout.write(f"sys_exec: Executed (code={errcode}): {command2log}")
+        return (errcode, log)
+
+
+def show_paths(title: str, paths: list[Path], root: Path, use_parent_name: bool) -> None:
+    title_len = 25
+    if title:
+        debug(title)
+    for p in paths:
+        name = (p.parent.name if use_parent_name else p.name)[:title_len].ljust(title_len)
+        print(f"* {name}: ./{p.relative_to(root)}")
+
+def search(root: Path, mask: str) -> Generator:
+    debug(f"Searching {mask} in ${root}...")
+    counter = 0
+    for path in root.rglob(mask or "*"):
+        counter += 1
+        yield path
+    debug(f"Finish search {mask} in ${root}. Found {counter} paths.")
+
+def sqush_dirs(dirs: list[Path]) -> list[Path]:
+    res: list[Path] = []
+    for new_dir in sorted(dirs):
+        exists = None
+        for exists_dir in sorted(res):
+            if exists_dir in new_dir.parents:
+                exists = exists_dir
+                break
+        if not exists:
+            res.append(new_dir)
+    return res
+
+def sqush_files(dirs: list[Path], files: list[Path]) -> list[Path]:
+    res = []
+    for new_file in sorted(files):
+        exists_dir = None
+        for d in dirs:
+            if d in new_file.parents:
+                exists_dir = d
+                break
+        if not exists_dir:
+            res.append(new_file)
+    return res
+
+def get_all_src_paths(root: Path) -> list[Path]:
+    debug(f"Search all source paths in {root}")
+    dirs: list[Path] = []
+    dirs.extend(search(root, "__pycache__"))
+    dirs.extend(search(root, "sdist"))
+    dirs.extend(search(root, "wheels"))
+    dirs.extend(search(root, "eggs"))
+    dirs.extend(search(root, ".eggs"))
+    dirs.extend(search(root, ".egg-info"))
+    dirs.extend(search(root, "eggs"))
+    dirs.extend(search(root, ".mypy_cache"))
+    dirs.extend(search(root, ".ruff_cache"))
+    dirs.extend(search(root, ".pytest_cache"))
+    dirs.extend(search(root, "venv"))
+    dirs.extend(search(root, "virtualenv"))
+    dirs.extend(search(root, "node_modules"))
+    dirs.extend(search(root, "temp"))
+    dirs = sorted(sqush_dirs(dirs))
+
+    files: list[Path] = []
+    files.extend(search(root, "*.pyc"))
+    files.extend(search(root, "*.pyo"))
+    files.extend(search(root, "*.pyd"))
+    files.extend(search(root, "*.egg"))
+    files.extend(search(root, "*.obj"))
+    files.extend(search(root, "*.class"))
+    files.extend(search(root, ".DS_Store"))
+    files.extend(search(root, "*.tmp"))
+    files = sorted(sqush_files(dirs=dirs, files=files))
+
+    show_paths(f"- Found {len(dirs)} directories which can be deleted.", paths=dirs, root=root, use_parent_name=False)
+    show_paths(f"- Found {len(files)} files which can be deleted.", paths=files, root=root, use_parent_name=False)
+
+    dirs.extend(files)
+    return dirs
+
+def get_git_repos(root: Path) -> list[Path]:
+    # debug(f"Prune all git repos in {root}")
+    debug(f"Search all git repositories in {root}")
+    dirs: list[Path] = sorted(search(root, ".git"))
+    dirs = [d.parent for d in dirs]
+    show_paths(f"Found {len(dirs)} repositories.", paths=dirs, root=root, use_parent_name=False)
+    # git gc --prune=now --aggressive
+    return dirs
+
+def delete_path(path: Path, safe: bool = True) -> None:
+    if safe:
+        sys_exec("trash", [str(path.absolute())])
+    else:
+        path.unlink(missing_ok=True)
+
+def assert_tool(tool_name: str) -> None:
+    err_code, _ = sys_exec("which", [tool_name])
+    if err_code != 0:
+        print(f"Tool '{tool_name}' not found.")
+        sys.exit(1)
+
+def show_help() -> None:
+    with Path(__file__).open("r") as reader:
+        help_text = [l for l in reader.readlines(1200) if l and l.startswith("##")]
+        for ht in help_text:
+            print(ht.lstrip("# ").rstrip())
+
+def main() -> int:
+
+    assert_tool("git")
+    assert_tool("trash")
+
+    cur_path = Path.cwd()
+    try:
+        cur_dir = Path.cwd()
+        src_paths = get_all_src_paths(cur_dir)
+        debug("")
+        debug(f"Found {len(src_paths)} directories or files which can be deleted.")
+        answer = input("Are you sure you want to continue (yes/No)? ")
+        errcode = 0
+        total_success = 0
+        total_error = 0
+        if (answer or "").lower() in ("yes",):
+            for path in src_paths:
+                try:
+                    sys.stdout.write(f"Delete {path}")
+                    delete_path(path, safe=True)
+                    sys.stdout.write(f" - OK{os.linesep}")
+                    total_success += 1
+                except OSError as ex:
+                    sys.stdout.write(f" - Error: {ex}{os.linesep}")
+                    errcode = 1
+                    total_error += 1
+        else:
+            debug("Skip deleting")
+        print(f"Done. Deleted {total_success} paths. Errors={total_error}.")
+        debug("")
+        repos_paths = get_git_repos(cur_dir)
+        debug("")
+        debug(f"Found {len(repos_paths)} repositories which can be pruned.")
+        answer = input("Are you sure you want to continue (yes/No)? ")
+        total_success = 0
+        total_error = 0
+        if (answer or "").lower() in ("yes",):
+            for path in repos_paths:
+                try:
+                    os.chdir(str(path.absolute()))
+                    sys.stdout.write(f"Prune {Path.cwd()} repository")
+                    sys_exec("git", ["gc", "--prune=now", "--aggressive"])
+                    sys.stdout.write(f" - OK{os.linesep}")
+                except Exception as ex:
+                    sys.stdout.write(f" - Error: {ex}{os.linesep}")
+                    errcode = 1
+        else:
+            debug("Skip pruning")
+        print(f"Done. Pruned {total_success} repositories. Errors={total_error}.")
+        return errcode
+    except KeyboardInterrupt:
+        print("")
+        print("Catch KeyboardInterrupt event. Exit.")
+    finally:
+        os.chdir(str(cur_path.absolute()))
+    return 1
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ("help", "--help", "-h"):
+        show_help()
+        sys.exit(1)
+    sys.exit(main())

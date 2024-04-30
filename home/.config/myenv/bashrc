@@ -65,6 +65,8 @@ alias shellcheck='shellcheck -o all'
 alias tig='tig --all'
 alias ws='cd ${WORKSPACE} && pwd'
 alias vscode='code'
+alias mpv-audio='mpv --profile=audio-only'
+alias mpva='mpv-audio'
 
 alias lynx='lynx -accept_all_cookies'
 

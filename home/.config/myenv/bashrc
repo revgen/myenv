@@ -14,6 +14,7 @@ esac
 export PATH="${HOME}/.local/bin:/opt/homebrew/bin:${PATH}"
 export EDITOR=vi
 export USERBIN="${USERBIN:-"${HOME}/.local/bin"}"
+export BACKUP_TARGET="${HOME}/Documents/CloudDrive/Backups"
 
 # ------[ Terminal settings ]--------------------------------------------------
 if [[ $TERM == *color ]]; then
@@ -22,10 +23,20 @@ if [[ $TERM == *color ]]; then
 else
   export PS1="\u@\h:\W\$ "
 fi
+# Turn off mail notification in terminal
+export MAILCHECK=-1
 
 # ------[ Tool's settings ]----------------------------------------------------
 if command -v "stty" >/dev/null; then stty stop ''; fi # Fix Ctrl+S inside the vim
 export GPG_TTY=$(tty);                          # gnupg specific
+
+# Docker build verbose mode
+export DOCKER_BUILDKIT=1
+export BUILDKIT_PROGRESS=plain
+
+if [ -z "${JAVA_HOME}" ]; then
+  export JAVA_HOME="$(ls -d /Library/Java/JavaVirtualMachines/*jdk*/Contents/Home/ | head -n 1)"
+fi
 
 # ------[ Python specific ]----------------------------------------------------
 # disabling Python bytecode (.pyc) files: generating the bytecode is extremely fast,
@@ -34,10 +45,11 @@ export PYTHONDONOTWRITEBYTECODE=1
 export PYTHONWARNINGS="ignore"
 
 # ------[ Console History ]----------------------------------------------------
-export HISTCONTROL=ignoreboth;      # Don't add similar command in the history
-shopt -s histappend 2>/dev/null;    # Store command into the history immediately
+export HISTCONTROL=ignorespace:ignoredups;  # Don't add similar command in the history
+shopt -s histappend 2>/dev/null;            # Store command into the history immediately
 if command -v "history" >/dev/null; then PROMPT_COMMAND='history -a'; fi
-export HISTSIZE=9999;               # Store more commands in the history
+export HISTSIZE=9999;                       # Store more commands in the history
+export HISTFILESIZE=9999
 
 # Prevent tar and other programs from giving special meaning to ._* archive members
 export COPYFILE_DISABLE=1
@@ -118,6 +130,16 @@ rmdir-empty() {
         echo "Exit"
         return 1
     fi
+}
+
+csview() {
+  case "${1}" in
+    help|--help|-h) echo "Usage: csview <csv file>"; return 1;;
+    "") sed -e 's/,,/, ,/g' | column -s, -t | less -S;;
+    #"") sed -e 's/,,/, ,/g' | column -s, -t | less -#5 -N -S;;
+    #*) cat "${1}" | sed -e 's/,,/, ,/g' | column -s, -t | less -#5 -N -S;;
+    *) cat "${1}" | sed -e 's/,,/, ,/g' | column -s, -t | less -S;;
+  esac
 }
 
 #-- Git settions --------------------------------------------------------------

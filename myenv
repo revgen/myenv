@@ -259,7 +259,9 @@ update_bash_profile() {
             echo "export WORKSPACE=\"${WORKSPACE}\""
             echo "if [ -r \"${ENV_HOME}/home/.config/${ENV_NAME}/bashrc\" ]; then"
             echo "    . \"${ENV_HOME}/home/.config/${ENV_NAME}/bashrc\";"
-            echo "    echo \"Configuration '${ENV_HOME}/home/.config/${ENV_NAME}/bashrc' was loaded\""
+            if [ "${SHELL_DEBUG}" == "true" ]; then
+              echo "    echo \"Configuration '${ENV_HOME}/home/.config/${ENV_NAME}/bashrc' was loaded\""
+            fi
             echo "else"
             echo "    echo \"WARNING: custom configuration '${ENV_HOME}/home/.config/${ENV_NAME}/bashrc' not found\""
             echo "fi"

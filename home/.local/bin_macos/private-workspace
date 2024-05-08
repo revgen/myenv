@@ -44,6 +44,8 @@ mount_image() {
     return 1
   fi
   mkdir -p "${mount_point}" || exit 1
+  echo -e "Use a command:\n  private-workspace mount\n" > "${mount_point}/DISK-NOT-MOUNTED.txt"
+
   if [ ! -e "${private_image}" ]; then
     echo "Error: '${private_image}' not found."
     return 1

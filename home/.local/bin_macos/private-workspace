@@ -12,7 +12,7 @@ script_name="$(basename "${0}")"
 suffix="${2:-"private-workspace"}"
 mp_suffix="${3-"$(basename "${suffix}" | cut -d"-" -f1)"}"
 private_image="${HOME}/.local/var/${USER}-${suffix}"
-mount_point="${HOME}/Documents/Workspace/${mp_suffix}"
+mount_point="${HOME}/Documents/Workspace/${mp_suffix}/drive"
 disk_name="$(basename "${private_image}")"
 
 if [ ! -e "${private_image}" ]; then

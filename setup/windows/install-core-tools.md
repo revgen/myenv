@@ -20,5 +20,7 @@
 
 * ```winget install -e --id KeePassXCTeam.KeePassXC```
 
+* ```winget install -e --id Microsoft.PowerToys``` # https://learn.microsoft.com/en-us/windows/powertoys/awake
+
 #### Enable telnet client
 ```dism /online /Enable-Feature /FeatureName:TelnetClient```

@@ -89,8 +89,6 @@ alias qview='gqview'
 alias lower='tr "[:upper:]" "[:lower:]"'
 alias upper='tr "[:lower:]" "[:upper:]"'
 
-alias dirinfo='cd .; printf "Name : "; pwd; printf "Size : "; du -sh . | awk "{print \$1}"; printf "Files: "; find . -type f | wc -l | sed "s/ //g"'
-
 alias tig='tig --all'
 alias hex='xxd'
 alias tohex='xxd -p'

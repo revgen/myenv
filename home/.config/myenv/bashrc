@@ -34,10 +34,6 @@ export GPG_TTY=$(tty);                          # gnupg specific
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 
-if [ -z "${JAVA_HOME}" ]; then
-  export JAVA_HOME="$(ls -d /Library/Java/JavaVirtualMachines/*jdk*/Contents/Home/ | head -n 1)"
-fi
-
 # ------[ Python specific ]----------------------------------------------------
 # disabling Python bytecode (.pyc) files: generating the bytecode is extremely fast,
 # and isn’t something we need to worry about while developing our code

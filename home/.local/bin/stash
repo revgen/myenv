@@ -24,7 +24,7 @@ def cli(args: list[str]) -> int:
     return 0
 
 
-def gui(args: list[str) -> int:
+def gui(args: list[str]) -> int:
     logger.debug("Start in gui mode")
     from tkinter import Tk, messagebox, Button
     

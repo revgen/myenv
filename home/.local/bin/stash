@@ -1,28 +1,53 @@
 #!/usr/bin/env python
-###############################################################################
+# #############################################################################
 #
-#
-###############################################################################
+# Requirements:
+#   brew install python-tk
+#   
+# #############################################################################
 import argparse
 import logging
 import os
 import sys
-from typing import List
+from pathlib import Path
 
+_SCRIPT_PATH = Path(__file__)
 __version__ = "0.0.1"
-__appname__ = "stash"
+__appname__ = _SCRIPT_PATH.name
 
 logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 logger = logging.getLogger()
 
 
-def cli(args: List[str]) -> int:
-    logger.info(f"Start {__appname__} v{__version__}")
-    logger.debug(f"Arguments: {args or 'empty'}")
+def cli(args: list[str]) -> int:
+    logger.debug("Start in cli mode")
     return 0
 
 
+def gui(args: list[str) -> int:
+    logger.debug("Start in gui mode")
+    from tkinter import Tk, messagebox, Button
+    
+    top = Tk()
+    top.geometry("200x100")
+    def hello():
+        messagebox.showinfo("Say Hello", "Hello World")
+
+    B1 = Button(top, text = "Say Hello", command = hello)
+    B1.place(x=35,y=50)
+
+    top.mainloop()
+    return 0
+
+
+def main(args: list[str]) -> int:
+    logger.info(f"Start {__appname__} v{__version__}")
+    logger.debug(f"Arguments: {args or 'empty'}")
+    if os.environ.get("DISPLAY"):
+        errcode = gui(args)
+    else:
+        errcode = cli(args)
+    return errcode
+
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    errcode = cli(args)
-    sys.exit(errcode)
+    sys.exit(main(sys.argv[1:]))

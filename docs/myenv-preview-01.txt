@@ -1,0 +1,19 @@
+
+  base64_decode() {                      [ID:2784cfb1-9375-4800-87dc-5e*******11]
+      data_base64=$(cat)                 [2029-08-12T23:48:15Z ▁▂▃▄▅▆▇█▓▓▓▒▒▒░░░]
+      local m=$(( ${#data_base64} % 4))
+      if [ $m -eq 2 ]; then data_base64="${data_base64}==";
+      elif [ $m -eq 3 ]; then ███┐   ███┐ ██┐   ██┐ ███████┐ ███┐   ██┐ ██┐   ██┐ 
+      echo "${data_base64}" | ████┐ ████│ └██┐ ██┌┘ ██┌────┘ ████┐  ██│ ██│   ██│ 
+  }                           ██┌████┌██│  └████┌┘  █████┐   ██┌██┐ ██│ ██│   ██│ 
+  payload_from_jwt() { cut -d ██│└██┌┘██│   └██┌┘   ██┌──┘   ██│└██┐██│ └██┐ ██┌┘ 
+  get_jwt() { cat "${JWT_FILE ██│ └─┘ ██│    ██│    ███████┐ ██│ └████│  └████┌┘  
+  get_user_id() { jwt=${1}; e └─┘     └─┘    └─┘    └──────┘ └─┘  └───┘   └───┘   
+  assert_user() { if [ -z "${1}" ]; then echo "Error: incorrect JWT. Did you make
+
+ # -------------
+  static int crc32_finup(struct shash_desc *desc, const u8 *data,
+                         unsigned int len, u8 *out)
+  {      return __crc32_finup(shash_desc_ctx(desc), data, len, out);
+  }
+

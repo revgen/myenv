@@ -29,7 +29,3 @@ killall SystemUIServer && \
 echo "Success. Location=$(defaults read com.apple.screencapture location )"
 # open -a Finder.app --args "${SCREENSHOT_LOCATION}"
 open "https://support.apple.com/en-us/HT201361"
-
-
-
-find "${SCREEENSHOT_LOCATION}" -mtime +1 | 

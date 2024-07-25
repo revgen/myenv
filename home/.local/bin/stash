@@ -1,53 +1,180 @@
 #!/usr/bin/env python
 # #############################################################################
 #
-# Requirements:
-#   brew install python-tk
-#   
+# Links:
+# * https://keepassxc.org/docs/KeePassXC_UserGuide
+# * https://wiki.gentoo.org/wiki/KeePassXC/cli
 # #############################################################################
+from __future__ import annotations
 import argparse
+from enum import Enum
 import logging
 import os
+import platform
+import subprocess
 import sys
+import traceback
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
-_SCRIPT_PATH = Path(__file__)
-__version__ = "0.0.1"
-__appname__ = _SCRIPT_PATH.name
+__version__ = "0.1.0"
+__script_path__ = Path(__file__)
+__appname__ = __script_path__.name
 
-logging.basicConfig(format="%(message)s", level=logging.DEBUG)
 logger = logging.getLogger()
+OS_TYPE = platform.platform().lower()[0:3]
+
+# =============================================================================
+@dataclass
+class Config:
+    app_gui: Optional[Path] = None
+    app_cli: Optional[Path] = None
+    home: Optional[Path] = None
+    user: str = ""
+    @staticmethod
+    def init() -> Config:
+        if OS_TYPE == "mac":
+            dir_path = Path("/Applications/KeePassXC.app/Contents/MacOS")
+            config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
+        elif OS_TYPE == "win":
+            dir_path = Path(os.environ["ProgramFiles"])                         # noqa: SIM112
+            config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
+        else:
+            dir_path = Path("/usr/share/keepassxc")
+            config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
+        config.home = Path.home()
+        config.user = os.environ.get("USER") or os.environ.get("USERNAME")
+        return config
+
+def show_notification(message: str, title: str = __appname__,
+                      is_error: bool = False) -> None:
+    if is_error:
+        message = f"[ERROR] {message}"
+        logger.error(f"{title}: {message}")
+    else:
+        logger.info(f"{title}: {message}")
+    if OS_TYPE == "mac":
+        display_cmd = f"display notification \"{message}\" with title \"{title}\""
+        subprocess.Popen(args=["osascript", "-e", display_cmd])
+    else:
+        logger.error("Notification not implemented")
 
 
-def cli(args: list[str]) -> int:
-    logger.debug("Start in cli mode")
-    return 0
+# =============================================================================
+class Command(Enum):
+    open = "open"
+    cli = "cli"
+    get = "get"
+    totp = "totp"
+    version = "version"
+    create = "create"
+
+    def __str__(self):
+        return self.value
 
 
-def gui(args: list[str]) -> int:
-    logger.debug("Start in gui mode")
-    from tkinter import Tk, messagebox, Button
-    
-    top = Tk()
-    top.geometry("200x100")
-    def hello():
-        messagebox.showinfo("Say Hello", "Hello World")
+def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
+    app_str = str(app)
+    logger.debug(f"Execute command: [{command}] {app_str}")
+    if command == Command.version:
+        return subprocess.call(args=[app_str, "--version"])
 
-    B1 = Button(top, text = "Say Hello", command = hello)
-    B1.place(x=35,y=50)
+    logger.debug(f"Arguments: {args}")
+    app_args = [app_str]
+    shell = False
+    if args.command == Command.open:
+        shell = True
+        app_args.append("open")
+    elif args.command == Command.cli:
+        app_args.append("open")
+    elif args.command == Command.create:
+        app_args.append("db-create")
+        app_args.append("--set-password")
+    else:
+        raise NotImplementedError
+    # app_args.append("--pw-stdin")
 
-    top.mainloop()
-    return 0
+    if args.key_file:
+        if command == Command.create:
+            app_args.append("--set-key-file")
+        elif command == Command.open:
+            app_args.append("--keyfile")
+        else:
+            app_args.append("--key-file")
+        app_args.append(str(args.key_file))
+    app_args.append(str(args.database))
+
+    logger.debug(f"Execute: {app_args}")
+    print("-" * 40)
+    errcode = subprocess.call(args=app_args, shell=shell)
+    logger.debug(f"Exit code = {errcode}")
+    return errcode
+
+
+def parse_args(config: Config, args: list[str]) -> argparse.Namespace:
+    def_debug = os.environ.get("DEBUG", "").lower().strip() in ("true", "on")
+    print(f"config.home = {config.home}")
+    def_db = config.home / "Documents" / __appname__ / f"{__appname__}-{config.user}.kdbx"
+    def_key = config.home / ".config" / __appname__ / f"{__appname__}-{config.user}.key"
+    parser = argparse.ArgumentParser(description=__appname__)
+    parser.add_argument("command", type=Command, choices=list(Command),
+                        default=Command.open, nargs="?")
+    parser.add_argument("database", default=str(def_db), nargs="?")
+    parser.add_argument("--key-file", default=str(def_key))
+    parser.add_argument("--no-key-file", action="store_true", default=False)
+    parser.add_argument("--debug", "-D", action="store_true", default=def_debug)
+    parser.add_argument("--no-backup", action="store_true", default=False)
+    parsed_args = parser.parse_args(args or sys.argv[1:])
+    if not os.environ.get("DISPLAY") and parsed_args.command == Command.open:
+        parsed_args.command = Command.cli
+
+    if not Path(parsed_args.database).exists() and parsed_args.command != Command.create:
+        raise OSError(f"Path {parsed_args.database} not found.")
+    if Path(parsed_args.database).exists() and parsed_args.command == Command.create:
+        raise OSError(f"Path {parsed_args.database} exists.")
+    parsed_args.database = Path(parsed_args.database)
+    args_dict = {k: str(v) for k, v in vars(parsed_args).items()}
+    logger.info(f"Start {__appname__} v{__version__}")
+    logger.debug(f"Arguments: {args or 'empty'}")
+    logger.debug(f" - Config: {args_dict}")
+
+    logger.info(f"Directory: {Path.cwd()}")
+    logger.info(f"Database : {parsed_args.database}")
+
+    if parsed_args.key_file:
+        parsed_args.key_file = Path(parsed_args.key_file)
+        logger.info(f"Keyfile  : {'*' * (len(parsed_args.key_file.name)-8)}{parsed_args.key_file.name[-8:]}")
+        if not Path(parsed_args.key_file).exists():
+            raise OSError(f"Path {parsed_args.key_file} not found.")
+
+    parsed_args.app = config.app_gui if parsed_args.command == Command.open else config.app_cli
+    if not parsed_args.app.exists():
+        raise OSError(f"Path {parsed_args.app} not found.")
+
+    return parsed_args
 
 
 def main(args: list[str]) -> int:
-    logger.info(f"Start {__appname__} v{__version__}")
-    logger.debug(f"Arguments: {args or 'empty'}")
-    if os.environ.get("DISPLAY"):
-        errcode = gui(args)
-    else:
-        errcode = cli(args)
+    config = Config.init()
+    parsed_args = parse_args(config=config, args=args)
+    parsed_args.database.parent.mkdir(mode=500, parents=True, exist_ok=True)
+    # show_notification(message=f"Open database")
+    errcode = keepass(app=parsed_args.app, command=parsed_args.command, args=parsed_args)
     return errcode
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    try:
+        errcode = main(sys.argv[1:])
+        if errcode != 0:
+            show_notification(message=f"Execution error (errcode={errcode})", is_error=True)
+    except KeyboardInterrupt:
+        print("Exit.")
+        errcode = 1
+    except Exception as ex:
+        errcode = 1
+        traceback.print_exc()
+        show_notification(message=str(ex), is_error=True)
+    logger.debug(f"Done (errcode={errcode})")
+    sys.exit(errcode)
+

@@ -17,12 +17,7 @@ export USERBIN="${USERBIN:-"${HOME}/.local/bin"}"
 export BACKUP_TARGET="${HOME}/Documents/CloudDrive/Backups"
 
 # ------[ Terminal settings ]--------------------------------------------------
-if [[ $TERM == *color ]]; then
-  color_prompt=yes
-  export PS1="\033[0;32m\u@\h\033[0m:\033[1;34m\W\033[0m\$ "
-else
-  export PS1="\u@\h:\W\$ "
-fi
+export PS1="\u@\h:\W\$ "
 # Turn off mail notification in terminal
 export MAILCHECK=-1
 

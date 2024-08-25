@@ -27,6 +27,9 @@ set_python_home() {
 }
 
 export TERM=xterm-256color
+# use $(tput sgr0) to fix problem:
+#     iTerm2 cursor doesn't return to line beginning with color
+export PS1="$(tput sgr0)\033[0;32m\u@\h\033[0m:\033[1;34m\W\033[0m\$ "
 
 if [ -n "$SSH_TTY" ]; then export TERM=xterm; fi  # fix "screen" on OSX
 # supress zsh verbose message in macOS 10.15+

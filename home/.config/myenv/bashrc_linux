@@ -1,3 +1,10 @@
+# ------[ Terminal settings ]--------------------------------------------------
+if [[ $TERM == *color ]]; then
+  color_prompt=yes
+  export PS1="\033[0;32m\u@\h\033[0m:\033[1;34m\W\033[0m\$ "
+else
+  export PS1="\u@\h:\W\$ "
+fi
 #-- Useful aliases -----------------------------------------------------------
 alias lt='ls -AElh'
 alias ports='netstat -tulpan'

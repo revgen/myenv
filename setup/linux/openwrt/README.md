@@ -1,9 +1,5 @@
 # OpenWRT
 
-
-
-
-
 ## Setup
 
 ### Install common tools

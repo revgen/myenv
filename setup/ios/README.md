@@ -56,8 +56,5 @@
 1. [Survival island]()
 1. [Lost in time]()
 
-
-
 ## Links
 * [iOS supported list for devices](https://everymac.com/systems/apple/ipad/ipad-faq/ipad-operating-system-info-update-cost-app-support.html)
-

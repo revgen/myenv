@@ -45,19 +45,7 @@ sudo ln -fs $(which pip3) /usr/bin/pip
 
 ### Update tty login screen
 
-```bash
-[ ! -f /etc/issue.orig ] && sudo cp -v /etc/issue /etc/issue.orig
-system_name="$(grep "^NAME" /etc/os-release | cut -d"=" -f2 | sed 's/"//g')"
-system_version="$(cat /etc/debian_version)"
-(
-echo "[\l] ${system_name} ${system_version}"
-echo ""
-echo "hostname: \n"
-echo "ethernet: \4{eth0}"
-echo "wireless: \4{wlan0}"
-echo ""
-) | sudo tee /etc/issue
-```
+To update a TTY login screen you need to update [/etc/issue](../update-tty-screen.md) file
 
 ### Setup user home environment
 
@@ -87,7 +75,7 @@ sudo mv -v /tmp/dashboard /usr/local/bin/
 ### Setup www home page
 
 ```bash
-sudo chown master:users -R /var/www/html/
+sudo chown pi:users -R /var/www/html/
 curl -L "https://assets.raspberrypi.com/favicon.png" > /var/www/html/favicon.png
 wget -O /var/www/html/index.tmpl.html https://raw.githubusercontent.com/revgen/myenv/master/setup/linux/raspberry/index.tmpl.html
 TITLE="$(hostname)" envsubst < /var/www/html/index.tmpl.html > /var/www/html/index.html

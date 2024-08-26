@@ -84,9 +84,8 @@ def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
     app_args = [app_str]
     shell = False
     if args.command == Command.open:
-        shell = True
         app_args.append("open")
-        app_args.append("--pw-stdin")
+        # app_args.append("--pw-stdin")
     elif args.command == Command.cli:
         app_args.append("open")
     elif args.command == Command.create:
@@ -107,7 +106,9 @@ def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
 
     logger.debug(f"Execute: {app_args}")
     print("-" * 40)
-    errcode = subprocess.call(args=app_args, shell=False)
+    complete_status = subprocess.run(args=app_args)
+    logger.debug(f"Complete: {complete_status}")
+    errcode = int(complete_status.returncode if complete_status else 255)
     logger.debug(f"Exit code = {errcode}")
     return errcode
 

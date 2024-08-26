@@ -86,6 +86,7 @@ def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
     if args.command == Command.open:
         shell = True
         app_args.append("open")
+        app_args.append("--pw-stdin")
     elif args.command == Command.cli:
         app_args.append("open")
     elif args.command == Command.create:
@@ -93,7 +94,6 @@ def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
         app_args.append("--set-password")
     else:
         raise NotImplementedError
-    # app_args.append("--pw-stdin")
 
     if args.key_file:
         if command == Command.create:
@@ -107,14 +107,13 @@ def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
 
     logger.debug(f"Execute: {app_args}")
     print("-" * 40)
-    errcode = subprocess.call(args=app_args, shell=shell)
+    errcode = subprocess.call(args=app_args, shell=False)
     logger.debug(f"Exit code = {errcode}")
     return errcode
 
 
 def parse_args(config: Config, args: list[str]) -> argparse.Namespace:
     def_debug = os.environ.get("DEBUG", "").lower().strip() in ("true", "on")
-    print(f"config.home = {config.home}")
     def_db = config.home / "Documents" / __appname__ / f"{__appname__}-{config.user}.kdbx"
     def_key = config.home / ".config" / __appname__ / f"{__appname__}-{config.user}.key"
     parser = argparse.ArgumentParser(description=__appname__)
@@ -156,8 +155,11 @@ def parse_args(config: Config, args: list[str]) -> argparse.Namespace:
 
 
 def main(args: list[str]) -> int:
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     config = Config.init()
     parsed_args = parse_args(config=config, args=args)
+    if parsed_args.debug:
+        logger.setLevel(logging.DEBUG)
     parsed_args.database.parent.mkdir(mode=500, parents=True, exist_ok=True)
     # show_notification(message=f"Open database")
     errcode = keepass(app=parsed_args.app, command=parsed_args.command, args=parsed_args)
@@ -177,4 +179,3 @@ if __name__ == "__main__":
         show_notification(message=str(ex), is_error=True)
     logger.debug(f"Done (errcode={errcode})")
     sys.exit(errcode)
-

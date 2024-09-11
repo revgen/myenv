@@ -35,7 +35,9 @@ class Config:
     @staticmethod
     def init() -> Config:
         if OS_TYPE == "mac":
-            dir_path = Path("/Applications/KeePassXC.app/Contents/MacOS")
+            dir_path = Path.home() / "Applications" / "KeePassXC.app" / "Contents" / "MacOS"
+            if not dir_path.exists():
+                dir_path = Path("/Applications/KeePassXC.app/Contents/MacOS")
             config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
         elif OS_TYPE == "win":
             dir_path = Path(os.environ["ProgramFiles"])                         # noqa: SIM112
@@ -126,6 +128,9 @@ def parse_args(config: Config, args: list[str]) -> argparse.Namespace:
     parser.add_argument("--debug", "-D", action="store_true", default=def_debug)
     parser.add_argument("--no-backup", action="store_true", default=False)
     parsed_args = parser.parse_args(args or sys.argv[1:])
+    if parsed_args.debug:
+        logger.setLevel(logging.DEBUG)
+        logger.debug(f"Arguments: {parsed_args}")
     if not os.environ.get("DISPLAY") and parsed_args.command == Command.open:
         parsed_args.command = Command.cli
 
@@ -136,14 +141,18 @@ def parse_args(config: Config, args: list[str]) -> argparse.Namespace:
     parsed_args.database = Path(parsed_args.database)
     args_dict = {k: str(v) for k, v in vars(parsed_args).items()}
     logger.info(f"Start {__appname__} v{__version__}")
+    
     logger.debug(f"Arguments: {args or 'empty'}")
     logger.debug(f" - Config: {args_dict}")
-
     logger.info(f"Directory: {Path.cwd()}")
     logger.info(f"Database : {parsed_args.database}")
 
     if parsed_args.key_file:
         parsed_args.key_file = Path(parsed_args.key_file)
+        logger.debug(f"Check key file : {parsed_args.key_file}")
+        if not Path(parsed_args.key_file).exists():
+            parsed_args.key_file = Path.home() / ".config" / __appname__ / parsed_args.key_file
+            logger.debug(f"Check key file : {parsed_args.key_file}")
         logger.info(f"Keyfile  : {'*' * (len(parsed_args.key_file.name)-8)}{parsed_args.key_file.name[-8:]}")
         if not Path(parsed_args.key_file).exists():
             raise OSError(f"Path {parsed_args.key_file} not found.")
@@ -159,8 +168,6 @@ def main(args: list[str]) -> int:
     logging.basicConfig(format="%(message)s", level=logging.INFO)
     config = Config.init()
     parsed_args = parse_args(config=config, args=args)
-    if parsed_args.debug:
-        logger.setLevel(logging.DEBUG)
     parsed_args.database.parent.mkdir(mode=500, parents=True, exist_ok=True)
     # show_notification(message=f"Open database")
     errcode = keepass(app=parsed_args.app, command=parsed_args.command, args=parsed_args)

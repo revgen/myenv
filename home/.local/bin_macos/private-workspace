@@ -51,7 +51,7 @@ mount_image() {
     return 1
   fi
   echo hdiutil attach -mountpoint "${mount_point}" "${private_image}"
-  sudo hdiutil attach -mountpoint "${mount_point}" "${private_image}" || return 1
+  hdiutil attach -mountpoint "${mount_point}" "${private_image}" || return 1
   show_mount_point
 }
 
@@ -135,7 +135,7 @@ notification() {
   osascript -e "display notification \"${message}\" with title \"${title}\" subtitle \"${subtitle}\" "
 }
 
-case "${1:-help}" in
+case "${1:-mount}" in
     help|--help|-h|-H)	show_help;;
     mount|--mount|-M)	mount_image || exit 1 ;;
     umount|unmount|--umount|--unmount|-U)	umount_image || exit 1 ;;

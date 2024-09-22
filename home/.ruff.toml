@@ -1,11 +1,11 @@
-select = ["ALL"]
+lint.select = ["ALL"]
 
 line-length = 120
 target-version = "py39"
 
-pylint = {max-args = 7, max-branches = 14}
+lint.pylint = {max-args = 7, max-branches = 14}
 
-ignore = [
+lint.ignore = [
     "D", "T", "EM", "G", "FBT", "PGH", "TD", "FIX", "ERA",
     "ANN002",
     "ANN003",
@@ -31,6 +31,6 @@ ignore = [
 
 # File specific settings
 # Ignore: E401 - imported but unused
-per-file-ignores = {"__init__.py"=["F401"], "*cli*.py"=["T201"], "setup.py"=["INP001"]}
+lint.per-file-ignores = {"__init__.py"=["F401"], "*cli*.py"=["T201"], "setup.py"=["INP001"]}
 
-flake8-quotes = {docstring-quotes = "double", inline-quotes = "double", multiline-quotes = "double"}
+lint.flake8-quotes = {docstring-quotes = "double", inline-quotes = "double", multiline-quotes = "double"}

@@ -56,8 +56,9 @@ brew install vlc
 # brew install skype
 # brew install zoom
 # brew install google-chrome google-backup-and-sync
-brew install iterm2 vnc-viewer kid3 balenaetcher handbrake sigil keepassxc
-brew install microsoft-remote-desktop
+brew install iterm2 kid3 balenaetcher keepassxc
+# brew install handbrake sigil
+brew install microsoft-remote-desktop vnc-viewer
 
 pip3 install --user --break-system-packages requests python-dotenv
 pip3 install --user --break-system-packages visidata

@@ -17,7 +17,7 @@ set_python_home() {
         local cache_dir="${HOME}/.local/var/tmp"
         local cache_file="${cache_dir}/python-home-$(date +"%d").tmp"
         mkdir -p "${cache_dir}"
-        PYTHON_HOME="$(ls -d ~/Library/Python/3.* | sort --version-sort | tail -n 1)"
+        PYTHON_HOME="$(ls -d ~/Library/Python/3.* 2>/dev/null | sort --version-sort | tail -n 1)"
         if [ -z "${PYTHON_HOME}" ]; then PYTHON_HOME="$(ls -d /usr/local/Cellar/python*/3* 2>/dev/null | sort --version-sort | tail -n 1)"; fi
         if [ -n "${PYTHON_HOME}" ] && ! (echo "${PATH}" | grep -q "${PYTHON_HOME}"); then
             export PYTHON_HOME="${PYTHON_HOME}"

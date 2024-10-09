@@ -9,13 +9,13 @@ Installation script support OS X and Linux system.
 
 When you need an environment only you can download 
 [install-myenv.sh](https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh) script and execute it.
-Install with wget:
-```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh)"
-```
 Install with curl:
 ```bash
 bash -c "$(curl -L https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh)"
+```
+Install with wget:
+```bash
+bash -c "$(wget -qO- https://raw.githubusercontent.com/revgen/myenv/master/install-myenv.sh)"
 ```
 
 When you need an ability to make a changes in the repository:

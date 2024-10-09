@@ -8,11 +8,11 @@ if [ -n "$(which xcodebuild)" ]; then
 fi
 
 echo "==[ Install homebrew ]=================================================="
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 
 echo "==[ Update homebrew ]==================================================="
 brew update
 
-echo "==[ Install Mac App Store command-line interface ]======================"
-brew install mas
+# echo "==[ Install Mac App Store command-line interface ]======================"
+# brew install mas
 

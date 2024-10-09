@@ -27,10 +27,15 @@ brew install bash bash-completion
 # glow              - see MarkDown files in terminal
 # bat               - a 'cat' tool with syntax highlight
 # lnav              - ncurses-based log file viewer
+# coreutils         - is include md5sha1sum
+# inetutils         - is include telnet
 brew install coreutils moreutils inetutils screen tree htop mc watch
-brew install gettext wget telnet unzip p7zip md5sha1sum ncdu pv
+brew install gettext wget unzip p7zip pv
+brew install ncdu
 brew install jq yq bat glow lnav
-brew install shellcheck tig figlet neofetch macos-trash
+brew install git tig
+brew install shellcheck figlet macos-trash
+brew install inxi neofetch
 
 # --------------------------------------------------------------------------------
 brew install awscli
@@ -38,7 +43,6 @@ brew install httping
 brew install lynx elinks openssl speedtest-cli 
 brew install ghostscript imagemagick
 brew install xquartz
-brew install git tig neovim
 brew install qview paintbrush
 # Calendar in the dock: https://www.mowglii.com/itsycal/
 brew install itsycal
@@ -59,6 +63,15 @@ pip3 install --user --break-system-packages requests python-dotenv
 pip3 install --user --break-system-packages visidata
 
 # --------------------------------------------------------------------------------
-# brew install cmatrix
 # brew install xscreensaver
-# pip3 install --user termsaver
+
+# brew install cmatrix
+
+# https://github.com/pipeseroni/pipes.sh
+# brew install pipes-sh
+
+# https://gitlab.com/jallbrit/cbonsai
+# brew install cbonsai
+
+# https://github.com/brunobraga/termsaver
+# pip3 install --user --break-system-packages termsaver

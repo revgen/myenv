@@ -17,7 +17,7 @@
 
 ```bash
 # Remove vim and install neovim or vim-tiny
-sudo apt -y purge vim vim-common vim-runtime
+sudo apt purge -y vim vim-common vim-runtime 
 sudo apt -y install neovim
 # sudo apt -y install vim-tiny;
 
@@ -26,12 +26,14 @@ sudo cp -v /etc/bash.bashrc /etc/bash.bashrc.$(date +%s).bak
 ```
 
 ```bash
-sudo apt -y install screen mc htop git curl wget lynx tree ncdu jq
+sudo apt -y install screen mc htop git curl wget lynx tree ncdu telnet
+sudo apt -y install telnet iputils-ping net-tools dnsutils
+
+sudo apt -y install jq
+sudo add-apt-repository ppa:rmescandon/yq; sudo apt install yq -y
+
 sudo apt -y install p7zip-full
 sudo apt -y install figlet dialog
-sudo apt -y install net-tools dnsutils
-
-sudo add-apt-repository ppa:rmescandon/yq; sudo apt install yq -y
 ```
 
 ```bash
@@ -77,7 +79,9 @@ sudo apt autoremove -y --purge snapd lxd
 sudo apt -y install python3-pip python3-venv
 [ -z "$(which python)" ] && sudo ln -fvs $(which python3) /usr/bin/python
 [ -z "$(which pip)" ] && sudo ln -fvs $(which pip3) /usr/bin/pip
+```
 
+```bash
 # Install python packages
 pip3 install pip
 pip3 install requests fastapi python-dotenv --break-system-packages
@@ -97,6 +101,11 @@ sudo chown -R ${USER}:users -R /var/www/html/
 sudo apt -y install docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
+
+# https://github.com/docker/compose/releases
+curl -SL https://github.com/docker/compose/releases/download/v2.30.1/docker-compose-linux-x86_64 -o docker-compose
+chmod +x docker-compose
+sudo mv -vf docker-compose /usr/local/bin/docker-compose
 
 sudo usermod -aG docker ${USER}
 sudo apt install -y docker-compose-v2
@@ -129,7 +138,7 @@ new_pass="$(head -c 32 /dev/random  | base64 | head -c 32)"
 # echo "Generated password: ${new_pass}"
 echo "${new_user}:${new_pass}" | sudo chpasswd
 
-# If we need an renerated avatar
+# If we need an generated avatar
 user_letter="$(echo "${new_user}" | tr [:lower:] [:upper:] | head -c 1)"
 wget -O /tmp/.face "https://placehold.co/96x96/283C50/FFFFFF/png?text=${user_letter}"
 sudo mv -v /tmp/.face "/home/${new_user}/.face"
@@ -197,7 +206,7 @@ test -e /usr/sbin/sshd || sudo apt-get install openssh-server
 
 > TODO: 2FA....
 
-## Setup firewall
+## Setup firewall (ufw)
 
 ```bash
 sudo ufw allow ssh
@@ -209,4 +218,27 @@ sudo ufw allow out 53,113,123/udp
 
 sudo ufw enable
 sudo ufw status
+```
+## Setup firewall (iptables)
+
+```bash
+sudo iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+sudo iptables -A INPUT -p tcp -m tcp --dport 8000:8099 -j ACCEPT
+# iptable's changes is working immediately
+
+```
+
+## Setup firewall (firewalld)
+
+```bash
+sudo apt install -y firewalld
+sudo firewall-cmd --zone=public --permanent --add-port=80/tcp
+sudo firewall-cmd --zone=public --permanent --add-port=443/tcp
+sudo firewall-cmd --zone=public --permanent --add-port=8080-8099/tcp
+sudo firewall-cmd --reload
+sudo firewall-cmd --state
+sudo firewall-cmd --list-all
+# sudo firewall-cmd --zone=public --list-all
+# sudo firewall-cmd --zone=public --list-ports
 ```

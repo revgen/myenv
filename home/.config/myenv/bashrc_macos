@@ -72,6 +72,12 @@ alias mplayer='mpv'
 alias kid3='/usr/bin/open -a kid3.app'
 alias mull-local='mutt -f /var/mail/${USER}'
 alias mail-local='mull-local'
+if [ -d "/Applications/IntelliJ IDEA CE.app" ]; then
+    alias idea='/Applications/IntelliJ\ IDEA\ CE.app/Contents/MacOS/idea'
+fi
+if [ -d "/Applications/Slack.app/Contents/MacOS" ]; then
+    alias slack='/Applications/Slack.app/Contents/MacOS/Slack'
+fi
 
 #-- Useful functions ----------------------------------------------------------
 toclip() {

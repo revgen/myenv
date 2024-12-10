@@ -96,6 +96,8 @@ if ! which ctop 2>&1 >/dev/null && ! alias upper 2>/dev/null>/dev/null; then
 fi
 alias docktop='ctop'
 alias docker-clean-unused='echo "Prune images..."; docker image prune -f; echo "Prune containers..."; docker container prune -f; echo "Done"'
+alias dive="docker run -ti --rm  -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive"
+alias docker-analyze="dive"
 
 #-- Useful functions ----------------------------------------------------------
 ls-recursively() { find ${1:-"${PWD}"} -type f -print0 | xargs -0 ls -al; }

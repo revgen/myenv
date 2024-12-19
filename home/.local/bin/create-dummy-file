@@ -1,12 +1,13 @@
 #!/bin/sh
 #=======================================================================
 ## Create fake file with random data inside
-## Usage: {SCRIPT_NAME} [size]
+## Usage: {SCRIPT_NAME} [size] [alg]
 ##
 ##   size   - size in K/M/G (default: 10M)
-##   name   - file name (default: dummy-<timestamp>.bin)
 ##   alg    - algorithm: zero/random (default: random)
-#
+##
+##  Output file name format: dummy-<timestamp>-<random>.bin
+##
 #=======================================================================
 case "${1}" in
     help|--help|h|-h)
@@ -15,8 +16,8 @@ case "${1}" in
 esac
 
 size="${1:-"10M"}"
-file_name="dummy-$(date +%s).bin"
-alg=/dev/random
+alg=/dev/${2:-"random"}
+file_name="dummy-$(date +%s)-${RANDOM}.bin"
 
 echo "Create dummy file '${file_name}' with ${size} size using '${alg}' data"
 read -r -p "Whould you like to continue (y/N)? " opt

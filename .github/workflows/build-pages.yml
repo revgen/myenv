@@ -30,8 +30,8 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Prepare build system
         run: |
-          mkdir -p docs
-          echo "<h1>MyEnv</h1>" > docs/index.html
+          mkdir -p _site
+          echo "<h1>MyEnv</h1>" > _site/index.html
       - name: Show directory
         run: |
           echo "------------"

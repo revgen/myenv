@@ -35,10 +35,10 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Prepare build system
         run: |
-          mkdir -p ./_site/repo/
+          mkdir -p ./_site/
           cp -vR ./docs/ ./_site/
-          cp -vR ./setup/ ./_site/repo/
-          cp -vR ./tools/ ./_site/repo/
+          cp -vR ./setup/ ./_site/
+          cp -vR ./tools/ ./_site/
           echo "<h1>MyEnv</h1>" > _site/index.html
           rm README.md
       - name: Show directory
@@ -50,6 +50,8 @@ jobs:
           cd ./_site
           pwd
           ls -ahl
+          tree ./
+          python --version
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

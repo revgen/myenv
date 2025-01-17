@@ -89,7 +89,7 @@ echo "Show current screenshot location:"
 defaults read com.apple.screencapture location
 ```
 
-Ready to use script: [setup-screenshots-macos.sh](https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/setup/macos/setup-screenshots-macos.sh)
+Ready to use script: [setup-screenshots-macos.sh](https://revgen.github.io/myenv/setup/macos/setup-screenshots-macos.sh)
 
 ## Tools
 

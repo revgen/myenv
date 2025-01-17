@@ -181,3 +181,10 @@ Resources where you can find an information about MacOS settings and tweaks
 * https://github.com/cfibmers/dotfiles/blob/master/osx/defaults.sh
 * [Awesome MacOS Command Line Tools](https://github.com/herrbischoff/awesome-macos-command-line)
 * [Hammerspoon](http://www.hammerspoon.org/) - powerful automation tool for Mac OS
+* [Download macOS installer from the AppStore](https://support.apple.com/en-us/102662#appstore)
+* [Create a bootable installer for macOS](https://support.apple.com/en-us/101578)
+* [Find out which macOS your Mac is using](https://support.apple.com/en-us/109033)
+* [MacOS Compatibility for Mac Computer (Mac Books or Desktops)](https://eshop.macsales.com/guides/Mac_OS_X_Compatibility)
+
+
+

@@ -35,6 +35,10 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Prepare build system
         run: |
+          sudo apt-get install -y tree
+          python --version
+      - name: Prepare build system
+        run: |
           mkdir -p ./_site/
           cp -vR ./docs/ ./_site/
           cp -vR ./setup/ ./_site/
@@ -51,7 +55,6 @@ jobs:
           pwd
           ls -ahl
           tree ./
-          python --version
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

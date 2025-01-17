@@ -1,4 +1,4 @@
-name: User-Environment-Tests
+name: user-environment-tests
 
 on:
   # schedule:

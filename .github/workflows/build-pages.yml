@@ -35,10 +35,10 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Prepare build system
         run: |
-          mkdir -p _site/repo/
-          cp -vR ./docs/ /_site/
-          cp -vR ./setup/ /_site/repo/
-          cp -vR ./tools/ /_site/repo/
+          mkdir -p ./_site/repo/
+          cp -vR ./docs/ ./_site/
+          cp -vR ./setup/ ./_site/repo/
+          cp -vR ./tools/ ./_site/repo/
           echo "<h1>MyEnv</h1>" > _site/index.html
           rm README.md
       - name: Show directory
@@ -47,7 +47,7 @@ jobs:
           pwd
           ls -ahl
           echo "------------"
-          cd _site
+          cd ./_site
           pwd
           ls -ahl
       - name: Upload artifact

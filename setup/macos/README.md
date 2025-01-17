@@ -124,6 +124,7 @@ Homebrew - The Missing Package Manager for macOS
 | Command | Description |
 | ---------------------------------------- | ---------------------------------------------------------- |
 | brew install iterm2                      | [Better replacement for Terminal on MacOS](https://iterm2.com/) |
+| • iTerms2 - [imgcat](https://iterm2.com/documentation-images.html) | ```curl -L https://www.iterm2.com/utilities/imgcat > ~/.local/bin/imgcat; chmod +x ~/.local/bin/imgcat``` |
 | brew install vlc                         | [Cross-platform multimedia player](https://www.videolan.org/vlc/) |
 | brew install kid3                        | [Audio file tag editor](https://kid3.kde.org/) |
 | brew install balenaetcher                | [A cross-platform tool to flash images onto SD cards and USB drives](https://www.balena.io/etcher) |
@@ -136,7 +137,7 @@ Homebrew - The Missing Package Manager for macOS
 | Command | Description |
 | ---------------------------------------- | ---------------------------------------------------------- |
 | brew install python@3.13                 | [Python Programming Language](https://python.org)|
-| brew install openjdk@17                  | . |
+| brew install openjdk@17                  | [Java is a high-level, class-based, object-oriented programming language](https://www.oracle.com/java/) |
 | brew install node@22                     | [Node.js is a free, open-source, cross-platform JavaScript runtime environment](https://nodejs.org/en) |
 | brew install awscli                      | [AWS Command Line Interface](https://aws.amazon.com/cli/) |
 | brew cask install google-cloud-sdk       | [Google Cloud CLI]([https://aws.amazon.com/cli/](https://cloud.google.com/sdk/docs/install-sdk))|

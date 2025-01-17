@@ -30,21 +30,15 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Prepare build system
         run: |
-          mkdir -p _site
-          echo "<h1>MyEnv</h1>" > _site/index.html
+          echo "<h1>MyEnv</h1>" > index.html
+          rm README.md
       - name: Show directory
         run: |
           echo "------------"
           pwd
           ls -ahl
-          echo "------------"
-          cd _site
-          pwd
-          ls -ahl
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        with:
-          path: './_site'
 
   # Deployment job
   deploy:
@@ -57,5 +51,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          path: './_site'

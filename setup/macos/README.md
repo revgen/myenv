@@ -74,6 +74,23 @@ On Search Privacy:
 * Add Microsoft account
 * etc.
 
+
+### Screenshots
+
+Store all screenshots into the special ```Screenshots``` directory on the ```Desktop```.
+
+```bash
+mkdir -p "${HOME}/Desktop/Screenshots"
+defaults write com.apple.screencapture disable-shadow -bool TRUE
+defaults write com.apple.screencapture name "screenshot"
+defaults write com.apple.screencapture location "${HOME}/Desktop/Screenshots"
+killall SystemUIServer
+echo "Show current screenshot location:"
+defaults read com.apple.screencapture location
+```
+
+Ready to use script: [setup-screenshots.sh](https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/setup/macos/default-settings/setup-screenshots.sh)
+
 ## Tools
 
 ### Homebrew

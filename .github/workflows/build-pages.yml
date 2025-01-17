@@ -36,9 +36,9 @@ jobs:
       - name: Prepare build system
         run: |
           mkdir -p _site/repo/
-          cp -vR ./docs/ /_site/docs/
-          cp -vR ./setup/ /_site/repo/setup/
-          cp -vR ./tools/ /_site/repo/tools/
+          cp -vR ./docs/ /_site/
+          cp -vR ./setup/ /_site/repo/
+          cp -vR ./tools/ /_site/repo/
           echo "<h1>MyEnv</h1>" > _site/index.html
           rm README.md
       - name: Show directory

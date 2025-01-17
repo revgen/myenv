@@ -1,9 +1,12 @@
 # Mac OS settings, tools and applications
 
 * [System settings](#system-settings)
-* [Russian Keyboard Layout](https://github.com/revgen/revgen.github.io/tree/master/storage/macos/russian-keyboard)
-* [Dictionaries](https://github.com/revgen/revgen.github.io/tree/master/storage/macos/dictionaries)
-* [Shortcuts](./macos-shortcuts.md)
+* [Tools](#tools)
+  * [Homebrew](#homebrew)
+  * [Command line interface tools](#command-line-interface-tools)
+  * [MacOS GUI tools](#macos-tools)
+  * [Tools for Software and Cloud development](#tools-for-softwarecloud-development)
+  * [System python packages](#python-packages)
 * [Links](#links)
 
 
@@ -128,7 +131,7 @@ Homebrew - The Missing Package Manager for macOS
 | brew install microsoft-remote-desktop    | [Microsoft remote desktop client for MacOS](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/remote-desktop-mac) |
 | brew install vnc-viewer                  | [Real VNC viewer client](https://www.realvnc.com/) |
 
-### Tools for softwar/cloud development
+### Tools for software/cloud development
 
 | Command | Description |
 | ---------------------------------------- | ---------------------------------------------------------- |
@@ -142,6 +145,15 @@ Homebrew - The Missing Package Manager for macOS
 | brew install visual-studio-code          | [It is a lightweight but powerful source code editor](https://code.visualstudio.com/) |
 | brew install intellij-idea-ce            | [Popular Java and Kotlin IDE (Community Edition)](https://www.jetbrains.com/idea/) |
 
+### Python packages
+
+| Command | Description |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| pip3 install python-dotenv --break-system-packages   | Manage environment variables in a .env file |
+| pip3 install requests --break-system-packages        | Popular and powerfull library to work with HTTP requests |
+| pip3 install termsaver --break-system-packages       | Provide simple [text-based screensavers](https://github.com/brunobraga/termsaver) for terminal windows|
+| pip3 install visidata --break-system-packages        | [View data files in terminal](https://www.visidata.org/) |
+| pip3 install ruff --break-system-packages            | An extremely fast [Python linter and code formatter](https://docs.astral.sh/ruff/) |
 
 ## Links
 

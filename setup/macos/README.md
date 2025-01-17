@@ -21,16 +21,6 @@ Use bash instead of zsh: ```chsh -s /bin/bash```
 1. Touch Bar shows: F1,F2...
 1. Press Fn key to: Show Control Strip
 
-
-### Mission Control
-
-1. Preferences -> Mission Control:
-1. Dashboard: As Space
-
-Widgets:
-
-
-
 ### Security
 
 1. Preferences -> Security & Privacy -> General: -> "Require Password" -> 
@@ -58,15 +48,8 @@ Show scroll bars every time
 ### Desktop, Screensaver and Hot Corners
 
 1. Preferences -> Desktop&Screensaver -> Screen Saver:
-1. Select "Classic" desktop style
-1. Check "Show with clock"
-
-### Safari
-
-1. Flash Player
-    1. [How to use Internet plug-ins in Safari for Mac](https://support.apple.com/en-us/HT202819)
-    2. [Link](https://get.adobe.com/flashplayer/) to get Flash Player for Safari. Other version [link](https://get.adobe.com/flashplayer/otherversions/).
-2. Extensions: Stop/Reload Button, Adblock Plus, Session Restore
+1. Select "Photos" screensaver type
+1. Choose "Shigting Tiles" style
 
 ### Notifications
 
@@ -75,17 +58,89 @@ Disable preview for everything when locked
 
 ### Spotlight
 
-On Search Result tab:
-* Disable: History, Contacts, Documents, Images, Mail, Movies, Music, PDF, Presentations, Spreadsheets, Suggestions
-* Uncheck: Allow Spottlight suggestion
+On Spotlight settings:
+* Check only what you need: Applications, Calculator, System Settings
 
-On Privacy tab:
-* Ignore in: ~/Documents, ~/Workspace, /Volumes
+On Search Privacy:
+* Add directory to ignore: ~/Documents, ~/Workspace, /Volumes
 
 ### Accounts
 
 * Add iCloud account
 * Add Google account
+* Add Microsoft account
+* etc.
+
+## Tools
+
+### Homebrew
+
+Homebrew - The Missing Package Manager for macOS
+
+* Install Homebrew
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+* Uninstall Homebrew
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+```
+
+### Command Line Interface tools
+
+| Command | Description |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| brew install bash bash-completion        | [GNU Bash](https://www.gnu.org/software/bash/) |
+| brew install neovim                      | [Hyperextensible Vim-based text editor](https://neovim.io/)|
+| brew install inetutils                   | [GNU utilities for networking](https://www.gnu.org/software/inetutils/): telnet, ping, etc. |
+| brew install git tig                     | [Git is distributed version control system](https://git-scm.com/) |
+| brew install htop iftop                  | TUI monitoring tools: [htop](https://htop.dev/), [iftop](https://pdw.ex-parrot.com/iftop/) |
+| brew install coreutils watch             | Different GNU cli tools: [coreutils](https://www.gnu.org/software/coreutils/), [watch](https://gitlab.com/procps-ng/procps)|
+| brew install mc tree ncdu                | Work with directories and files: [mc](https://midnight-commander.org/), [tree](https://en.wikipedia.org/wiki/Tree_(command)), [ncdu](https://dev.yorhel.nl/ncdu)
+| brew install inxi neofetch duf           | System information: [inxi](https://smxi.org/docs/inxi.htm), [duf](https://github.com/muesli/duf), [neofetch](https://en.wikipedia.org/wiki/Neofetch) |
+| brew install gettext                     | GNU internationalization (i18n) and localization (l10n) [library](https://www.gnu.org/software/gettext/)|
+| brew install wget lynx                   | Download and view web pages in terminal: [wget](https://www.gnu.org/software/wget/), [lynx](https://en.wikipedia.org/wiki/Lynx_(web_browser))|
+| brew install unzip p7zip                 | Work with archives|
+| brew install pv                          | Monitor data's progress through a pipe: [pv](https://www.ivarch.com/programs/pv.shtml)|
+| brew install jq yq bat lnav              | File viewer and analyzer: [jq - json](https://jqlang.github.io/jq/), [yq - yaml](https://mikefarah.gitbook.io/yq), [bat - a cat with syntax highlighter](https://github.com/sharkdp/bat), [lnav - logs](https://lnav.org/) |
+| brew install lnav                        | Work with archives|
+| brew install shellcheck                  | [Static analysis tool for shell scripts](https://www.shellcheck.net/) |
+| brew install macos-trash                 | [Work with trash from terminal](https://github.com/sindresorhus/macos-trash) |
+| brew install openssl                     | . |
+| brew install speedtest-cli               | . |
+| brew install httping                     | [A tool to measure RTT on HTTP/S requests](https://github.com/pjperez/httping) |
+| brew install imagemagick                 | . |
+| brew install ghostscript                 | [Interpreter for the PostScript®  language and PDF files](https://www.ghostscript.com/) |
+| brew install ffmpeg mpv libcaca          | Watch video and/or listen audio from terminal |
+| brew install yt-dlp                      | [Command-line audio/video downloader for youtube.com](https://github.com/yt-dlp/yt-dlp) |
+| brew install cmatrix pipes-sh cbonsai    | Screensavers in terminal: [cmatrix](https://github.com/abishekvashok/cmatrix/), [pipes-sh](https://github.com/pipeseroni/pipes.sh), [cbonsai](https://gitlab.com/jallbrit/cbonsai) |
+
+### MacOS tools
+
+| Command | Description |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| brew install iterm2                      | [Better replacement for Terminal on MacOS](https://iterm2.com/) |
+| brew install vlc                         | [Cross-platform multimedia player](https://www.videolan.org/vlc/) |
+| brew install kid3                        | [Audio file tag editor](https://kid3.kde.org/) |
+| brew install balenaetcher                | [A cross-platform tool to flash images onto SD cards and USB drives](https://www.balena.io/etcher) |
+| brew install keepassxc                   | [A cross-platform password manager](https://keepassxc.org/) |
+| brew install microsoft-remote-desktop    | [Microsoft remote desktop client for MacOS](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/remote-desktop-mac) |
+| brew install vnc-viewer                  | [Real VNC viewer client](https://www.realvnc.com/) |
+
+### Tools for softwar/cloud development
+
+| Command | Description |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| brew install python@3.13                 | [Python Programming Language](https://python.org)|
+| brew install openjdk@17                  | . |
+| brew install node@22                     | [Node.js is a free, open-source, cross-platform JavaScript runtime environment](https://nodejs.org/en) |
+| brew install awscli                      | [AWS Command Line Interface](https://aws.amazon.com/cli/) |
+| brew cask install google-cloud-sdk       | [Google Cloud CLI]([https://aws.amazon.com/cli/](https://cloud.google.com/sdk/docs/install-sdk))|
+| brew install oci-cli                     | [Oracle Cloud Infrastructure CLI](https://docs.cloud.oracle.com/iaas/Content/API/Concepts/cliconcepts.htm)|
+| brew install azure-cli                   | [Azure Command-Line Interface](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos) |
+| brew install visual-studio-code          | [It is a lightweight but powerful source code editor](https://code.visualstudio.com/) |
+| brew install intellij-idea-ce            | [Popular Java and Kotlin IDE (Community Edition)](https://www.jetbrains.com/idea/) |
 
 
 ## Links

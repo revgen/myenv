@@ -38,7 +38,7 @@ jobs:
           pwd
           ls -ahl
           echo "------------"
-          cd docs
+          cd _site
           pwd
           ls -ahl
       - name: Upload artifact

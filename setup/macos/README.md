@@ -192,6 +192,7 @@ Resources where you can find an information about MacOS settings and tweaks
 * [Create a bootable installer for macOS](https://support.apple.com/en-us/101578)
 * [Find out which macOS your Mac is using](https://support.apple.com/en-us/109033)
 * [MacOS Compatibility for Mac Computer (Mac Books or Desktops)](https://eshop.macsales.com/guides/Mac_OS_X_Compatibility)
+* [Management profiles for OS X / macOS](https://github.com/rtrouton/profiles)
 
 
 

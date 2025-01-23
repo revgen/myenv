@@ -6,6 +6,9 @@ skipped() { echo " - Skipped"; }
 
 # -----------------------------------------------------------------------------
 title "Finder"
+ask "* Remove items from the Trash after 30 days" && \
+    defaults write com.apple.finder FXRemoveOldTrashItems -bool true || skipped
+    # Finder -> Preferences -> Advanced -> “Remove items from the Trash after 30 days”
 ask "* Use Finders list view as the default view mode" && \
     defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv" || skipped
     # Four-letter codes for the other view modes: `icnv`, `clmv`, `Flwv`

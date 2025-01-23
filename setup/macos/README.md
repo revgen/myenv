@@ -124,7 +124,6 @@ Homebrew - The Missing Package Manager for macOS
 | brew install unzip p7zip                 | Work with archives|
 | brew install pv                          | Monitor data's progress through a pipe: [pv](https://www.ivarch.com/programs/pv.shtml)|
 | brew install jq yq bat lnav              | File viewer and analyzer: [jq - json](https://jqlang.github.io/jq/), [yq - yaml](https://mikefarah.gitbook.io/yq), [bat - a cat with syntax highlighter](https://github.com/sharkdp/bat), [lnav - logs](https://lnav.org/) |
-| brew install lnav                        | Work with archives|
 | brew install shellcheck                  | [Static analysis tool for shell scripts](https://www.shellcheck.net/) |
 | brew install macos-trash                 | [Work with trash from terminal](https://github.com/sindresorhus/macos-trash) |
 | brew install openssl                     | . |
@@ -135,6 +134,7 @@ Homebrew - The Missing Package Manager for macOS
 | brew install ffmpeg mpv libcaca          | Watch video and/or listen audio from terminal |
 | brew install yt-dlp                      | [Command-line audio/video downloader for youtube.com](https://github.com/yt-dlp/yt-dlp) |
 | brew install cmatrix pipes-sh cbonsai    | Screensavers in terminal: [cmatrix](https://github.com/abishekvashok/cmatrix/), [pipes-sh](https://github.com/pipeseroni/pipes.sh), [cbonsai](https://gitlab.com/jallbrit/cbonsai) |
+| brew install musikcube                   | [Fully functional terminal-based music player](https://musikcube.com/) |
 
 ### MacOS tools
 
@@ -142,12 +142,19 @@ Homebrew - The Missing Package Manager for macOS
 | ---------------------------------------- | ---------------------------------------------------------- |
 | brew install iterm2                      | [Better replacement for Terminal on MacOS](https://iterm2.com/) |
 | • iTerms2 - [imgcat](https://iterm2.com/documentation-images.html) | ```curl -L https://www.iterm2.com/utilities/imgcat > ~/.local/bin/imgcat; chmod +x ~/.local/bin/imgcat``` |
+| brew install google-chrome               | [Official web browser from Google](https://www.google.com/chrome/dr/download) |
+| brew install google-drive                | [Cloud storage from Google](https://drive.google.com/) |
+| brew install onedrive                    | [Cloud storage from Microsoft](https://www.microsoft.com/en-us/microsoft-365/onedrive/online-cloud-storage) |
+| brew install megasync                    | [MEGA Cloud drives](https://mega.nz/sync) |
 | brew install vlc                         | [Cross-platform multimedia player](https://www.videolan.org/vlc/) |
 | brew install kid3                        | [Audio file tag editor](https://kid3.kde.org/) |
 | brew install balenaetcher                | [A cross-platform tool to flash images onto SD cards and USB drives](https://www.balena.io/etcher) |
 | brew install keepassxc                   | [A cross-platform password manager](https://keepassxc.org/) |
 | brew install microsoft-remote-desktop    | [Microsoft remote desktop client for MacOS](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/clients/remote-desktop-mac) |
 | brew install vnc-viewer                  | [Real VNC viewer client](https://www.realvnc.com/) |
+| brew install veracrypt                   | [Open-source and multi-platform disk encryption software](https://www.veracrypt.fr/code/VeraCrypt/) |
+| brew install ytmdesktop-youtube-music    | [Youtube Music client](https://ytmdesktop.app/) |
+| brew install freetube                    | [Free client for Youtube](https://freetubeapp.io/) |
 
 ### Tools for software/cloud development
 

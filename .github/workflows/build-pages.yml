@@ -48,6 +48,16 @@ jobs:
           echo '<img src="./docs/myenv-preview-01.png" title="MYENV"></img>' >> _site/index.html
           echo '</body></html>' >> _site/index.html
           rm README.md
+      - name: Generate Directory Listings
+        uses: jayanta525/github-pages-directory-listing@v4.0.0
+        with:
+          FOLDER: _site/
+      - name: Prepare build system
+        run: |
+          mv _site/index.html _site/repo.html
+          echo '<html><body style="background-color: #000">' > _site/index.html
+          echo '<img src="./docs/myenv-preview-01.png" title="MYENV"></img>' >> _site/index.html
+          echo '</body></html>' >> _site/index.html
       - name: Show directory
         run: |
           echo "------------"

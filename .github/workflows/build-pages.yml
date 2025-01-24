@@ -59,7 +59,7 @@ jobs:
           echo '  pre {font-size: 175%;}' >> index.html
           echo '  a, a:visited  { text-decoration: none; color: #006600; }' >> index.html
           echo '  @media only screen and (max-width: 1024px) {' >> index.html
-          echo '    pre { font-size: 100%; }' >> index.html
+          echo '    pre { font-size: 75%; }' >> index.html
           echo '  }' >> index.html
           echo '</style></head>'>> index.html
           echo '<body style="background-color: #000; color: #006600;">' >> index.html

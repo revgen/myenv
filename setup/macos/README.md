@@ -155,6 +155,7 @@ Homebrew - The Missing Package Manager for macOS
 | brew install veracrypt                   | [Open-source and multi-platform disk encryption software](https://www.veracrypt.fr/code/VeraCrypt/) |
 | brew install ytmdesktop-youtube-music    | [Youtube Music client](https://ytmdesktop.app/) |
 | brew install freetube                    | [Free client for Youtube](https://freetubeapp.io/) |
+| brew install paintbrush                  | [Original simple paint program for macOS](https://paintbrush.sourceforge.io/) |
 
 ### Tools for software/cloud development
 

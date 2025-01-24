@@ -9,6 +9,7 @@
   payload_from_jwt() { cut -d ██│└██┌┘██│   └██┌┘   ██┌──┘   ██│└██┐██│ └██┐ ██┌┘ 
   get_jwt() { cat "${JWT_FILE ██│ └─┘ ██│    ██│    ███████┐ ██│ └████│  └████┌┘  
   get_user_id() { jwt=${1}; e └─┘     └─┘    └─┘    └──────┘ └─┘  └───┘   └───┘   
+  open_repo() { xdg-open "./repo.html"; }
   assert_user() { if [ -z "${1}" ]; then echo "Error: incorrect JWT. Did you make
 
  # -------------
@@ -16,4 +17,3 @@
                          unsigned int len, u8 *out)
   {      return __crc32_finup(shash_desc_ctx(desc), data, len, out);
   }
-

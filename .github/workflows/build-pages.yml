@@ -58,8 +58,8 @@ jobs:
           echo '<div style="display: table; margin-right: auto; margin-left: auto;">' >> index.html
           echo '<pre>' >> index.html
           cat ./docs/myenv-preview-01.txt >> index.html
-          echo '</pre></div>' >> _site/index.html
-          echo '</body></html>' >> _site/index.html
+          echo '</pre></div>' >> index.html
+          echo '</body></html>' >> index.html
       - name: Show directory
         run: |
           echo "------------"

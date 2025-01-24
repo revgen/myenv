@@ -50,13 +50,13 @@ jobs:
         uses: jayanta525/github-pages-directory-listing@v4.0.0
         with:
           FOLDER: _site/
-      - name: Prepare build system
+      - name: Create root index file
         run: |
           cd _site
           mv index.html repo.html
-          echo '<html><body style="background-color: #000">' > index.html
+          echo '<html><body style="background-color: #000; color: #006600;">' > index.html
           echo '<div style="display: table; margin-right: auto; margin-left: auto;">' >> index.html
-          echo '<pre>' >> index.html
+          echo '<pre style="fotn-size: 175%;">' >> index.html
           cat ./docs/myenv-preview-01.txt >> index.html
           echo '</pre></div>' >> index.html
           echo '</body></html>' >> index.html

@@ -1,12 +1,29 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 echo "Secure delete all files and directories."
+sched_exists=0
+
+shred_script() {
+    nn="${1}"
+    size="$(stat -f%z "${nn}")"
+    if [ -z "${size}" ] || [ "${size}" == "0" ]; then size=1024; fi
+    echo "  Overwrite ${size} bytes for ${nn} file"
+    head -c ${size} /dev/random > "${nn}" || exit 1
+    head -c ${size} /dev/zero > "${nn}" || exit 1
+}
 
 delete_file_secure() {
     src="${1}"
     nn="$(dirname "${src}")/$(uuidgen)"
-    #echo "Process ${src} -> ${nn}...";
+    printf "Processing: "
     mv -v "${src}" "${nn}" || exit 1
-    shred -vfzn 2 "${nn}"
+    chmod u+w "${nn}" || exit 1
+    if [ "${sched_exists}" == "1" ]; then
+        shred -vfzn 2 "${nn}"
+    else
+        shred_script "${nn}"
+    fi
+    printf "  Remove: "
     rm -vf "${nn}" || exit 1
 }
 
@@ -15,7 +32,8 @@ delete_dir_secure() {
     nn="$(dirname "${src}")/$(uuidgen)"
     #echo "Process ${src} -> ${nn}..."
     mv -v "${src}" "${nn}" || exit 1
-    rmdir -v "${nn}" || exit 1
+    chmod u+w "${nn}" || exit 1
+    rmdir -v "${nn}" || echo "Error delete '${nn}' directory"
 }
 
 delete_dir_secure_recursive() {
@@ -36,14 +54,19 @@ case "${1}" in
     help|--help|-h)
 	echo "Steps:"
 	echo "  1. All paths will be renamed with the generated uuid."
-	echo "  2. After that files will be processed witht he shred tool 2 times and filled with zeros."
+	echo "  2. After that files will be processed with the shred tool 2 times and filled with zeros."
 	echo "  3. Files will be removed"
 	echo "Usage: $(basename "${0}") [path]"
 	exit 1;;
 esac
 
-if ! which shred >/dev/null; then echo "Error: shred tools is required for this script." && exit 1; fi 
-src="${1:-"${PWD}"}"
+if ! which shred >/dev/null; then
+    sched_exists=0
+    echo "Warning: shred tools not found. A shred_script will be using."
+else
+    sched_exists=1
+fi
+src="$(readlink -f "${1:-"${PWD}"}")"
 read -p "Do you really want to delete '${src}' (y/N)? " opt
 if [ "${opt}" != "y" ]; then echo "Skip"; exit 1; fi
 

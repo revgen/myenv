@@ -72,6 +72,8 @@ alias mplayer='mpv'
 alias kid3='/usr/bin/open -a kid3.app'
 alias mull-local='mutt -f /var/mail/${USER}'
 alias mail-local='mull-local'
+alias duf='duf --hide-mp "/dev, *com*, *ystem*"'
+
 if [ -d "/Applications/IntelliJ IDEA CE.app" ]; then
     alias idea='/Applications/IntelliJ\ IDEA\ CE.app/Contents/MacOS/idea'
 fi

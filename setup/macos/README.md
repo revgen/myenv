@@ -171,6 +171,7 @@ Homebrew - The Missing Package Manager for macOS
 | brew install azure-cli                   | [Azure Command-Line Interface](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-macos) |
 | brew install visual-studio-code          | [It is a lightweight but powerful source code editor](https://code.visualstudio.com/) |
 | brew install intellij-idea-ce            | [Popular Java and Kotlin IDE (Community Edition)](https://www.jetbrains.com/idea/) |
+| docker (better to use official download) | [Download docker for MacOS](https://docs.docker.com/desktop/setup/install/mac-install/) |
 
 ### Python packages
 

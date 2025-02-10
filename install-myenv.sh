@@ -80,7 +80,7 @@ install_local() {
   mkdir -p "${ENV_HOME}" > /dev/null
   if [[ ! -d "${ENV_HOME}/.git" ]]; then
     info "Git clone ${repo_url}"
-    git clone "${repo_url}" "${ENV_HOME}" || exit ${INSTALLATION_ERROR}
+    git clone --depth 1 "${repo_url}" "${ENV_HOME}" || exit ${INSTALLATION_ERROR}
   fi
 
   cd "${ENV_HOME}" || exit 1

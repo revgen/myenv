@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1.0.174
+VERSION=1.0.173
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:
@@ -280,7 +280,7 @@ update_bash_profile() {
         {
             echo ""
             echo "# --[ Load ${ENV_NAME} configuration:start ]------------------------"
-            if ! echo "${PATH}" | grep ".local/bin"; then
+            if ! echo "${PATH}" | grep -q ".local/bin"; then
                 echo "export PATH=\"${HOME}/.local/bin:${PATH}\""
             fi
             echo "export ${ENV_VAR_NAME}NAME=\"${ENV_NAME}\""

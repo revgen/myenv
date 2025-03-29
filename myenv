@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION=1.0.175
+VERSION=1.0.173
 # ##############################################################################
 ## Use: {SCRIPT_NAME} <command>
 ## Commands:
@@ -194,8 +194,9 @@ version() {
     else
         env_home="${ENV_HOME}"
     fi
-    local sep="▶ " # █ ▸ ▶
-    echo -e "${BLUE}${sep}${ENV_NAME} v${VERSION} #$(basename "${SHELL}")${NOCOLOR} ${CYAN}${sep}${osinfo} ($(arch))${NOCOLOR} ${GRAY}${sep}${env_home}"${NOCOLOR}
+    shell="$(echo "#$(basename "${SHELL}")" | sed 's/#bash/Ⓑ/' | sed 's/#zsh/Ⓩ/' | sed 's/#zsh/Ⓐ/')"
+    # Separators: █ ▸ ▶ ▬ ◣ ◯ ◰ ➤ ↣ ≫ ≋ ≀ ⊣ ⊿ ❯
+    echo -e "${BLUE}${shell} ${ENV_NAME} v${VERSION} ${NOCOLOR} ${CYAN}> ${osinfo} ($(arch))${NOCOLOR} ${GRAY}$ ${env_home}"${NOCOLOR}
 }
 
 check_new_version() {

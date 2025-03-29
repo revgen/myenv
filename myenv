@@ -16,20 +16,22 @@ VERSION=1.0.172
 # ##############################################################################
 if [[ -z "${BASH_VERSION:-}" ]]; then echo "Error: Bash is required." >&2; exit 1; fi
 
-NO_COLOR=''; RED=''; GREEN=''; YELLOW=''; BLUE=''; PURPLE=''; CYAN=''; WHITE=''; GRAY='';
-if test -t 1 && [ "${NOCOLOR}" != "true" ]; then
+NOCOLOR=''; RED=''; GREEN=''; YELLOW=''; BLUE=''; PURPLE=''; CYAN=''; WHITE=''; GRAY='';
+# Settings for color output
+# if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
+if test -t 1 && [ "${NOCOLOR}" != "true" ] && [ "${NO_COLOR}" != "true" ]; then
     # see if it supports colors...
     ncolors=$(tput colors 2>/dev/null)
     if test -n "$ncolors" && test $ncolors -ge 8; then
-        NO_COLOR='\033[0m'; RED='\033[1;31m'; GREEN='\033[1;32m'; YELLOW='\033[1;33m'; BLUE='\033[1;34m';
+        NOCOLOR='\033[0m'; RED='\033[1;31m'; GREEN='\033[1;32m'; YELLOW='\033[1;33m'; BLUE='\033[1;34m';
         PURPLE='\033[1;35m'; CYAN='\033[1;36m'; WHITE='\033[1;37m'; GRAY='\033[0;90m';
     fi
 fi
 
 #-------------------------------------------------------------------------------
-debug() { [[ "${DEBUG}" == "true" ]] && echo >&2 -e "${VERBOSE}$*${NOFORMAT}"; }
-info() { echo >&2 -e "${INFO}$*${NOFORMAT}"; }
-error() { echo >&2 -e "${ERROR}$*${NOFORMAT}"; }
+debug() { [[ "${DEBUG}" == "true" ]] && echo >&2 -e "${CYAN}$*${NOCOLOR}"; }
+info() { echo >&2 -e "${GREEN}$*${NOCOLOR}"; }
+error() { echo >&2 -e "${RED}$*${NOCOLOR}"; }
 prompt_yn() { read -r -p "${1} " opt; [[ "${opt:-"y"}" == "y" ]] || [[ "${opt}" == "Y" ]]; }
 prompt_ny() { read -r -p "${1} " opt; [[ "${opt:-"n"}" != "y" ]] && [[ "${opt}" != "Y" ]]; }
 cleanup() { cd "${OLD_PWD:-"${PWD}"}" >/dev/null || true; }
@@ -77,10 +79,7 @@ case "${OSTYPE}" in
   *)        export OSNAME=unknown ;;    # solaris* / bsd* / msys* / cygwin* / other
 esac
 
-# Settings for color output
-if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
-    NOFORMAT='\033[0m' INFO='\033[0;32m' VERBOSE='\033[0;36m' ERROR='\033[0;31m';
-else NOFORMAT='' INFO='' VERBOSE='' ERROR=''; fi
+
 
 #-------------------------------------------------------------------------------
 remove_symlinks_from_bin() {
@@ -197,7 +196,7 @@ version() {
         env_home="${ENV_HOME}"
     fi
     local sep="▶ " # █ ▸ ▶
-    echo -e "${BLUE}${sep}${ENV_NAME} v${VERSION} #$(basename "${SHELL}")${NO_COLOR} ${CYAN}${sep}${osinfo} ($(arch))${NO_COLOR} ${GRAY}${sep}${env_home}"${NO_COLOR}
+    echo -e "${BLUE}${sep}${ENV_NAME} v${VERSION} #$(basename "${SHELL}")${NOCOLOR} ${CYAN}${sep}${osinfo} ($(arch))${NOCOLOR} ${GRAY}${sep}${env_home}"${NOCOLOR}
 }
 
 check_new_version() {

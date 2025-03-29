@@ -30,4 +30,3 @@ toclip() {
 fromclip() {
     xclip -selection clipboard -o
 }
-~

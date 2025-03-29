@@ -15,6 +15,7 @@ export PATH="${HOME}/.local/bin:/opt/homebrew/bin:${PATH}"
 export EDITOR=vi
 export USERBIN="${USERBIN:-"${HOME}/.local/bin"}"
 export BACKUP_TARGET="${HOME}/Documents/CloudDrive/Backups"
+export WORKSPACE="${WORKSPACE:-"${HOME}/Documents/Workspace"}"
 
 # ------[ Terminal settings ]--------------------------------------------------
 export PS1="\u@\h:\W\$ "
@@ -154,12 +155,9 @@ if ! command -v "${MYENVNAME}" >/dev/null; then
   echo "MYENVHOME = ${MYENVHOME}"
   ls -ahl "${MYENVHOME}"
 else
-  if [ -n "${TERM_PROGRAM}" ]; then       # show additional information in a regular terminals
-    if [ -x "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome" ]; then
-      "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome"
-    else
-      "${MYENVNAME}" --version
-    fi
+  #if [ -n "${TERM_PROGRAM}" ]; then       # show additional information in a regular terminals
+  if [ -x "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome" ]; then
+    "${MYENVHOME}/home/.config/${MYENVNAME}/user-welcome"
   else
     "${MYENVNAME}" --version
   fi

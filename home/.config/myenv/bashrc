@@ -147,6 +147,9 @@ fi
 [ ! -d "${HOME}/.local/var/tmp" ] && mkdir -p "${HOME}/.local/var/tmp"
 echo "${COLUMNS}x${LINES}" > "${HOME}/.local/var/tmp/$(basename $(tty))-geometry"
 
+if command -v "fzf" >/dev/null; then
+    eval "$(fzf --bash)"
+fi
 # ------[ Customer welcome screen ]--------------------------------------------
 if ! command -v "${MYENVNAME}" >/dev/null; then
   echo "ERROR: you have a problem with the ${MYENVNAME} environment."

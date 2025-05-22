@@ -110,8 +110,9 @@ Homebrew - The Missing Package Manager for macOS
 ### Command Line Interface tools
 
 | Command | Description |
-| ----------------------------------------- | ---------------------------------------------------------- |
-| brew install bash bash-completion   | [GNU Bash](https://www.gnu.org/software/bash/) |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| brew install bash bash-completion        | [GNU Bash](https://www.gnu.org/software/bash/) |
+| brew install fzf                         | [fzf](https://junegunn.github.io/fzf/) is a general-purpose command-line fuzzy finder|
 | brew install neovim                      | [Hyperextensible Vim-based text editor](https://neovim.io/)|
 | brew install inetutils                   | [GNU utilities for networking](https://www.gnu.org/software/inetutils/): telnet, ping, etc. |
 | brew install git tig                     | [Git is distributed version control system](https://git-scm.com/) |

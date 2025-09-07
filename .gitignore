@@ -1,3 +1,4 @@
 __draft__/
 __old__/
 .env
+.DS_Store

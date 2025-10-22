@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 
 HOME_DIR = Path.home()
-ARCHIVED_DAYS = 15
+ARCHIVED_DAYS = 1
 
 
 if os.environ.get("DEBUG") == "true":
@@ -64,9 +64,9 @@ def get_time_from_file_name(file_name: str) -> datetime:
 
 def process_screenshots(screenshots_dir: Path, archive_dir: Optional[Path] = None) -> None:
     info(f"Processing all screenshots in the {screenshots_dir} directory...")
-    archive_dir  = archive_dir or screenshots_dir / "Archive"
-    debug(f"Archive directory is {archive_dir}")
     cur_dt = datetime.now().astimezone(tz=timezone.utc)
+    archive_dir  = archive_dir or screenshots_dir / str(cur_dt.year)
+    debug(f"Archive directory is {archive_dir}")
 
     total_screenshots = 0
     total_renamed = 0
@@ -88,11 +88,12 @@ def process_screenshots(screenshots_dir: Path, archive_dir: Optional[Path] = Non
             debug(f"- File '{orig_name}' do not need to be renamed.")
             file_dt = datetime.fromtimestamp(int(file.stat().st_ctime)).astimezone(tz=timezone.utc)
             new_name = orig_name
+        debug(f"- File datetime: {file_dt} (now={cur_dt})")
 
         if file_dt >= cur_dt - timedelta(days=ARCHIVED_DAYS):
             new_file_path = screenshots_dir / new_name
         else:
-            archive_dir_for_file = archive_dir / file_dt.strftime("%Y-%m")
+            archive_dir_for_file = archive_dir / file_dt.strftime("%Y-%m") / file_dt.strftime("%Y-%m-%d")
             archive_dir_for_file.mkdir(parents=True, exist_ok=True)
             new_file_path = archive_dir_for_file / new_name
             total_archived += 1
@@ -101,7 +102,7 @@ def process_screenshots(screenshots_dir: Path, archive_dir: Optional[Path] = Non
             info(f"- Move: {orig_name} -> {new_file_path.relative_to(HOME_DIR)}")
             file.rename(new_file_path)
         else:
-            debug(f"- Skip: {orig_name}. Do not need to move")
+            debug(f"- Skip: {orig_name}, do not need to move")
             total_skipped += 1
 
     info(f"Processed screenshots: total={total_screenshots}, renamed={total_renamed}, "

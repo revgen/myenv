@@ -1,10 +1,8 @@
 #!/bin/sh
 
-if [ ! -e "/Applications/qView.app/" ]; then
-    echo "Error: qView.app not found. Please install qView.app first"
-    echo "# brew install gqview"
-    echo "https://interversehq.com/qview/"
-    exit 1
+if [ -e "/Applications/qView.app/" ]; then
+    open -a qView.app "${1:-"${PWD}"}"
+else
+    open "${1:-"${PWD}"}"
 fi
 
-open -a qView.app "${1:-"${PWD}"}"

@@ -45,6 +45,7 @@
     # update user.name for old commits: git change-commits GIT_AUTHOR_NAME "OLD-NAME" "NEW-NAME"
     change-commits = "!f() { VAR=$1; OLD=$2; NEW=$3; shift 3; git filter-branch -f --env-filter \"if [[ \\\"$`echo $VAR`\\\" = '$OLD' ]]; then export $VAR='$NEW}'; fi\" $@; }; f "
 [http]
+	cookiefile = ~/.gitcookies
 [credential]
     helper = cache --timeout=9999999
 [difftool]

@@ -1,4 +1,7 @@
+.idea/
 __draft__/
 __old__/
 .env
+.venv/
+**/.venv/
 .DS_Store

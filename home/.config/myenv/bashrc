@@ -81,7 +81,6 @@ alias qview='gqview'
 alias lower='tr "[:upper:]" "[:lower:]"'
 alias upper='tr "[:lower:]" "[:upper:]"'
 
-alias tig='tig --all'
 alias hex='xxd'
 alias tohex='xxd -p'
 alias fromhex='xxd -p -r'

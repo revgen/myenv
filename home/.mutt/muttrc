@@ -9,3 +9,6 @@ set sort_aux=reverse-last-date-received
 set editor = "vim"
 set edit_headers = yes
 set charset = UTF-8
+
+set read_only = no
+

@@ -16,6 +16,8 @@
 ## Install core tools
 
 ```bash
+sudo apt-add-repository multiverse && sudo apt-get update
+
 # Remove vim and install neovim or vim-tiny
 sudo apt purge -y vim vim-common vim-runtime 
 sudo apt -y install neovim
@@ -34,11 +36,19 @@ sudo add-apt-repository ppa:rmescandon/yq; sudo apt install yq -y
 
 sudo apt -y install p7zip-full
 sudo apt -y install figlet dialog
+
+sudo apt -y intall ufw
+sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw enable
+sudo ufw status
 ```
 
 ```bash
-sudo apt -y install duf inxi
-sudo apt -y install elinks 
+sudo apt -y install duf
+sudo apt -y install inxi --no-install-recommends
+sudo apt -y install elinks
 ```
 
 ```bash
@@ -73,10 +83,10 @@ sudo apt autoremove -y --purge snapd lxd
 ## Setup python
 
 ```bash
-[ ! which python3 >/dev/null ] && sudo apt -y install python3
-[ ! which pip3 >/dev/null ] && sudo apt -y install python3-pip
+which python3 >/dev/null || sudo apt -y install python3
+which pip3 >/dev/null || sudo apt -y install python3-pip
 
-sudo apt -y install python3-pip python3-venv
+sudo apt -y install python3-venv
 [ -z "$(which python)" ] && sudo ln -fvs $(which python3) /usr/bin/python
 [ -z "$(which pip)" ] && sudo ln -fvs $(which pip3) /usr/bin/pip
 ```
@@ -84,7 +94,7 @@ sudo apt -y install python3-pip python3-venv
 ```bash
 # Install python packages
 pip3 install pip
-pip3 install requests fastapi python-dotenv --break-system-packages
+python3 -m pip install requests fastapi python-dotenv --break-system-packages
 ```
 
 ## Install nginx
@@ -102,20 +112,16 @@ sudo apt -y install docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# https://github.com/docker/compose/releases
-curl -SL https://github.com/docker/compose/releases/download/v2.30.1/docker-compose-linux-x86_64 -o docker-compose
-chmod +x docker-compose
-sudo mv -vf docker-compose /usr/local/bin/docker-compose
-
 sudo usermod -aG docker ${USER}
+
 sudo apt install -y docker-compose-v2
 ```
 
 ## Install system monitor
 
 ```bash
-sudo pip3 install bottle glances fastapi ujson --break-system-packages
-wget https://raw.githubusercontent.com/revgen/myenv/master/linux/setup/ubuntu/install-system-monitor-glances.sh
+sudo python3 -m pip install bottle glances fastapi ujson --break-system-packages
+wget https://raw.githubusercontent.com/revgen/myenv/master/setup/linux/ubuntu/install-system-monitor-glances.sh
 sudo bash install-system-monitor-glances.sh
 
 sudo ufw allow 61208
@@ -201,12 +207,12 @@ test -e /usr/sbin/sshd || sudo apt-get install openssh-server
 #    PermitRootLogin no
 # Add:
 #    AllowUsers master dev bob
-# sudo systemctl restart sshd
+# sudo systemctl restart ssh
 ```
 
 > TODO: 2FA....
 
-## Setup firewall (ufw)
+## Optional: Setup firewall (ufw)
 
 ```bash
 sudo ufw allow ssh
@@ -219,7 +225,7 @@ sudo ufw allow out 53,113,123/udp
 sudo ufw enable
 sudo ufw status
 ```
-## Setup firewall (iptables)
+## Optional: Setup firewall (iptables)
 
 ```bash
 sudo iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
@@ -229,7 +235,7 @@ sudo iptables -A INPUT -p tcp -m tcp --dport 8000:8099 -j ACCEPT
 
 ```
 
-## Setup firewall (firewalld)
+## Optional: Setup firewall (firewalld)
 
 ```bash
 sudo apt install -y firewalld

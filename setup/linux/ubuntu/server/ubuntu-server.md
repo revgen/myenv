@@ -28,7 +28,7 @@ sudo cp -v /etc/bash.bashrc /etc/bash.bashrc.$(date +%s).bak
 ```
 
 ```bash
-sudo apt -y install screen mc htop git curl wget lynx tree ncdu telnet
+sudo apt -y install screen mc htop btop git curl wget lynx tree ncdu telnet bat 
 sudo apt -y install telnet iputils-ping net-tools dnsutils
 
 sudo apt -y install jq

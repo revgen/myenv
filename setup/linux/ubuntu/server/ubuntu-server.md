@@ -16,6 +16,10 @@
 ## Install core tools
 
 ```bash
+sudo timedatectl set-timezone "America/New_York"
+# sudo timedatectl set-timezone "America/Los_Angeles"
+# sudo timedatectl set-timezone "Europe/Amsterdam"
+
 sudo apt-add-repository multiverse && sudo apt-get update
 
 # Remove vim and install neovim or vim-tiny
@@ -28,7 +32,9 @@ sudo cp -v /etc/bash.bashrc /etc/bash.bashrc.$(date +%s).bak
 ```
 
 ```bash
-sudo apt -y install screen mc htop btop git curl wget lynx tree ncdu telnet bat 
+sudo apt -y install screen mc htop btop git curl wget lynx tree ncdu telnet bat
+[ -z "$(which bat)" ] && sudo ln -fvs $(which batcat) /usr/bin/bat
+
 sudo apt -y install telnet iputils-ping net-tools dnsutils
 
 sudo apt -y install jq

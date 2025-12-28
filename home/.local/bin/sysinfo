@@ -2,7 +2,7 @@
 # shellcheck disable=SC2312
 #==============================================================================
 ## Show system information
-## Usage: {SCRIPT_NAME} [full/simple/banner]
+## Usage: {SCRIPT_NAME} [full/simple/banner/local-ip/external-ip]
 #==============================================================================
 case "$(uname -s | tr "[:upper:]" "[:lower:]")" in
   linux*)
@@ -106,7 +106,8 @@ active_users() {
 #------------------------------------------------------------------------------
 local_ip() {
     if command -v ip >/dev/null; then
-        ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+        # ip add show | grep "inet " | grep -v "127.0.0.1" | sed 's/\// /g' | awk '{print $2}' | sort | xargs | sed -e 's/ /, /g'
+        ip -brief address show | grep -v 'docker' | grep -v 'veth' | grep -v "^br\-" | grep -v "127.0.0.1" | awk '{print $3}' | cut -d"/" -f1
         return 0
     fi
     if command -v ifconfig >/dev/null; then
@@ -206,5 +207,7 @@ case "${arg1}" in
     slim|--slim|simple|--simple|-S) show_slim_info ;;
     banner|--banner|-B) show_banner ;;
     full|--full|-F) execute_inxi ;;
+    local-ip|localip|local-address|localaddress) local_ip;;
+    external-ip|externalip|external-address|externaladdress) public_ip;;
     *) execute_inxi "$*" ;;
 esac

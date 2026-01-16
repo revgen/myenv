@@ -150,8 +150,8 @@ update() {
     echo "Updating..."
     debug "Reset to the ${REPO_BRANCH}:HEAD"
     git remote prune origin || exit 1
-    # git tag -l --sort=-version:refname | xargs git tag -d 2>/dev/null >/dev/null
-    git fetch --tags --all || exit 1
+    git fetch --tags --all 2>&1 | grep -v "new tag" || return 1
+    git tag -l --sort=-version:refname | grep "[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*" | head -n 10 | sed 's/^/ * [tag] /g'
     echo "Changes:"
     git diff --stat HEAD..origin/${REPO_BRANCH}
     echo "Getting latest tag..."

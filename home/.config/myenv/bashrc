@@ -78,6 +78,8 @@ alias vd='LC_ALL="${LC_ALL:-"en_US.UTF-8"}" vd'
 alias csvview='vd'
 alias qview='gqview'
 
+alias duf='duf --hide-mp "/dev, *com*, *ystem*" --hide-fs "tmpfs, efivarfs"'
+
 alias lower='tr "[:upper:]" "[:lower:]"'
 alias upper='tr "[:lower:]" "[:upper:]"'
 

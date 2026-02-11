@@ -1,0 +1,331 @@
+#!/usr/bin/env python
+"""
+Tool for creating file hashes and directory manifests to detect corruption or unexpected changes.
+
+Usage: checksums --help
+
+Author: Evgen Rusakov (c) 2025
+
+This tool is provided 'as is' and without warranty of any kind.
+"""
+from __future__ import annotations
+import argparse
+from dataclasses import dataclass
+import hashlib
+import json
+import os
+import logging
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections import OrderedDict
+
+__app__ = Path(__file__).stem
+__version__ = "0.2.0"
+__repo__ = "https://github/revgen/myenv"
+
+logger = logging.getLogger()
+CACH_DIR = Path.home() / ".cache" / __app__
+
+def confirm_or_exit(msg: str, def_value: str = "n") -> bool:
+    """ "Display a confirmation prompt with Yes and No options.
+    """
+    if (input(f"{msg}: ") or def_value).lower().strip() not in ("yes", "y"):
+        logger.info("Exit")
+        return False
+    return True
+
+
+@dataclass
+class Config:
+    paths: set[Path]
+    algorithm: str
+    checksum_file_name: str
+    use_cache: bool
+    show_hidden: bool
+    quiet: bool
+    debug: bool
+
+    def __init__(self) -> None:
+        self.paths = set()
+        self.algorithm = HashCalculator.DEF_ALGORITHM
+        self.checksum_file_name = HashCalculator.DEF_CHECKSUM_FILE_NAME
+        self.use_cache = False
+        self.show_hidden = False
+        self.quiet = False
+        self.debug = bool((os.environ.get("DEBUG") or "").strip().lower() in ("true", "yes", "y"))
+
+    def get_log_level(self) -> int:
+        return logging.DEBUG if self.debug else logging.INFO
+
+    def get_log_format(self) -> str:
+        if self.debug:
+            return "%(asctime)s.%(msecs)03d [%(levelname)-5.5s] %(message)s"
+        return "%(message)s"
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "paths": [str(p) for p in self.paths or set()],
+            "algorithm": str(self.algorithm),
+            "checksum-file-name": str(self.checksum_file_name),
+            "use-cache": self.use_cache or False,
+            "show-hidden": self.show_hidden or False,
+            "quiet": self.quiet or False,
+            "debug": self.debug or False,
+        }
+
+    def __str__(self) -> str:
+        return json.dumps(self.to_dict())
+
+
+class HashCalculator:
+    """ Calculate hash for strings or files
+    """
+    ALGORITHMS = {                                                                          # noqa: RUF012
+        "md5": hashlib.md5,
+        "sha1": hashlib.sha1,
+        "sha256": hashlib.sha256,
+    }
+    DEF_ALGORITHM = "md5"
+    DEF_CHECKSUM_FILE_NAME = ".checksums"
+
+    def __init__(self, algorithm: Optional[str] = None, hashfile: Optional[str] = None,     # noqa: UP045
+                 use_cache: bool = False, show_hidden: bool = False, quiet: bool = False) -> None:
+        self.algorithm = (algorithm or "md5").strip().lower()
+        self.hash_file_name = hashfile or HashCalculator.DEF_CHECKSUM_FILE_NAME
+        self.home_path = Path.home()
+        self.cache_dir = self.home_path / ".cache" / __app__ / "hashes"
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.use_cache = use_cache or False
+        self.quiet = quiet or False
+        self.show_hidden = show_hidden or False
+
+    def _is_hash_valid(self, hash_value: str) -> bool:
+        if not hash_value:
+            return False
+        if self.algorithm not in HashCalculator.ALGORITHMS:
+            raise ValueError(f"Unknown algorithm '{self.algorithm}'.")
+        try:
+            hash_value_dec = int(hash_value * 32, base=16)
+            if self.algorithm == "md5" \
+                and len(hash_value) == 32 and 0 <= hash_value_dec < 35 * pow(10, 37):   # noqa: PLR2004
+                return True
+            if self.algorithm == "sha1" \
+                and len(hash_value) == 40 and 0 <= hash_value_dec < 15 * pow(10, 48):   # noqa: PLR2004
+                return True
+            if self.algorithm == "sha256" \
+                and len(hash_value) == 64 and 0 <= hash_value_dec < 11 * pow(10, 78):   # noqa: PLR2004
+                return True
+            logger.debug(f"Hash '{hash_value}' is invalid ({self.algorithm}).")
+        except ValueError as ex:
+            logger.warning(f"Hash '{hash_value}' is invalid ({self.algorithm}): {ex}")
+        return False
+
+    def calc_hash_from_string(self, text: str = "") -> str:
+        hash_engine = HashCalculator.ALGORITHMS[self.algorithm]()
+        logger.debug(f"Calculate {self.algorithm} hash from a string: {text[:30]}")
+        hash_engine.update(text.encode("utf-8"))
+        hash_value = hash_engine.hexdigest().lower()
+        logger.debug(f"Calculate {self.algorithm} hash from a string '{text[:30]}' done: {hash_value}")
+        return hash_value
+
+    def calculate_hash_for_path(self, path: Path) -> dict[str, str]:
+        result = None
+        logger.debug(f"Check {path}")
+        if not path.exists():
+            raise OSError("Path not found: {path}")
+        if path.is_dir():
+            if not self.quiet and not confirm_or_exit(f"Calculate checksums in {path} (y/N)"):
+                return None
+            result = self._calculate_dir_hash(path)
+        else:
+            file_path, hash_value = self._calculate_file_hash(path)
+            result = {file_path: hash_value}
+            hash_file_path = path.parent / f"{path.name}.{self.algorithm}"
+            self._create_hash_file(hash_file_path, path.parent, result)
+        return result
+
+    def _get_file_hash_file_path(self, path: Path, rel_to: Optional[Path] = None) -> Path:      # noqa: UP045
+        rel_to = rel_to or self.home_path
+        cur_path = path.relative_to(rel_to) if rel_to and path.is_relative_to(rel_to) else path
+        path_hash = self.calc_hash_from_string(str(cur_path.resolve().absolute()))
+        cache_file_path = self.cache_dir / path_hash[:2] / path_hash
+        cache_file_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Hash file is '{cache_file_path}'")
+        return cache_file_path
+
+    def _create_hash_file(self, hash_file_path: Path, root_path: Path, paths: OrderedDict[str, str]) -> None:
+        logger.debug(f"Create '{hash_file_path}' file.")
+        hash_file_path.unlink(missing_ok=True)
+        if not paths:
+            logger.info(f"Hash list is empty. Skip '{hash_file_path}' creation.")
+            return
+        logger.info(f"Create checksums file '{hash_file_path}' with {len(paths)} records.")
+        with hash_file_path.open("wt") as writer:
+            for path, hash_value in paths.items():
+                rel_path = Path(path).relative_to(root_path).as_posix()
+                writer.write(f"{hash_value}  {rel_path}\n")
+
+    def _calculate_file_hash(self, path: Path, buff_size: int=4096) -> tuple[str, str]:
+        logger.debug(f"Calculate hash for '{path}' file")
+        if not path.is_file():
+            raise ValueError(f"The path should be a file, '{path}' is not a file.")
+        if self.use_cache:
+            file_hash_file = self._get_file_hash_file_path(path)
+            if file_hash_file.exists():
+                logger.debug(f"Read file hash from the cache: {file_hash_file}")
+                with file_hash_file.open("rt") as reader:
+                    line = reader.readline()
+                    hash_value = line.split(",", maxsplit=1)
+                    if self._is_hash_valid(hash_value):
+                        return (path, hash_value)
+                    logger.debug(f"Incorrect hash value '{hash}' from the file: {file_hash_file}")
+        logger.debug(f"Calculate file hash for '{path}'...")
+        buff_size = max(buff_size, 1024)
+        hash_engine = HashCalculator.ALGORITHMS[self.algorithm]()
+        with path.open("rb") as reader:
+            while True:
+                chunk = reader.read(buff_size)
+                if not chunk:
+                    break
+                hash_engine.update(chunk)
+        hash_value = hash_engine.hexdigest().lower()
+        if self.use_cache:
+            logger.debug(f"Calculate file hash  '{path}' is done: {hash_value}")
+            file_hash_file.parent.mkdir(parents=True, exist_ok=True)
+            with file_hash_file.open("wt") as writer:
+                logger.debug(f"Write hash to the cache: {file_hash_file}")
+                writer.write(f"{hash_value},{path}")
+        return (path, hash_value)
+
+    def _calculate_dir_hash(self, path: Path) -> OrderedDict[str, str]:
+        logger.info(f"Processing '{path}' directory...")
+        if not path.is_dir():
+            raise ValueError(f"The path should be a directory, '{path}' is not a directory.")
+        cur_files: OrderedDict[str, str] = {}
+        subdir_files: OrderedDict[str, str] = {}
+        subdirs_count = 0
+        files_counter = 0
+        hash_file_name = f"{self.hash_file_name}.{self.algorithm}"
+        for p in sorted(path.glob("*"), key=lambda x: (not x.is_dir(), x.name)):
+            if p.name.startswith(f"{self.hash_file_name}.") \
+                or (not self.show_hidden and p.name.startswith(".")):
+                logger.info(f"Skip path '{p}'")
+                continue
+            if p.is_dir():
+                subdirs_count += 1
+                subdir_files.update(self._calculate_dir_hash(p))
+            else:
+                files_counter += 1
+                logger.debug(f"Select file '{p}'")
+                _, hash_value = self._calculate_file_hash(p)
+                logger.info(f"- {files_counter:03} File '{hash_value}': '{p.name}'")
+                cur_files[str(p)] = hash_value
+        subdir_files.update(cur_files)
+        self._create_hash_file(path / hash_file_name, path, subdir_files)
+        logger.info(f"Processed '{path}' directory: {files_counter} files, "
+                    f"{len(subdir_files) - files_counter} files from {subdirs_count} sub-directories.")
+        return subdir_files
+
+
+def _run(config: Config, args: argparse.Namespace) -> int:
+    now = datetime.now().isoformat()[:19]
+    log_dir = Path(os.environ.get("LOG_DIR") or "/tmp")                     # noqa: S108
+    log_file = str(log_dir / f"{__app__}-{now}.log")
+    CACH_DIR.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(level=config.get_log_level(), format=config.get_log_format(), datefmt="%H:%M:%S",
+                        handlers=[logging.StreamHandler(), logging.FileHandler(log_file)])
+
+    logger.info(f"Start {__app__} {__version__} at {now}")
+    logger.info(f"Log file: {log_file}")
+    logger.debug(f"Working directory: {Path.cwd()}")
+    logger.debug(f"Arguments: {args}")
+    logger.debug(f"Config: {config}")
+
+    hash_calculator = HashCalculator(config.algorithm, config.checksum_file_name, config.use_cache, config.show_hidden)
+    all_path_exists = True
+    for path in config.paths:
+        if not path.exists():
+            all_path_exists = False
+            logger.error(f"Path not found: {path}")
+    if not all_path_exists:
+        return 1
+    result_files = {}
+    for path in config.paths:
+        res = hash_calculator.calculate_hash_for_path(path)
+        if not res:
+            return 1
+        result_files.update(res)
+    for file_path, path in result_files.items():
+        logger.debug(f"{path}  {file_path}")
+    logger.info(f"Processed paths: {','.join(sorted(str(p) for p in config.paths))}")
+    logger.info(f"Calculated hash for {len(result_files)} files is done.")
+    return 0
+
+def cli() -> int:
+    config = Config()
+    epilog = "\n".join((
+        "Use the specific command for your hash type to validate file and directory manifests:",
+        f"  md5sum -c example-file.pdf.md5",
+        f"  md5sum -c {HashCalculator.DEF_CHECKSUM_FILE_NAME}.md5",
+        f"  sha1sum -c {HashCalculator.DEF_CHECKSUM_FILE_NAME}.sha1",
+        "",
+        f"{__app__} {__version__}, {Path(__file__).resolve()}",
+        f"{__repo__}",
+        "###################################################################",
+        "# This tool is provided 'as is' and without warranty of any kind. #",
+        "###################################################################",
+    ))
+    descr = ("Tool for creating file hashes and directory manifests to detect corruption or unexpected changes.")
+    algorithms = ", ".join(HashCalculator.ALGORITHMS.keys())
+    parser = argparse.ArgumentParser(description=descr, epilog=epilog,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("paths", nargs="*",
+                        help=f"path to file or directory (default: {Path.cwd()})")
+    parser.add_argument("--algorithm", "-a", default=config.algorithm,
+                        help=f"hash algorithm: {algorithms} (default: {config.algorithm})")
+    parser.add_argument("--checksum-file-name", "-N", default=config.checksum_file_name,
+                        help=f"checksum file name (default: {config.checksum_file_name})")
+    parser.add_argument("--use-cache", action="store_true",
+                        help=f"enable hash cache: ~/{CACH_DIR.relative_to(Path.home())}")
+    parser.add_argument("--show-hidden", action="store_true", help="include hidden files")
+    parser.add_argument("--quiet", "-q", action="store_true", help="quiet mode (no confirmation prompts)")
+    parser.add_argument("--debug", "-d", action="store_true", help="verbose output")
+    parser.add_argument("--version", "-v", action="store_true", help="show the version of the tool")
+    if any(a.lower() == "help" for a in sys.argv):
+        sys.argv[1] = "--help"
+    args = parser.parse_args()
+
+    if args.version:
+        print(f"{__app__} {__version__}")
+        return 0
+
+    config.algorithm = str(args.algorithm or config.algorithm).strip().lower()
+    config.checksum_file_name = args.checksum_file_name or config.checksum_file_name
+    config.use_cache = args.use_cache
+    config.show_hidden = args.show_hidden
+    config.quiet = args.quiet
+    config.debug = args.debug
+    for path in args.paths or [Path.cwd()]:
+        config.paths.add(Path(path).resolve())
+
+    if config.algorithm not in HashCalculator.ALGORITHMS:
+        logger.error(f"Unknown algorithm: {config.algorithm}")
+        return 1
+
+    start_process = datetime.now()
+    try:
+        return _run(config, args)
+    except KeyboardInterrupt:
+        logger.warning("Keyboard interaption Event was received. Exit.")
+    finally:
+        logger.info(f"End {__app__}. Duration: {datetime.now() - start_process}.")
+    return 0
+
+# -- [ Main ]-----------------------------------------------------------------
+if __name__ == "__main__":
+    sys.exit(cli())

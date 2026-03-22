@@ -1,7 +1,11 @@
 #!/bin/sh
 
 curl -so /usr/bin/opendns-check "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/opendns-check"
+chmod +x /usr/bin/opendns-check
 curl -so /usr/bin/opendns-update "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/opendns-update"
+chmod +x /usr/bin/opendns-update
 curl -so /usr/bin/router-status "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/router-status"
+chmod +x /usr/bin/router-status
 curl -so /usr/bin/show-clients "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/show-clients"
+chmod +x /usr/bin/show-clients
 

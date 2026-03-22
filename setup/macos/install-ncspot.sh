@@ -37,3 +37,7 @@ fi
 echo "Done"
 which ncspot
 ncspot --version
+<<<<<<< HEAD
+=======
+
+>>>>>>> 94003a9 (Save)

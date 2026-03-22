@@ -7,7 +7,7 @@ printf "memory..: "; echo "$(grep "MemFree" /proc/meminfo | awk '{print $2" "$3}
 printf "address.: "; curl -sL https://checkip.amazonaws.com 2>&1 || true
 printf "........: "; ip addr show dev br-lan | grep inet | awk '{print $2}' | cut -d'/' -f1
 printf "time....: "; date +%FT%T
-printf "opendns : "; ./opendns-check 2>&1 >/dev/null && echo "OK" || "ERROR"
+printf "opendns : "; opendns-check 2>&1 >/dev/null && echo "OK" || echo "ERROR"
 echo "--- clients ----"
 show-clients-safe 2>/dev/null || show-clients
 

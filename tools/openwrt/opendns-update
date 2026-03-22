@@ -1,0 +1,31 @@
+#!/bin/sh
+cd "$(dirname "${0}")"
+[ -f /etc/opendns.conf ] && . /etc/opendns.conf
+[ -f ./opendns.conf ] && . ./opendns.conf
+#env | grep DYNDNS_
+
+tmpfile=/tmp/opendns-update.txt
+external_ip="$(curl -sL https://checkip.amazonaws.com 2>/dev/null)"
+[ -z "${external_ip}" ] && echo "Error get external ip" && exit 1;
+
+url="https://updates.opendns.com/nic/update?hostname=${DYNDNS_NAME}&myip=${external_ip}"
+echo "Request ${url} (output=${tmpfile})..."
+curl --max-time 10 --connect-timeout 10 -Ls -u "${DYNDNS_USER}:${DYNDNS_PASS}" "${url}" > "${tmpfile}"
+errcode=$?
+resp="$(cat "${tmpfile}")"
+errmsg="$(cut -d" " -f1 "${tmpfile}")"
+#echo "Response: ${resp}"
+case ${errmsg} in
+  "good") msg="SUCCESS: (good) DNS hostname successfully updated (${DYNDNS_NAME}=${external_ip})." ;;
+  "nochg") msg="SUCCESS: (nochg) no update performed (${DYNDNS_NAME}=${EXTERNAL_IP})." ;;
+  "nohost") errcode=1; msg="ERROR: (nohost) Hostname supplied does not exist under specified account. Revise config file." ;;
+  "badauth") errcode=1; msg="ERROR: (badauth) Invalid username password combination." ;;
+  "badagent") errcode=1; msg="ERROR: (badagent) Client disabled - Server is no longer allowing requests from this update script." ;;
+  '!donator') errcode=1; msg="ERROR: (donator) An update request was sent including a feature that is not available." ;;
+  "abuse") errcode=1; msg="ERROR: (abuse) username is blocked due to abuse." ;;
+  "911") errcode=1; msg="ERROR: (911) A fatal error on our side such as a database outage. Retry the update in no sooner than 30 minutes." ;;
+  "") errcode=1; msg="ERROR: (empty) No response received from the server. This may be due to rate limiting, timeout or a server-side problem." ;;
+  *) errcode=1; msg="ERROR: (error: ${resp}) Could not understand the response from No-IP. The DNS update server may be down." ;;
+esac
+echo "${msg}"
+

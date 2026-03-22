@@ -1,0 +1,16 @@
+#!/bin/sh
+errcode=0
+if curl -sI "https://welcome.opendns.com/" | grep "HTTP" | grep -q 200; then
+  echo "[OK ] Welcome OpenDNS - Success"
+else
+  echo "[ERR] Welcome OpenDNS - Failed"
+  errcode=1
+fi
+
+if curl -sL "http://www.internetbadguys.com/" | grep -q "InternetBadGuys.com is only a demonstration site"; then
+  echo "[ERR] InternetBadGuys - allowed"
+  errcode=1
+else
+  echo "[OK ] InternetBadGuys - not allowed"
+fi
+

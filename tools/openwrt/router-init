@@ -1,0 +1,7 @@
+#!/bin/sh
+
+curl -so /usr/bin/opendns-check "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/opendns-check"
+curl -so /usr/bin/opendns-update "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/opendns-update"
+curl -so /usr/bin/router-status "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/router-status"
+curl -so /usr/bin/show-clients "https://raw.githubusercontent.com/revgen/myenv/refs/heads/master/tools/openwrt/show-clients"
+

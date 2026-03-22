@@ -1,0 +1,12 @@
+#!/bin/sh
+if grep "^ID=" /etc/os-release 2>&1 | grep -q -v openwrt; then echo "OpenWrt is required"; exit 1; fi
+
+cat /tmp/dhcp.leases | awk '{print $2" "$3" "$4}' > /tmp/clients__.txt
+(
+  ip neigh show | grep -v eth0 | awk '{print $5" "$1}' | grep -v "^ " | while read line; do
+    if ! grep -q "${line}" /tmp/clients.txt; then echo "${line} UNKNOWN"; fi
+  done
+  cat /tmp/clients__.txt
+) | sort
+rm -f /tmp/clients__.txt
+

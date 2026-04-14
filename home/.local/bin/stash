@@ -24,7 +24,7 @@ import shutil
 import tempfile
 import subprocess
 from pathlib import Path
-from typing import Optional, Self, Union, TYPE_CHECKING
+from typing import Optional, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -32,6 +32,16 @@ if TYPE_CHECKING:
 import keyring
 import pyotp
 import pykeepass
+
+if sys.version_info < (3, 11):
+    cur_ver = ".".join(map(str, sys.version_info[:3]))
+    sys.stderr.write(f"RuntimeError: Python is 3.11 or newer required (Python {cur_ver} is used).\n")
+    sys.exit(1)
+
+# Check if we are in a terminal (not a pipe or file redirect)
+if not sys.stdout.isatty():
+    sys.stderr.write("RuntimeError: The script can be using in the terminal only, no pipes or redirects.\n")
+    sys.exit(1)
 
 __appname__ = "stash"
 __version__ = "0.0.3"
@@ -47,6 +57,7 @@ STASH_CACHE.chmod(0o700)
 DEF_STASH_NAME = (os.environ.get("STASH_NAME") or PWD.name).lower().replace(" ", "_")
 DEF_STASH_DATABASE = os.environ.get("STASH_DATABASE") or None
 DEF_STASH_KEYFILE = os.environ.get("STASH_KEYFILE") or None
+USE_COLOR = "color" in (os.environ.get("TERM") or "").lower()
 
 logger = logging.getLogger(__name__)
 
@@ -200,11 +211,7 @@ class Util:
 
     @staticmethod
     def get_python_version(decimals: int = 2) -> str:
-        try:
-            return ".".join(str(i) for i in sys.version_info[:decimals])
-        except Exception as ex:
-            logger.error(f"Error get python verson: {ex}")
-            return "unknown"
+        return ".".join(str(i) for i in sys.version_info[:min(len(sys.version_info), max(1, int(decimals or 2)))])
 
     @staticmethod
     def get_os_info() -> str:
@@ -219,7 +226,7 @@ class Util:
     def run(cmd: list[str], check: bool = True, capture_output: bool = False,
             input: Optional[str] = None) -> subprocess.CompletedProcess:                    # noqa: A002
         cmd_log = " ".join(f'"{c}"' if " " in c else c for c in cmd)
-        logger.info(f"Execute: {cmd_log}")
+        logger.debug(f"Execute: {cmd_log}")
         if input:
             input_data = str(input).encode(encoding=ENCODING)
             return subprocess.run(cmd, check=check, capture_output=True, input=input_data)  # noqa: S603
@@ -248,7 +255,7 @@ class Stash:
             if env_key in os.environ:
                 self.database = Path(os.environ[env_key])
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> Stash:                                           # noqa: PYI034
         self.secret_key.open(path=self._keyfile_path)
         if not self.database:
             logger.debug(f"Search '{self.name}' database...")
@@ -437,7 +444,12 @@ class Stash:
             cmd = [app, "open"]
             if self.secret_key.use_keyfile:
                 cmd.append("--key-file")
+                if not self.secret_key.path.exists():
+                    raise FileNotFoundError(f"Keyfile '{self.secret_key.path}' not found.")
                 cmd.append(str(self.secret_key.path))
+
+            if not self.database.exists():
+                raise FileNotFoundError(f"Database '{self.database}' not found.")
 
             cmd.append(str(self.database))
             Util.run(cmd)
@@ -478,7 +490,12 @@ class Stash:
             cmd = [str(app_path), "--pw-stdin"]
             if self.secret_key.use_keyfile:
                 cmd.append("--keyfile")
+                if not self.secret_key.path.exists():
+                    raise FileNotFoundError(f"Keyfile '{self.secret_key.path}' not found.")
                 cmd.append(str(self.secret_key.path))
+
+            if not self.database.exists():
+                raise FileNotFoundError(f"Database '{self.database}' not found.")
             cmd.append(str(self.database))
             password = ask_password()
             Util.run(cmd, input=password)
@@ -569,7 +586,8 @@ def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901
                 args_list[idx] = "--verbose"
 
         debug = os.environ.get("DEBUG") == "true"
-        logging.basicConfig(level="INFO", format="%(message)s", datefmt="%Y-%m-%dT%H:%M:%S")
+        log_format = "\033[32m%(message)s\033[0m" if USE_COLOR else "%(message)s"
+        logging.basicConfig(level="INFO", format=log_format, datefmt="%Y-%m-%dT%H:%M:%S")
         example_usage = [
             "",
             "examples:",
@@ -622,7 +640,7 @@ def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901
             return 0
 
         if pargs.command == Command.generate:
-            print("Generate password.... Not implemented.")
+            logger.info("Generate password.... Not implemented.")
             return 0
 
         with Stash(name=pargs.name, database=Path(pargs.database) if pargs.database else None,
@@ -660,7 +678,7 @@ def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901
     except OSError as ex:
         logger.error(f"{ex.__class__.__qualname__}: {ex}")
     except KeyboardInterrupt:
-        print("Keyboard Interrupt event received. Exit.")
+        logger.warning("Keyboard Interrupt event received. Exit.")
     return 1
 
 if __name__ == "__main__":

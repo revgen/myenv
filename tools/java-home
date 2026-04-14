@@ -1,0 +1,16 @@
+#!/bin/sh
+ostype="$(uname -s)"
+
+function java_home_macos() {
+    java --version 2>/dev/null | grep "^java\|^openjdk" >/dev/null && /usr/libexec/java_home 2>/dev/null
+}
+
+function java_home_linux() {
+    return "Not ready";
+}
+
+case "${ostype}" in
+    Darwin) java_home_macos ;;
+    Linux ) java_home_linux ;;
+    * ) echo "Error: unknow OS type '${ostype}'."; exit 1 ;;
+esac

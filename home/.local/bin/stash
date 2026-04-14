@@ -1,189 +1,667 @@
-#!/usr/bin/env python
-# #############################################################################
+#!/usr/bin/env python3
+##############################################################################
+# Stash is a simple command-line tool to store, retrieve,
+# and update secrets in an encrypted database, inspired by KeePass.
 #
-# Links:
-# * https://keepassxc.org/docs/KeePassXC_UserGuide
-# * https://wiki.gentoo.org/wiki/KeePassXC/cli
-# #############################################################################
+# Requirements:
+#   pip install keyring
+#   pip install pyotp
+#   pip install pykeepass
+#
+##############################################################################
+# ruff: noqa: TRY400, TRY401, UP045
 from __future__ import annotations
 import argparse
 from enum import Enum
+import getpass
+import base64
+import json
 import logging
 import os
 import platform
-import subprocess
 import sys
-import traceback
-from dataclasses import dataclass
+import shutil
+import tempfile
+import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self, Union, TYPE_CHECKING
 
-__version__ = "0.1.0"
-__script_path__ = Path(__file__)
-__appname__ = __script_path__.name
+if TYPE_CHECKING:
+    from types import TracebackType
 
-logger = logging.getLogger()
-OS_TYPE = platform.platform().lower()[0:3]
+import keyring
+import pyotp
+import pykeepass
 
-# =============================================================================
-@dataclass
-class Config:
-    app_gui: Optional[Path] = None
-    app_cli: Optional[Path] = None
-    home: Optional[Path] = None
-    user: str = ""
-    @staticmethod
-    def init() -> Config:
-        if OS_TYPE == "mac":
-            dir_path = Path.home() / "Applications" / "KeePassXC.app" / "Contents" / "MacOS"
-            if not dir_path.exists():
-                dir_path = Path("/Applications/KeePassXC.app/Contents/MacOS")
-            config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
-        elif OS_TYPE == "win":
-            dir_path = Path(os.environ["ProgramFiles"])                         # noqa: SIM112
-            config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
+__appname__ = "stash"
+__version__ = "0.0.3"
+__description__ = ("Stash is a simple command-line tool to store, retrieve, "
+                   "and update secrets in an encrypted database, inspired by KeePass.")
+
+PWD = Path.cwd().resolve()
+ENCODING = "utf-8"
+HOME = Path.home()
+STASH_CACHE = HOME / ".cache" / __appname__
+STASH_CACHE.mkdir(mode=0o700, parents=True, exist_ok=True)
+STASH_CACHE.chmod(0o700)
+DEF_STASH_NAME = (os.environ.get("STASH_NAME") or PWD.name).lower().replace(" ", "_")
+DEF_STASH_DATABASE = os.environ.get("STASH_DATABASE") or None
+DEF_STASH_KEYFILE = os.environ.get("STASH_KEYFILE") or None
+
+logger = logging.getLogger(__name__)
+
+# --[ Utils ]-----------------------------------------------------------------
+def ask_confirmation(msg: str, expected: str = "y", def_answer: str = "y") -> bool:
+    msg = f"{msg} " if not msg.endswith(" ") else msg
+    answer = (input(msg) or def_answer).strip().lower()
+    return answer == expected
+
+def ask_password(promt: str = "Enter password:", allow_empty: bool = False, echo_char: str = "*") -> str:
+    while True:
+        pass1 = getpass.getpass(f"{promt} ", echo_char=echo_char or None)
+        if not allow_empty and not pass1:
+            logger.error("Password is required.")
+            continue
+        return pass1
+
+def ask_new_password() -> str:
+    while True:
+        pass1 = ask_password("Enter new password:")
+        pass2 = ask_password("Confirm password:", allow_empty=True)
+        if pass1 == pass2:
+            pass2 = ""
+            return pass1
+        logger.warning("Passwords not match. Repeat please.")
+
+def name_to_env_key(val: str) -> str:
+    # replace all nonalphanumeric to ""
+    return (val or "").upper().replace(" ", "_").replace(".", "_").replace("-", "_")
+
+# -- [ Working with key ]-----------------------------------------------------
+class SecretKey:
+    def __init__(self, name: str, use_keyfile: bool = True, use_secret_storage: bool = True) -> None:
+        self.name = name
+        self.path: Optional[Path] = None
+        self._keyfile = None
+        self.use_keyfile = use_keyfile or False
+        self.use_secret_storage = use_secret_storage or False
+        self._use_tempfile = False
+        self._cache = HOME / ".cache" / Stash.SERVICE_NAME
+        self._cache.mkdir(mode=0o700, parents=True, exist_ok=True)
+        self._value = None
+        self._cache.chmod(0o700)
+
+    def open(self, path: Optional[Path] = None) -> SecretKey:
+        self.path = path
+        self._use_tempfile = not self.path and self.use_secret_storage
+        if self.use_keyfile:
+            if self._use_tempfile:
+                self._keyfile = tempfile.NamedTemporaryFile(mode="wb", dir=self._cache, prefix="kf-")   # noqa: SIM115
+                self.path = Path(self._keyfile.name)
+            elif not self.path.exists():
+                raise OSError(f"Keyfile '{self.path}' not found")
+            else:
+                self._keyfile = self.path.open("rb")
         else:
-            dir_path = Path("/usr/share/keepassxc")
-            config = Config(app_gui=dir_path / "KeePassXC", app_cli=dir_path / "keepassxc-cli")
-        config.home = Path.home()
-        config.user = os.environ.get("USER") or os.environ.get("USERNAME")
-        return config
 
-def show_notification(message: str, title: str = __appname__,
-                      is_error: bool = False) -> None:
-    if is_error:
-        message = f"[ERROR] {message}"
-        logger.error(f"{title}: {message}")
-    else:
-        logger.info(f"{title}: {message}")
-    if OS_TYPE == "mac":
-        display_cmd = f"display notification \"{message}\" with title \"{title}\""
-        subprocess.Popen(args=["osascript", "-e", display_cmd])
-    else:
-        logger.error("Notification not implemented")
+            self.path = None
+        logger.debug(f"SecretKey open: use_keyfile={self.use_keyfile}, "
+                     f"secret_storage={self.use_secret_storage}, "
+                     f"keyfile={Util.path_to_rel(self.path)}")
+        return self
+
+    def close(self) -> SecretKey:
+        logger.debug("SecretKey close: deleting temp data...")
+        if self.use_keyfile:
+            try:
+                self._keyfile.close()
+            except OSError:
+                logger.warning(f"Error close {self.path} file")
+
+            if self._use_tempfile and not self.path.is_relative_to(self._cache):
+                logger.debug(f"Delete key file: {Util.path_to_rel(self.path)}")
+                with self.path.open("wb") as writer:
+                    writer.write(os.urandom(128))
+                self.path.unlink(missing_ok=True)
+                self.use_keyfile = False
+        self._value = None
+        return self
+
+    def _read_from_env(self) -> Optional[str]:
+        env_key = Util.name_to_env_key(f"{__appname__}_KEY_{self.name}")
+        if env_key in os.environ:
+            logger.debug(f"Read secret from sys.env: {env_key}...")
+            return os.environ[env_key]
+        return None
+
+    def read_secret(self, generate: bool = False) -> str:
+        if not self.use_secret_storage or not self.use_keyfile:
+            return False
+        value = self._read_from_env()
+        if not value:
+            value = self._read_secret_storage()
+            logger.info(f"Read keyfile from the system keys storage: {__appname__}/{self.name}")
+        if not value and generate:
+            logger.info(f"Key data '{self.name}' not found")
+            value = self.generate_key_data()
+            self._write_secret_storage(value)
+            logger.info(f"Writed keyfile to the system keys storage: {__appname__}/{self.name}")
+        logger.debug(f"keydata = {value}")
+        if self._use_tempfile:
+            logger.debug(f"Write keydata to a temp file {self.path}")
+            self._keyfile.seek(0)
+            self._keyfile.write(self.str_to_bin(value))
+            self._keyfile.flush()
+        return value
+
+    def _read_secret_storage(self) -> str:
+        logger.debug(f"Read secret: {__appname__}.{self.name}...")
+        secret_str = keyring.get_password(__appname__, self.name) or ""
+        logger.debug(f"Read secret: {__appname__}.{self.name} - {len(secret_str)} characters")
+        return secret_str
+
+    def _write_secret_storage(self, value: str) -> None:
+        logger.debug(f"Save secret: {__appname__}.{self.name}...")
+        keyring.set_password(__appname__, self.name, value)
+        logger.info(f"Save secret: {__appname__}.{self.name} - {len(value)} characters")
+
+    def generate_key_data(self, size: int = 32) -> str:
+        logger.debug("Generate key data...")
+        rand_data = os.urandom(max(size, 32))
+        res = self.bin_to_str(rand_data)
+        logger.debug(f"Generate key data complete: {'*'*len(rand_data)}")
+        return res
+
+    def bin_to_str(self, value: bytes) -> str:
+        return base64.b64encode(value).decode(encoding=ENCODING)
+
+    def str_to_bin(self, value: str) -> bytes:
+        return base64.b64decode((value or "").encode(encoding=ENCODING))
 
 
-# =============================================================================
+# ----------------------------------------------------------------------------
+class Util:
+    @staticmethod
+    def path_to_rel(path: Optional[Path]) -> str:
+        if not path:
+            return None
+        if not isinstance(path, Path):
+            path = Path(str(path))
+        if path.is_relative_to(PWD):
+            return f"./{path.relative_to(PWD)}"
+        if path.is_relative_to(HOME):
+            return f"~/{path.relative_to(HOME)}"
+        return str(path)
+
+    @staticmethod
+    def name_to_env_key(val: str) -> str:
+        # replace all nonalphanumeric to ""
+        return (val or "").upper().replace(" ", "_").replace(".", "_").replace("-", "_")
+
+    @staticmethod
+    def get_python_version(decimals: int = 2) -> str:
+        try:
+            return ".".join(str(i) for i in sys.version_info[:decimals])
+        except Exception as ex:
+            logger.error(f"Error get python verson: {ex}")
+            return "unknown"
+
+    @staticmethod
+    def get_os_info() -> str:
+        try:
+            arch = platform.machine().replace("x86_64", "x64")
+            return f"{platform.platform(terse=True)}-{arch}"
+        except Exception as ex:
+            logger.error(f"Error get python verson: {ex}")
+            return "unknown"
+
+    @staticmethod
+    def run(cmd: list[str], check: bool = True, capture_output: bool = False,
+            input: Optional[str] = None) -> subprocess.CompletedProcess:                    # noqa: A002
+        cmd_log = " ".join(f'"{c}"' if " " in c else c for c in cmd)
+        logger.info(f"Execute: {cmd_log}")
+        if input:
+            input_data = str(input).encode(encoding=ENCODING)
+            return subprocess.run(cmd, check=check, capture_output=True, input=input_data)  # noqa: S603
+        return subprocess.run(cmd, check=check, capture_output=capture_output)              # noqa: S603
+
+
+class Stash:
+    SERVICE_NAME = "stash"
+    DEF_DB_DIR_NAME = "secrets"
+    META_ENTRY_NAME = "__meta__"
+    def __init__(self, name: Optional[str] = None, database: Optional[Path] = None,
+                 keyfile: Optional[Path] = None, use_keyfile: bool = True) -> None:
+        self.name = (name or DEF_STASH_NAME).lower().replace(" ", "_")
+        logger.info(f"Initialize {self.__class__.__name__}: name={self.name}, version={__version__}, "
+                    f"system={Util.get_os_info()}, python={Util.get_python_version()}")
+        self.cache = HOME / ".cache" / Stash.SERVICE_NAME
+        self.cache.mkdir(mode=0o700, parents=True, exist_ok=True)
+        self.cache.chmod(0o700)
+        logger.debug(f"Use cache: {Util.path_to_rel(self.cache)}")
+        self.secret_key = SecretKey(self.name, use_keyfile=use_keyfile, use_secret_storage=True)
+        self._keyfile_path = keyfile
+        self._keepass: pykeepass.PyKeePass = None
+        self.database = database
+        if not self.database:
+            env_key = Util.name_to_env_key(f"{Stash.SERVICE_NAME}_DB_{self.name}")
+            if env_key in os.environ:
+                self.database = Path(os.environ[env_key])
+
+    def __enter__(self) -> Self:
+        self.secret_key.open(path=self._keyfile_path)
+        if not self.database:
+            logger.debug(f"Search '{self.name}' database...")
+            self.database = self.search_db()
+        logger.debug(f"{self.__class__.__name__} start: database={Util.path_to_rel(self.database)}")
+        return self
+
+    def __exit__(self, exc_type: Optional[type[BaseException]], exc_val: Optional[BaseException],
+                 exc_tb: Optional[TracebackType]) -> bool:
+        logger.debug(f"{self.__class__.__name__} end: delete temp data")
+        if self._keepass:
+            self._keepass = None
+        self.secret_key.close()
+        if not exc_type:
+            return True
+        if exc_type is KeyboardInterrupt:
+            return False
+        logger.exception(f"Unexpected error ({type(exc_type)}): {exc_val}")
+        logger.debug(f"Error traceback: {exc_tb}")
+        return False
+
+    def get_db_default_path(self) -> Path:
+        return PWD / Stash.DEF_DB_DIR_NAME/ f"{self.name}.kdbx"
+
+    def is_open(self) -> bool:
+        return self._keepass is not None
+
+    def get_db_search_paths(self, name: str) -> dict[str, Path]:
+        logger.debug(f"Search all possible database paths for name={name}...")
+        res = {}
+        for root_dir in (PWD, Path.home() / f".{__appname__}",
+                        Path.home() / "Documents", Path.home() / "Documents" / __appname__, Path.home()):
+            for ext in (".kdbx", ".db"):
+                for db_name in (f"{name}{ext}",
+                                f"{Stash.DEF_DB_DIR_NAME}/{name}{ext}",
+                                f".{Stash.DEF_DB_DIR_NAME}/{name}{ext}"):
+                    path = root_dir / db_name
+                    path_str = Util.path_to_rel(path)
+                    res[path_str] = path
+                    # logger.debug(f"Search DB path: {path_str}")
+        logger.debug(f"Found all possible database paths for name='{name}': {list(res.keys())}")
+        return res
+
+    def _add_stash_meta_to_db(self, db: pykeepass.PyKeePass, force: bool = False) -> bool:
+        db_path = Path(db.filename)
+        if not force and \
+            not ask_confirmation(f"Do you want add {__appname__} meta informaion to the {db_path.name} database? (y/N)",
+                                 def_answer="n"):
+            logger.info("Skip.")
+            return False
+        db.database_name = self.name
+        root_group = db.root_group
+        root_group.name = __appname__.upper()
+        entry = db.add_entry(root_group, title=Stash.META_ENTRY_NAME,
+                             username=self.name, password="", force_creation=True)
+        entry.set_custom_property("tool", __appname__)
+        entry.set_custom_property("version", __version__)
+        db.save()
+        db.reload()
+        logger.info(f"Meta information was added to the '{db_path.name}' database.")
+        return True
+
+    def get_entry(self, path: str, only_entry: bool=False) -> Union[pykeepass.Entry, pykeepass.Group]:
+        path_parts = [p for p in (path or "").split("/") if p.strip()]
+        logger.debug(f"Searching an entry: {path} / {path_parts}...")
+        entry: pykeepass.Entry = self._keepass.find_entries(path = path_parts)
+        if entry:
+            logger.debug(f"Found entry by path '{path}': {entry}")
+            return entry
+        logger.debug(f"Entry not found by path '{path}'")
+        if only_entry:
+            return None
+        logger.debug(f"Searching a group: {path} / {path_parts}...")
+        group: pykeepass.Group = self._keepass.find_groups(path = path_parts)
+        if group:
+            logger.debug(f"Found group by path '{path}': {group}")
+            return group
+        logger.debug(f"Group not found by path '{path}'")
+        return None
+
+    def get_group(self, path: str) -> pykeepass.Entry:
+        path_parts = [p for p in (path or "").split("/") if p.strip()]
+        logger.debug(f"Searching: {path} / {path_parts}...")
+        entry = self._keepass.find_groups(path = path_parts)
+        if entry:
+            logger.debug(f"Found group by path '{path}': {entry}")
+            return entry
+        logger.debug(f"Group not found by path '{path}'")
+        return None
+
+    def search_db(self, use_default_db: bool = True) -> Optional[Path]:
+        logger.debug(f"Search '{self.name}' database...")
+        found_path = None
+        for db_path in self.get_db_search_paths(self.name).values():
+            # logger.debug(f"Checking {db_path_str}...")
+            if db_path.exists():
+                found_path = db_path
+                break
+        if not found_path and use_default_db:
+            logger.debug(f"Database '{self.name}' not found. Trying to use a default...")
+            found_path = self.get_db_default_path()
+
+        if found_path:
+            logger.debug(f"Found database: {Util.path_to_rel(found_path)}")
+            return found_path
+        logger.debug("Database not found")
+        return None
+
+    def _create_database(self, db_path: Path) -> bool:
+        name = db_path.stem
+        db_path.parent.mkdir(exist_ok=True, parents=True)
+        logger.debug(f"Creating new db ({name}): {db_path}...")
+        password = ask_new_password()
+        keyfile_path_str = str(self.secret_key.path or "") or None
+        logger.debug(f"password = {password}, keyfile = {keyfile_path_str}")
+        self.secret_key.read_secret(generate=True)
+        new_db = pykeepass.create_database(db_path, password=password, keyfile=keyfile_path_str)
+        if new_db:
+            self._add_stash_meta_to_db(db=new_db, force=True)
+            logger.info(f"Database '{Util.path_to_rel(db_path)}' was created successfully.")
+            return True
+        logger.error(f"Filed create database: {Util.path_to_rel(new_db)}")
+        return False
+
+    def create(self) -> bool:
+        if self.database.exists():
+            logger.error(f"Database '{self.database}' exists. Skip.")
+            return False
+        if not ask_confirmation(f"Do you want to create a new database: {Util.path_to_rel(self.database)}? (Y/n)"):
+            logger.info("Skip. Exit.")
+            return None
+        return self._create_database(self.database)
+
+    def open(self) -> pykeepass.PyKeePass:
+        if self._keepass:
+            logger.error(f"Keepass database open alreeady: {self._keepass.filename.name}")
+
+        if not self.database.exists():
+            logger.error(f"Database '{self.database}' not found.")
+            return None
+
+        logger.info(f"Open database: {Util.path_to_rel(self.database)}")
+        password = ask_password()
+        try:
+            self.secret_key.read_secret(generate=False)
+            # if logger.level == logging.DEBUG:
+            #     dump_key_file = PWD / f"debug-{self.name}.key"
+            #     dump_key_file.write_bytes(key_data_bin)
+            #     logger.debug(f"Dump key file: {dump_key_file}")
+            keyfile_path_str = str(self.secret_key.path or "") or None
+            logger.debug(f"password = {password}, keyfile = {keyfile_path_str}")
+            self._keepass = pykeepass.PyKeePass(str(self.database), password=password, keyfile=keyfile_path_str)
+            if not self._keepass:
+                raise ValueError("PyKeePass instance is null")
+            return self
+        except (pykeepass.exceptions.HeaderChecksumError,
+                pykeepass.exceptions.CredentialsError,
+                pykeepass.exceptions.PayloadChecksumError) as ex:
+            logger.error(f"Error open '{self.name}' database: {ex}")
+        except Exception as ex:
+            logger.exception(f"Error open '{self.name}' database ({type(ex)}):")
+        self._keepass = None
+        return None
+
+    def check(self) -> bool:
+        logger.info(f"Checking {self.database}....")
+        if not self._keepass:
+                raise ValueError("PyKeePass instance is null")
+        meta_entry = self.get_entry(Stash.META_ENTRY_NAME, only_entry=True)
+        if not meta_entry:
+            logger.warning(f"Looks like entry '{self._keepass.root_group.name}.{Stash.META_ENTRY_NAME}' not found.")
+            logger.warning(f"Database '{self.name}' was open, but it can be incorrect.")
+            return self._add_stash_meta_to_db(db=self._keepass)
+        properties = ", ".join(f"{k}={v}" for k, v in dict(meta_entry.custom_properties).items())
+        logger.info(f"Found {meta_entry} entry: {properties}")
+        logger.info(f"Database '{self.name}' was open successfully.")
+        return True
+
+    def open_shell(self) -> None:
+        try:
+            app_name = "keepassxc-cli"
+            logger.info(f"Open stash in {app_name}")
+            app = shutil.which(app_name)
+            if not app:
+                raise FileNotFoundError(f"Application '{app_name}' not found.")
+            cmd = [app, "open"]
+            if self.secret_key.use_keyfile:
+                cmd.append("--key-file")
+                cmd.append(str(self.secret_key.path))
+
+            cmd.append(str(self.database))
+            Util.run(cmd)
+            return True
+        except OSError as ex:
+            logger.error(f"Error open database: {ex}")
+        except subprocess.CalledProcessError as ex:
+            logger.error(f"Error open database: {ex}")
+        return False
+
+    def _find_mac_app(self, app_name: str, app_run: Optional[str] = None) -> Path:
+        if not app_run:
+            app_run = app_name.split(".", maxsplit=1)[0]
+        logger.debug(f"Search {app_name}...")
+        cmd_res = Util.run([ "mdfind", "-name", app_name, "-onlyin", "/Applications", "-onlyin", "~/Applications"],
+                           check=False, capture_output=True)
+        if cmd_res.returncode == 0:
+            output = (cmd_res.stdout or b"").decode(encoding=ENCODING).strip()
+            logger.debug(f"Command output: {output}")
+            app_path = output.split("\n")[0]
+            logger.debug(f"Found {app_path}")
+            app_path_run = Path(app_path) / "Contents" / "MacOS" / app_run
+            if app_path_run.exists():
+                return app_path_run
+            logger.debug(f"Application {app_path_run} not found.")
+            return None
+        logger.debug(f"Application {app_name} not found.")
+        return None
+
+    def open_gui(self) -> None:
+        try:
+            # add Linux and Windows support
+            app_name = "KeePassXC"
+            logger.info(f"Open stash in {app_name}")
+            app_path = self._find_mac_app(app_name=app_name)
+            if not app_path:
+                raise FileNotFoundError(f"Application '{app_name}' not found.")
+            cmd = [str(app_path), "--pw-stdin"]
+            if self.secret_key.use_keyfile:
+                cmd.append("--keyfile")
+                cmd.append(str(self.secret_key.path))
+            cmd.append(str(self.database))
+            password = ask_password()
+            Util.run(cmd, input=password)
+            return True
+        except OSError as ex:
+            logger.error(f"Error open database: {ex}")
+        except subprocess.CalledProcessError as ex:
+            logger.error(f"Error open database: {ex}")
+        return False
+
+    def show_totp(self, path: str) -> str:
+        entry = self.get_entry(path, only_entry=True)
+        if not entry:
+            raise KeyError(f"Entry '{path}' not found.")
+        logger.debug(f"Entry: {entry}")
+        otp_uri = entry.otp
+        logger.debug(f"OTP Url: {otp_uri}")
+        if not otp_uri:
+            raise KeyError("OTP value not found")
+        totp = pyotp.parse_uri(otp_uri)
+        totp_val = totp.now()
+        logger.debug(f"Current TOTP value: {totp_val}")
+        return totp_val
+
+    def show_entity(self, path: str, show_protected: bool = False,
+                    only_username: bool = False, only_password: bool = False) -> str:
+        entry = self.get_entry(path)
+        if not entry:
+            raise KeyError(f"Entry '{path}' not found.")
+        if isinstance(entry, pykeepass.Entry):
+            logger.debug(f"Entry: {entry}")
+            if only_username:
+                logger.debug(f"Return username only: {entry.username}")
+                return entry.username or ""
+            if only_password:
+                logger.debug("Return password only: ********")
+                return entry.password or ""
+            data = {
+                "type": "entry",
+                "title": entry.title,
+                "username": entry.username,
+                "password": entry.password if show_protected else "********",
+                "url": entry.url,
+                "notes": entry.notes,
+                "expires": str(entry.expiry_time) if entry.expiry_time else None,
+                "tags": ",".join(str(t or "") for t in entry.tags or []) if entry.tags else None,
+                "uuid": str(entry.uuid),
+            }
+            logger.debug(f"Return entry: {json.dumps(data)}")
+        else:
+            group: pykeepass.Group = entry
+            logger.debug(f"Group: {group}")
+            data = {
+                "type": "group",
+                "title": group.name,
+                "notes": group.notes,
+                "expires": str(group.expiry_time) if group.expiry_time else None,
+                "uuid": str(group.uuid),
+            }
+            if group.entries:
+                data["entries"] = sorted(e.title for e in group.entries)
+            if group.subgroups:
+                data["groups"] = sorted(g.name for g in group.subgroups)
+            logger.debug(f"Return entry: {json.dumps(data)}")
+        return json.dumps(data, indent=2)
+
+
 class Command(Enum):
     open = "open"
-    cli = "cli"
-    get = "get"
-    totp = "totp"
-    version = "version"
+    show = "show"
+    shell = "shell"
     create = "create"
+    check = "check"
+    generate = "generate"
+    version="version"
 
     def __str__(self):
         return self.value
 
+def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901, PLR0911, PLR0912, PLR0915
 
-def keepass(app: Path, command: Command, args: argparse.Namespace) -> int:
-    app_str = str(app)
-    logger.debug(f"Execute command: [{command}] {app_str}")
-    if command == Command.version:
-        return subprocess.call(args=[app_str, "--version"])
+    try:
+        args_list = args or sys.argv[1:]
+        for idx in range(len(args_list)):
+            if args_list[idx] == "--version":
+                args_list[idx] = "version"
+            elif args_list[idx] == "--debug":
+                args_list[idx] = "--verbose"
 
-    logger.debug(f"Arguments: {args}")
-    app_args = [app_str]
-    shell = False
-    if args.command == Command.open:
-        app_args.append("open")
-        # app_args.append("--pw-stdin")
-    elif args.command == Command.cli:
-        app_args.append("open")
-    elif args.command == Command.create:
-        app_args.append("db-create")
-        app_args.append("--set-password")
-    else:
-        raise NotImplementedError
+        debug = os.environ.get("DEBUG") == "true"
+        logging.basicConfig(level="INFO", format="%(message)s", datefmt="%Y-%m-%dT%H:%M:%S")
+        example_usage = [
+            "",
+            "examples:",
+            f"  {__appname__} open              - open stash database in KeePassXS",
+            f"  {__appname__} shell             - open stash database in keepassxs-cli",
+            f"  {__appname__} check             - open stash database and check validity",
+            f"  {__appname__} create            - create new  stash database",
+            f"  {__appname__} show /gr1/key2    - show /gr1/key2 entry",
+            f"  {__appname__} show /key1 -p     - show /key1 entry password",
+            f"  {__appname__} show /key1 -u     - show /key1 entry username",
+            f"  {__appname__} show /key1 -t     - show /key1 entry totp",
+            f"  {__appname__} generate.         - generate password",
+            "",
+            f"{__appname__} {__version__}",
+        ]
+        # TODO: rewrite with subparser
+        argparser = argparse.ArgumentParser(prog=__appname__,
+                                            formatter_class=argparse.RawDescriptionHelpFormatter,
+                                            description=__description__,
+                                            epilog="\n".join(example_usage))
+        argparser.add_argument("command", nargs="?", default=Command.open.value,
+                               type=Command, choices=list(Command), help="Command")
+        argparser.add_argument("path", nargs="?", default="", help="Entry path")
+        argparser.add_argument("-p", "--password", action="store_true", default=False,
+                               help="Show password in clear text")
+        argparser.add_argument("-u", "--username", action="store_true", default=False,
+                               help="Show username")
+        argparser.add_argument("-t", "--totp", action="store_true", default=False,
+                               help="Show time-based one-time password")
+        argparser.add_argument("--show-protected", action="store_true",
+                               help="Show the protected attributes in clear text")
+        argparser.add_argument("-N", "--name", default=DEF_STASH_NAME,
+                               help=f"Stash name (default: {DEF_STASH_NAME})")
+        argparser.add_argument("-D", "--database", default=DEF_STASH_DATABASE,
+                               help="Path to stash database (default: <search by name>)")
+        argparser.add_argument("-K", "--keyfile", default=DEF_STASH_KEYFILE,
+                               help="Path to key file (default: <search by name>)")
+        argparser.add_argument("--no-keyfile", action="store_true", default=False,
+                               help="Do not use a key file and a key from OS secrets")
+        argparser.add_argument("-V", "--verbose", action="store_true", default=debug,
+                               help="Enable verbose output")
+        pargs = argparser.parse_args(args_list)
+        if pargs.verbose:
+            logger.setLevel("DEBUG")
+            logger.debug(f"Arguments : {args_list}")
+            logger.debug(f"Properties: {vars(pargs)}")
 
-    if args.key_file:
-        if command == Command.create:
-            app_args.append("--set-key-file")
-        elif command == Command.open:
-            app_args.append("--keyfile")
-        else:
-            app_args.append("--key-file")
-        app_args.append(str(args.key_file))
-    app_args.append(str(args.database))
+        if pargs.command == Command.version:
+            print(f"{__appname__} {__version__}")
+            return 0
 
-    logger.debug(f"Execute: {app_args}")
-    print("-" * 40)
-    complete_status = subprocess.run(args=app_args)
-    logger.debug(f"Complete: {complete_status}")
-    errcode = int(complete_status.returncode if complete_status else 255)
-    logger.debug(f"Exit code = {errcode}")
-    return errcode
+        if pargs.command == Command.generate:
+            print("Generate password.... Not implemented.")
+            return 0
 
+        with Stash(name=pargs.name, database=Path(pargs.database) if pargs.database else None,
+                   keyfile=Path(pargs.keyfile) if pargs.keyfile else None, use_keyfile=not pargs.no_keyfile) as stash:
+            if pargs.command == Command.open:
+                return 0 if stash.open_gui() else 1
+            if pargs.command == Command.shell:
+                return 0 if stash.open_shell() else 1
+            if pargs.command == Command.create:
+                return 0 if stash.create() else 1
 
-def parse_args(config: Config, args: list[str]) -> argparse.Namespace:
-    def_debug = os.environ.get("DEBUG", "").lower().strip() in ("true", "on")
-    def_db = config.home / "Documents" / __appname__ / f"{__appname__}-{config.user}.kdbx"
-    def_key = config.home / ".config" / __appname__ / f"{__appname__}-{config.user}.key"
-    parser = argparse.ArgumentParser(description=__appname__)
-    parser.add_argument("command", type=Command, choices=list(Command),
-                        default=Command.open, nargs="?")
-    parser.add_argument("database", default=str(def_db), nargs="?")
-    parser.add_argument("--key-file", default=str(def_key))
-    parser.add_argument("--no-key-file", action="store_true", default=False)
-    parser.add_argument("--debug", "-D", action="store_true", default=def_debug)
-    parser.add_argument("--no-backup", action="store_true", default=False)
-    parsed_args = parser.parse_args(args or sys.argv[1:])
-    if parsed_args.debug:
-        logger.setLevel(logging.DEBUG)
-        logger.debug(f"Arguments: {parsed_args}")
-    if not os.environ.get("DISPLAY") and parsed_args.command == Command.open:
-        parsed_args.command = Command.cli
+            if not stash.open():
+                logger.error(f"Database '{stash.name}' open error.")
+                return 1
 
-    if not Path(parsed_args.database).exists() and parsed_args.command != Command.create:
-        raise OSError(f"Path {parsed_args.database} not found.")
-    if Path(parsed_args.database).exists() and parsed_args.command == Command.create:
-        raise OSError(f"Path {parsed_args.database} exists.")
-    parsed_args.database = Path(parsed_args.database)
-    args_dict = {k: str(v) for k, v in vars(parsed_args).items()}
-    logger.info(f"Start {__appname__} v{__version__}")
-    
-    logger.debug(f"Arguments: {args or 'empty'}")
-    logger.debug(f" - Config: {args_dict}")
-    logger.info(f"Directory: {Path.cwd()}")
-    logger.info(f"Database : {parsed_args.database}")
+            if pargs.command == Command.check:
+                return 0 if stash.check() else 1
 
-    if parsed_args.key_file:
-        parsed_args.key_file = Path(parsed_args.key_file)
-        logger.debug(f"Check key file : {parsed_args.key_file}")
-        if not Path(parsed_args.key_file).exists():
-            parsed_args.key_file = Path.home() / ".config" / __appname__ / parsed_args.key_file
-            logger.debug(f"Check key file : {parsed_args.key_file}")
-        logger.info(f"Keyfile  : {'*' * (len(parsed_args.key_file.name)-8)}{parsed_args.key_file.name[-8:]}")
-        if not Path(parsed_args.key_file).exists():
-            raise OSError(f"Path {parsed_args.key_file} not found.")
-
-    parsed_args.app = config.app_gui if parsed_args.command == Command.open else config.app_cli
-    if not parsed_args.app.exists():
-        raise OSError(f"Path {parsed_args.app} not found.")
-
-    return parsed_args
-
-
-def main(args: list[str]) -> int:
-    logging.basicConfig(format="%(message)s", level=logging.INFO)
-    config = Config.init()
-    parsed_args = parse_args(config=config, args=args)
-    parsed_args.database.parent.mkdir(mode=500, parents=True, exist_ok=True)
-    # show_notification(message=f"Open database")
-    errcode = keepass(app=parsed_args.app, command=parsed_args.command, args=parsed_args)
-    return errcode
+            if pargs.command == Command.show:
+                if not pargs.path:
+                    logger.error("Argument 'path' is required.")
+                    return 1
+                try:
+                    if pargs.totp:
+                        res = stash.show_totp(pargs.path)
+                    else:
+                        res = stash.show_entity(pargs.path, show_protected=pargs.show_protected,
+                                                only_username=pargs.username, only_password=pargs.password)
+                    print(res)
+                    return 0
+                except KeyError as ex:
+                    logger.error(f"Error read '{pargs.path}': {ex}")
+                return 1
+            return 1
+    except OSError as ex:
+        logger.error(f"{ex.__class__.__qualname__}: {ex}")
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt event received. Exit.")
+    return 1
 
 if __name__ == "__main__":
-    try:
-        errcode = main(sys.argv[1:])
-        if errcode != 0:
-            show_notification(message=f"Execution error (errcode={errcode})", is_error=True)
-    except KeyboardInterrupt:
-        print("Exit.")
-        errcode = 1
-    except Exception as ex:
-        errcode = 1
-        traceback.print_exc()
-        show_notification(message=str(ex), is_error=True)
-    logger.debug(f"Done (errcode={errcode})")
-    sys.exit(errcode)
+    sys.exit(cli())

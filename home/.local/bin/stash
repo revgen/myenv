@@ -48,16 +48,12 @@ __version__ = "0.0.3"
 __description__ = ("Stash is a simple command-line tool to store, retrieve, "
                    "and update secrets in an encrypted database, inspired by KeePass.")
 
-PWD = Path.cwd().resolve()
 ENCODING = "utf-8"
 HOME = Path.home()
 STASH_CACHE = HOME / ".cache" / __appname__
 STASH_CACHE.mkdir(mode=0o700, parents=True, exist_ok=True)
 STASH_CACHE.chmod(0o700)
-DEF_STASH_NAME = (os.environ.get("STASH_NAME") or PWD.name).lower().replace(" ", "_")
-DEF_STASH_DATABASE = os.environ.get("STASH_DATABASE") or None
-DEF_STASH_KEYFILE = os.environ.get("STASH_KEYFILE") or None
-USE_COLOR = "color" in (os.environ.get("TERM") or "").lower()
+DEF_USE_COLOR = "color" in (os.environ.get("TERM") or "").lower()
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +93,7 @@ class SecretKey:
         self.use_keyfile = use_keyfile or False
         self.use_secret_storage = use_secret_storage or False
         self._use_tempfile = False
-        self._cache = HOME / ".cache" / Stash.SERVICE_NAME
+        self._cache = Path(HOME / ".cache" / Stash.SERVICE_NAME)
         self._cache.mkdir(mode=0o700, parents=True, exist_ok=True)
         self._value = None
         self._cache.chmod(0o700)
@@ -147,6 +143,7 @@ class SecretKey:
 
     def read_secret(self, generate: bool = False) -> str:
         if not self.use_secret_storage or not self.use_keyfile:
+            logger.debug(f"Ser keyfile to the system keys storage: {__appname__}/{self.name}")
             return False
         value = self._read_from_env()
         if not value:
@@ -198,8 +195,9 @@ class Util:
             return None
         if not isinstance(path, Path):
             path = Path(str(path))
-        if path.is_relative_to(PWD):
-            return f"./{path.relative_to(PWD)}"
+        pwd = Path.cwd()
+        if path.is_relative_to(pwd):
+            return f"./{path.relative_to(pwd)}"
         if path.is_relative_to(HOME):
             return f"~/{path.relative_to(HOME)}"
         return str(path)
@@ -232,24 +230,37 @@ class Util:
             return subprocess.run(cmd, check=check, capture_output=True, input=input_data)  # noqa: S603
         return subprocess.run(cmd, check=check, capture_output=capture_output)              # noqa: S603
 
+    @staticmethod
+    def to_path(path: Union[str, Path, None]) -> Path:
+        if not path:
+            return None
+        if isinstance(path, Path):
+            return Path
+        return Path(str(path))
+
 
 class Stash:
     SERVICE_NAME = "stash"
     DEF_DB_DIR_NAME = "secrets"
     META_ENTRY_NAME = "__meta__"
-    def __init__(self, name: Optional[str] = None, database: Optional[Path] = None,
+    def __init__(self, name: Optional[str] = None, work_dir: Optional[Path] = None,
+                 database: Optional[Path] = None,
                  keyfile: Optional[Path] = None, use_keyfile: bool = True) -> None:
-        self.name = (name or DEF_STASH_NAME).lower().replace(" ", "_")
+        self.work_dir = Util.to_path(work_dir or os.environ.get("WORK_DIR") or os.environ.get("WORK_DIRECTORY")
+                             or Path.cwd()).resolve()
+        def_stash_name = (os.environ.get("STASH_NAME") or self.work_dir.name).lower().replace(" ", "_")
+        self.name = (name or def_stash_name).lower().replace(" ", "_")
         logger.info(f"Initialize {self.__class__.__name__}: name={self.name}, version={__version__}, "
                     f"system={Util.get_os_info()}, python={Util.get_python_version()}")
         self.cache = HOME / ".cache" / Stash.SERVICE_NAME
         self.cache.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.cache.chmod(0o700)
         logger.debug(f"Use cache: {Util.path_to_rel(self.cache)}")
+        logger.debug(f"Current directory: {Util.path_to_rel(Path.cwd())}")
         self.secret_key = SecretKey(self.name, use_keyfile=use_keyfile, use_secret_storage=True)
-        self._keyfile_path = keyfile
+        self._keyfile_path = Util.to_path(keyfile or os.environ.get("STASH_KEYFILE") or None)
         self._keepass: pykeepass.PyKeePass = None
-        self.database = database
+        self.database = Util.to_path(database or os.environ.get("STASH_DATABASE") or None)
         if not self.database:
             env_key = Util.name_to_env_key(f"{Stash.SERVICE_NAME}_DB_{self.name}")
             if env_key in os.environ:
@@ -278,7 +289,7 @@ class Stash:
         return False
 
     def get_db_default_path(self) -> Path:
-        return PWD / Stash.DEF_DB_DIR_NAME/ f"{self.name}.kdbx"
+        return self.work_dir / Stash.DEF_DB_DIR_NAME/ f"{self.name}.kdbx"
 
     def is_open(self) -> bool:
         return self._keepass is not None
@@ -286,7 +297,7 @@ class Stash:
     def get_db_search_paths(self, name: str) -> dict[str, Path]:
         logger.debug(f"Search all possible database paths for name={name}...")
         res = {}
-        for root_dir in (PWD, Path.home() / f".{__appname__}",
+        for root_dir in (self.work_dir, Path.home() / f".{__appname__}",
                         Path.home() / "Documents", Path.home() / "Documents" / __appname__, Path.home()):
             for ext in (".kdbx", ".db"):
                 for db_name in (f"{name}{ext}",
@@ -359,7 +370,8 @@ class Stash:
             found_path = self.get_db_default_path()
 
         if found_path:
-            logger.debug(f"Found database: {Util.path_to_rel(found_path)}")
+            logger.debug(f"Found database: {found_path}")
+            # logger.debug(f"Found database: {Util.path_to_rel(found_path)}")
             return found_path
         logger.debug("Database not found")
         return None
@@ -400,7 +412,7 @@ class Stash:
         logger.info(f"Open database: {Util.path_to_rel(self.database)}")
         password = ask_password()
         try:
-            self.secret_key.read_secret(generate=False)
+            self.secret_key.read_secret()
             # if logger.level == logging.DEBUG:
             #     dump_key_file = PWD / f"debug-{self.name}.key"
             #     dump_key_file.write_bytes(key_data_bin)
@@ -450,8 +462,8 @@ class Stash:
 
             if not self.database.exists():
                 raise FileNotFoundError(f"Database '{self.database}' not found.")
-
             cmd.append(str(self.database))
+            self.secret_key.read_secret()
             Util.run(cmd)
             return True
         except OSError as ex:
@@ -497,6 +509,7 @@ class Stash:
             if not self.database.exists():
                 raise FileNotFoundError(f"Database '{self.database}' not found.")
             cmd.append(str(self.database))
+            self.secret_key.read_secret()
             password = ask_password()
             Util.run(cmd, input=password)
             return True
@@ -586,8 +599,6 @@ def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901
                 args_list[idx] = "--verbose"
 
         debug = os.environ.get("DEBUG") == "true"
-        log_format = "\033[32m%(message)s\033[0m" if USE_COLOR else "%(message)s"
-        logging.basicConfig(level="INFO", format=log_format, datefmt="%Y-%m-%dT%H:%M:%S")
         example_usage = [
             "",
             "examples:",
@@ -619,17 +630,23 @@ def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901
                                help="Show time-based one-time password")
         argparser.add_argument("--show-protected", action="store_true",
                                help="Show the protected attributes in clear text")
-        argparser.add_argument("-N", "--name", default=DEF_STASH_NAME,
-                               help=f"Stash name (default: {DEF_STASH_NAME})")
-        argparser.add_argument("-D", "--database", default=DEF_STASH_DATABASE,
+        argparser.add_argument("-N", "--name",
+                               help="Stash name (default: current directory name)")
+        argparser.add_argument("-D", "--database",
                                help="Path to stash database (default: <search by name>)")
-        argparser.add_argument("-K", "--keyfile", default=DEF_STASH_KEYFILE,
+        argparser.add_argument("-W", "--work-dir",
+                               help="Working directory (default: current directory)")
+        argparser.add_argument("-K", "--keyfile",
                                help="Path to key file (default: <search by name>)")
         argparser.add_argument("--no-keyfile", action="store_true", default=False,
                                help="Do not use a key file and a key from OS secrets")
+        argparser.add_argument("--no-color", action="store_true", help="Do not use color in output")
         argparser.add_argument("-V", "--verbose", action="store_true", default=debug,
                                help="Enable verbose output")
         pargs = argparser.parse_args(args_list)
+
+        log_format = "\033[32m%(message)s\033[0m" if DEF_USE_COLOR and not pargs.no_color else "%(message)s"
+        logging.basicConfig(level="INFO", format=log_format, datefmt="%Y-%m-%dT%H:%M:%S")
         if pargs.verbose:
             logger.setLevel("DEBUG")
             logger.debug(f"Arguments : {args_list}")
@@ -642,6 +659,13 @@ def cli(args: Optional[list[str]] = None) -> int:                   # noqa: C901
         if pargs.command == Command.generate:
             logger.info("Generate password.... Not implemented.")
             return 0
+
+        if pargs.work_dir:
+            work_dir = Path(pargs.work_dir)
+            if not work_dir.exists():
+                raise FileNotFoundError(f"Path {work_dir} not found.")
+            os.chdir(work_dir)
+            logger.debug(f"Switch to the directory: {Util.path_to_rel(Path.cwd())}")
 
         with Stash(name=pargs.name, database=Path(pargs.database) if pargs.database else None,
                    keyfile=Path(pargs.keyfile) if pargs.keyfile else None, use_keyfile=not pargs.no_keyfile) as stash:

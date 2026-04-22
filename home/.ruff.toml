@@ -9,7 +9,6 @@ lint.ignore = [
     "D", "T", "EM", "G", "FBT", "PGH", "TD", "FIX", "ERA",
     "ANN002",
     "ANN003",
-    "ANN101",
     "ANN204",
     "E402",
     "I001",

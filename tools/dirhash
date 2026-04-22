@@ -1,0 +1,21 @@
+#!/bin/sh
+hashfile=".dirhash.md5"
+output="${PWD}/${hashfile}"
+hash_app="$(which md5sum || which md5)"
+echo "Calculate hash of all files in the $(pwd) directory."
+echo "Directory: $(pwd)"
+echo "Hash file: ${output}"
+echo "Hash tool: ${hash_app}"
+
+read -n 1 -rp "Do you want to continue? (Y/n) " answer
+[ "${answer:-"y"}" != "y" ] && echo "Exit." && exit 1
+
+tmpfile="$(mktemp -t dirhash)"
+rm -f "${tmpfile}"
+find . -type f | grep -v "${hashfile}" | sort \
+| while read fn; do
+  "${hash_app}" "${fn}" | tee -a "${tmpfile}"
+done
+cp -vf "${tmpfile}" "${output}"
+echo "Hash file have beed created: ${output}"
+rm -f "${tmpfile}"

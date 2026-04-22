@@ -73,6 +73,10 @@ alias kid3='/usr/bin/open -a kid3.app'
 alias mull-local='mutt -f /var/mail/${USER}'
 alias mail-local='mull-local'
 
+alias sha1sum='shasum'
+alias sha256sum='shasum -a 256'
+alias sha512sum='shasum -a 512'
+
 if [ -d "/Applications/IntelliJ IDEA CE.app" ]; then
     alias idea='/Applications/IntelliJ\ IDEA\ CE.app/Contents/MacOS/idea'
 fi

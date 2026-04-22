@@ -143,7 +143,7 @@ class SecretKey:
 
     def read_secret(self, generate: bool = False) -> str:
         if not self.use_secret_storage or not self.use_keyfile:
-            logger.debug(f"Ser keyfile to the system keys storage: {__appname__}/{self.name}")
+            logger.debug(f"Save keyfile to the system keys storage: {__appname__}/{self.name}")
             return False
         value = self._read_from_env()
         if not value:

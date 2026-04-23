@@ -5,3 +5,5 @@ __old__/
 .venv/
 **/.venv/
 .DS_Store
+.ruff_cache
+

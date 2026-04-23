@@ -18,7 +18,12 @@ export BACKUP_TARGET="${HOME}/Documents/CloudDrive/Backups"
 export WORKSPACE="${WORKSPACE:-"${HOME}/Documents/Workspace"}"
 
 # ------[ Terminal settings ]--------------------------------------------------
-export PS1="\u@\h:\W\$ "
+if [ -z "${SSH_TTY:-""}" ]; then
+    export PS1="\u@\h:\W\$ "
+else
+    export PS1="SSH>\u@\h:\W\$ "
+fi
+
 # Turn off mail notification in terminal
 export MAILCHECK=-1
 
@@ -93,6 +98,8 @@ alias cleanup-downloads='myenv downloads clean'
 
 alias nocomments='sed "s/#\!/@#\!/g" | grep  "^[^\s*\(#\|$\)]" | sed "s/@#\!/#\!/g"'
 
+alias stash-home='WORK_DIR="${WORKSPACE}/private" STASH_NAME=${USER}-private stash'
+
 if ! which ctop 2>&1 >/dev/null && ! alias upper 2>/dev/null>/dev/null; then
   alias ctop='docker run --rm -ti --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
 fi
@@ -125,16 +132,6 @@ rmdir-empty() {
         echo "Exit"
         return 1
     fi
-}
-
-csview() {
-  case "${1}" in
-    help|--help|-h) echo "Usage: csview <csv file>"; return 1;;
-    "") sed -e 's/,,/, ,/g' | column -s, -t | less -S;;
-    #"") sed -e 's/,,/, ,/g' | column -s, -t | less -#5 -N -S;;
-    #*) cat "${1}" | sed -e 's/,,/, ,/g' | column -s, -t | less -#5 -N -S;;
-    *) cat "${1}" | sed -e 's/,,/, ,/g' | column -s, -t | less -S;;
-  esac
 }
 
 #-- Git settions --------------------------------------------------------------

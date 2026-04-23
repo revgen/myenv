@@ -103,14 +103,15 @@ class SecretKey:
         self._use_tempfile = not self.path and self.use_secret_storage
         if self.use_keyfile:
             if self._use_tempfile:
+                logger.debug("Use keyfile from tempfile.")
                 self._keyfile = tempfile.NamedTemporaryFile(mode="wb", dir=self._cache, prefix="kf-")   # noqa: SIM115
                 self.path = Path(self._keyfile.name)
             elif not self.path.exists():
                 raise OSError(f"Keyfile '{self.path}' not found")
             else:
+                logger.debug(f"Use keyfile: {self.path}.")
                 self._keyfile = self.path.open("rb")
         else:
-
             self.path = None
         logger.debug(f"SecretKey open: use_keyfile={self.use_keyfile}, "
                      f"secret_storage={self.use_secret_storage}, "
@@ -141,10 +142,10 @@ class SecretKey:
             return os.environ[env_key]
         return None
 
-    def read_secret(self, generate: bool = False) -> str:
-        if not self.use_secret_storage or not self.use_keyfile:
-            logger.debug(f"Save keyfile to the system keys storage: {__appname__}/{self.name}")
-            return False
+    def read_secret(self, generate: bool = False) -> Optional[str]:
+        if not self._use_tempfile or not self.use_secret_storage or not self.use_keyfile:
+            logger.debug(f"Use a real keyfile for {__appname__}/{self.name}: {self.path}")
+            return None
         value = self._read_from_env()
         if not value:
             value = self._read_secret_storage()
@@ -235,7 +236,7 @@ class Util:
         if not path:
             return None
         if isinstance(path, Path):
-            return Path
+            return path
         return Path(str(path))
 
 

@@ -1,0 +1,18 @@
+#!/bin/sh
+echo "The script is cleanup unused snap packages"
+if ! which snap >/dev/null; then echo "Snap tool not found."; exit 1; fi
+
+echo "Search unused/disabled snap packages..."
+snap list --all 2>/dev/null | awk '/disabled/{print $1, $3}' | tee /tmp/span-disabled.tmp
+
+if [ ! -s /tmp/span-disabled.tmp ]; then
+    echo "Nothing to cleanup";
+else
+    echo "Cleanup unused/old snap packages..."
+    cat /tmp/span-disabled.tmp | while read snapname revision; do
+        echo "Removing $snapname-$revision"
+        sudo snap remove "$snapname" --revision="$revision"
+    done
+    echo "Cleanup unused/old snap packages - done."
+fi
+echo "Cleanup is done."
